@@ -1,0 +1,14 @@
+\section{Implementation} \label{sec:implementation}
+use symbolic implementation.
+
+Note:
+the use of bezier curves for face's path representation is an approximation of the provided curves.
+This approximation affects both the decomposition (over the area of a face) and accuracy of the point-face localization.
+Is there any better approach to this approaximation? 
+
+
+Note:
+faces and holes both belong to face class, but they differ by the direction of their path: 
+face.path == CCW
+hole.path == CW
+

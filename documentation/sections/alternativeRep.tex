@@ -1,0 +1,66 @@
+\section{Single variable representation of line and circle} \label{app:alternativeRep}
+
+\paragraph{Line}
+The alternative representation of the level-curve of a linear function $f(x,y)=ax+by+c$ could be written as:
+
+\[
+\dot{f}(\theta) = (x,y) =
+\begin{cases}
+  \left( x_l + \theta, y_l \right) & \quad \text{if } s = 0\\
+  \left( x_l, y_l + \theta \right) & \quad \text{if } s = \pm \infty\\
+  \left( x_l + \dot{a}\theta , y_l + \dot{b}\theta \right) & \quad \text{otherwise} \\
+\end{cases}\\
+\]
+
+where $(x_l,y_l)$ is an arbitrary (but fixed as a reference) point on the level-curve of the $f(x,y)$, $s$ is the slope of the level-curve of the $f(x,y)$, and $\dot{a}, \dot{b}$ are given by:
+\[
+\dot{a} = \frac{\sqrt{ s^2 + 1}}{s^2 + 1}, \quad \dot{b} = \dot{a}s
+\]
+
+The inverse function ($\theta = \dot{f}^{-1}(x,y)$) is given by:
+\[
+\theta = \dot{f}^{-1}(x,y) =
+\begin{cases}
+  x & \quad \text{if } s = 0\\
+  y & \quad \text{if } s = \pm \infty\\
+  \frac{x-x_l}{\dot{a}} & \quad \text{if } \dot{a} \neq 0\\
+  \frac{y-y_l}{\dot{b}} & \quad \text{otherwise} \\
+\end{cases}\\
+\]
+
+While the second derivative of a line is a null vector, the first derivative of a line in this representation would be:
+\[
+\begin{array}{l}
+  \frac{d\dot{f}(\theta)}{d\theta} = \left( \cos(\theta) , \sin(\theta) \right) \text{, where } \theta = \arctan(s)\\
+\end{array}
+\]
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Circle}
+Similarly, for the level-curve of a conic function $f(x,y)=(x-x_c)^2+(y-y_c)^2-r_c$ (hence the level-curve would be a conic section, in this case a circle) the alternative represetation could be written as:
+
+\[
+\dot{f}(\theta) = (x,y) = \left( x_c + r_c \cos(\theta), y_c + r_c \sin(\theta) \right)
+\]
+
+where $(x_c,y_c)$ is the center of the $f(x,y)$ function, and radius $r_c$ defines the desired level-curve of the $f(x,y)$.\bigskip
+
+The inverse function ($\theta = \dot{f}^{-1}(x,y)$) is given by:
+
+\[
+\theta = \dot{f}^{-1}(x,y) = \arctantwo (y - y_c, x - x_c)
+\]
+
+The first and second derivatives of a circle in this representation would be:
+\[
+\begin{array}{l}
+  \frac{d\dot{f}(\theta)}{d\theta} = \left( -r_c \sin(\theta), r_c \cos(\theta) \right)\\
+  \quad\\
+  \frac{d^2\dot{f}(\theta)}{d\theta^2} = \left( -r_c \cos(\theta), -r_c \sin(\theta) \right)\\
+\end{array}
+\]
+
+
+\paragraph{Direction of half-edges and the derivatives}

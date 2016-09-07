@@ -1,0 +1,41 @@
+\documentclass{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% packages
+\usepackage{myPackages}
+\usepackage[utf8]{inputenc}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{listings}
+\usepackage[b]{esvect}
+\usepackage[toc,page]{appendix}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator{\arctantwo}{arctan2}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% title...
+\title{Adaptive Cell Decomposition\\
+A Space Subdivision Method Beyond Lines}
+% \author{Saeed Gholami Shahbandi, Adam Duracz}
+% \date{March 2016}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+
+%\input{sections/introduction}
+\input{sections/subdivision}
+%\input{sections/implementation}
+%\input{sections/discussion}
+
+\newpage
+\begin{appendices}
+\input{sections/alternativeRep}
+\input{sections/dataStructures}
+\end{appendices}
+
+\bibliographystyle{plain}
+\bibliography{mybib.bib}
+
+\end{document}

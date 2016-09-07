@@ -1,0 +1,161 @@
+\section{Data Structures} \label{app:datastructure}
+
+%% 1) Doubly Connected Edge List % http://www.ti.inf.ethz.ch/ew/lehre/CG12/lecture/Chapter%205.pdf
+
+
+\paragraph{Curve}
+
+%% class Circle:
+%% DPE
+%% IPE
+%% firstDerivative
+%% secondDerivative
+
+%% class Curve:
+%% def __init__(self, curve,
+%% self.curve = curve
+%% self.ipsIdx = itersectionPointsIdx
+%% self.ipsTVal = tValue_at_intersections
+%% self.ipsDer1st = at_intersections_derivative_1st
+%% self.ipsDer2nd = at_intersections_derivative_2nd
+
+%% assert len(self.ipsIdx) == len(self.ipsTVal)
+%% assert len(self.ipsIdx) == len(self.ipsDer1st)
+%% assert len(self.ipsIdx) == len(self.ipsDer2nd)
+
+
+\paragraph{Node}
+
+%% class Node:
+%%     def __init__(self, point,
+%%                  intersecting_curves_Idx=(),
+%%                  intersecting_curves_Tval=()):
+        
+%%         self.point = point
+%%         self.curveIdx = intersecting_curves_Idx
+%%         self.curveTval = intersecting_curves_Tval
+
+
+\paragraph{Half-Edge}
+
+%% class HalfEdge:
+%%     def __init__ (self,
+%%                   selfIdx, twinIdx,
+%%                   cIdx, side,
+%%                   sIdx, sTVal, s1stDer, s2ndDer,
+%%                   eIdx, eTVal, e1stDer, e2ndDer):
+
+%%         self.selfIdx = selfIdx   # (sIdx, eIdx, pIdx)
+%%         self.twinIdx = twinIdx   # twin half edge's index
+
+%%         # half edge Curve's attributes:
+%%         self.cIdx = cIdx         # Index of the curve creating the edge
+%%         self.side = side         # defines the direction of t-value (in: t2>t1, out: t1>t2)
+        
+%%         # half edge attributes:
+%%         self.sIdx = sIdx         # starting node's index        
+%%         self.sTVal = sTVal
+%%         self.s1stDer = s1stDer
+%%         self.s2ndDer = s2ndDer
+
+%%         self.eIdx = eIdx         # ending node's index
+%%         self.eTVal = eTVal
+%%         self.e1stDer = e1stDer
+%%         self.e2ndDer = e2ndDer
+
+\paragraph{Face}
+%% (also, holes and patches)
+
+%% class Face:
+%%     def __init__(self, halfEdgeList, path):
+%%         ''' '''
+%%         self.halfEdges = halfEdgeList
+%%         self.path = path
+%%         self.holes = () # list of faces
+
+%%     def get_area(self, considerHoles=True):
+%%         '''
+%%         Be aware that path.to_polygons() is an approximation of the face,
+%%         if it contains curves, consequently the area would be approximated
+
+%%         Green's theorem could provide an accurate measure of the area
+%%         '''
+%%         polygon = self.path.to_polygons()
+%%         assert len(polygon) == 1
+%%         x = polygon[0][:,0]
+%%         y = polygon[0][:,1]
+%%         PolyArea = 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
+        
+%%         holesArea = 0
+%%         if considerHoles:
+%%             for hole in self.holes:
+%%                 polygon = hole.path.to_polygons()
+%%                 assert len(polygon) == 1
+%%                 x = polygon[0][:,0]
+%%                 y = polygon[0][:,1]
+%%                 holesArea += 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
+
+%%         return PolyArea - holesArea
+
+%%     def is_point_inside(self, point):
+%%         ''' '''
+%%         if self.path.contains_point( (point.x,point.y) ):
+%%             for hole in self.holes:
+%%                 if hole.path.contains_point( (point.x,point.y) ):
+%%                     return False
+%%             return True        
+%%         return False
+
+%%     def punch_hole(self, holeFace):
+%%         ''' '''
+%%         self.holes += (holeFace,)
+
+
+%%     def get_punched_path(self):
+%%         '''
+%%         this is only useful for plotting
+%%         the "path.contain_point()" doesn't work with holePunched pathes anyway
+
+%%         no need to invert holes' trajectory,
+%%         as they are supposedly superfaces, which means they have cw trajectory
+%%         '''
+%%         verts = self.path.vertices
+%%         codes = self.path.codes
+
+%%         for hole in self.holes:
+%%             verts = np.append( verts, hole.path.vertices, axis=0)
+%%             codes = np.append( codes, hole.path.codes)
+
+%%         return mpath.Path(verts, codes)
+
+
+        
+\paragraph{Decomposition}
+%% class Decomposition:
+%%     def __init__ (self, graph, faces, superFaceIdx=None):
+        
+%%         self.graph = graph
+
+%%         if superFaceIdx is not None:
+%%             f = list(faces)
+%%             self.superFace = f.pop(superFaceIdx)
+%%             self.faces = tuple(f)
+%%         else:
+%%             self.superFace = None
+%%             self.faces = faces
+
+%%     def find_face(self, point):
+%%         for idx,face in enumerate(self.faces):
+%%             if face.is_point_inside(point):
+%%                 return idx
+%%         return None
+
+%%     def find_neighbours(self, faceIdx):
+%%         return []
+        
+%%     def get_extents(self):
+%%         bboxes = [face.path.get_extents() for face in self.faces]
+%%         return matplotlib.transforms.BboxBase.union(bboxes)
+
+
+\paragraph{Subdivision} \quad

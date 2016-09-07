@@ -1,0 +1,477 @@
+\section{Subdivision}
+The process of our method for constructing the subdivion is explained in this section.
+The core process of subdivion is the decomposition of the space into faces, according to a provided set of curves.
+That is to say, identifying every individual face.
+On the other hand, in order to satisfy the required functionality of the resulting subdivion (such as membership function and neighbourhood function), proper descriptions of intermediate and underlying data structures are essential.
+Such descriptions will be provided in the appendix~\ref{app:datastructure}.\bigskip
+
+Algorithm~\ref{alg:subdivisionRestricted} presents a restricted version of the subdivision construction algorithm.
+While explaining the sub-procedures mentioned in algorithm~\ref{alg:subdivisionRestricted}, the restrictions and their remedy would be described.
+A more comprehensive version of algorithm~\ref{alg:subdivisionRestricted} will be presented afterward.
+
+\begin{algorithm}
+  \caption {Subdivision (restricted version)}
+  \label{alg:subdivisionRestricted}
+  \begin{algorithmic}    
+    \STATE INPUT  $\mathcal{C}:\{curves\}$
+    \STATE OUTPUT  $\mathcal{F}:\{faces\}$
+    \STATE \quad
+    \STATE $\mathcal{N}:\{nodes\} = \mathit{intersect} \left( \mathcal{C} \right)$
+    \STATE $\mathcal{E}:\{half\text{-}edges\} = \mathit{segment} \left( \mathcal{C}, \mathcal{N} \right)$
+    %% \STATE Construct a Multi Directional Graph ($\mathit{MDG}$) from $\left( \mathcal{E}, \mathcal{N} \right)$
+    %% \STATE $ \mathcal{F}=\{faces\} = \mathit{partition} \left( \mathit{MDG} , \mathcal{C} \right)$
+    %% \STATE return $\mathit{Subdivision}\left( \mathcal{C},\mathcal{F}, \mathit{MDG} \right)$
+    \STATE $ \mathcal{F}:\{faces\} = \mathit{partition} \left(\mathcal{C},\mathcal{E} \right)$
+  \end{algorithmic}
+\end{algorithm}
+
+Algorithm~\ref{alg:subdivisionRestricted}, which is quite identical to the subdivision algorithm presented in \cite{de2000computational}, is demonstrated in figure~\ref{fig:subd_simpleExample}.
+It should be reiterate that the focus of this work is to revise the meta-algorithm and its sub-procedures, so that it can handle the more general cases including curves of circle class.
+Regardless, we first try to provide an intuitive and basic understanding of the restricted version, and in the following sections we'll provides details on the computation and required extensions to each procedure.
+The objective of the restricted version of the subdivision algorithm (presented in algorithm~\ref{alg:subdivisionRestricted} and demonstrated in figure~\ref{fig:subd_simpleExample}) is to identify those partitioned areas of the space (denoted by $\mathcal{S}$) into a set of faces (denoted by $\mathcal{F}$.)
+The first step is to find the set all the intersection points bewteen all the curves (figure~\ref{subfig:subd_simpleExample_b}).
+This set is denoted by $\mathcal{N}$, standing for \emph{nodes} \footnote{The reason for the name is the important role that they play in constructing a graph in the extended version of the algorithm. Eventhough we'll come to this aspect later, we use the same term for consistency.}.
+Every node resulting from this process is also assigned to the curves that yielded it.
+For the next step, that is segmenting curves into half-edge based on their nodes, it is important that the nodes' assigments to the curves should be geometrically sorted over curves.
+In the case of only straight line, the sorting process is performed by looking at the $x$ (or $y$) values of the nodes.
+A more comprehensive approach for sorting will be presented later in section~\ref{subsec:halfEdgeConstruction}.
+After sorting the nodes over each curve, the curves are segmented to edges as illustrated in figure~\ref{subfig:subd_simpleExample_c}.
+Note that each simple edge is composed of two ``twin'' directed half-edges, represented by blue vectors in figure~\ref{subfig:subd_simpleExample_c}.
+For more detail on half-edge data structure please see \cite{de2000computational}, or the appendix~\ref{app:datastructure}.
+In the final stage, we attend to construct the set of faces $\mathcal{F}$, through a process of path following.
+The process starts by fetching (and removing) a half-edge from an open list, moving it to the list
+of a face's boundary.
+The next member of the face's boundary list is the half-edge that follows the last last in the list.
+The potential candidates for the next member are those half-edge who start from the node which the last half-edge of the list is arriving at.
+The next element is identified among the candidates by measuring their angles to the last half-edge.
+The one with widest Counter Clock-Wise (CCW) angle with respect to the last half-edge is identified as the new member of the face's boundary list.
+As we will see later, this conventional method for following the boundary of a face would fail in the presence of curves from circle classes, for which we provide other measures from first and second derivatives of the curves.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_simpleExample_a.png}
+    \caption{$\mathcal{C}$: curves} \label{subfig:subd_simpleExample_a}
+  \end{subfigure}%
+  \quad \quad%
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_simpleExample_b.png}
+    \caption{$\mathcal{N}$: nodes} \label{subfig:subd_simpleExample_b}
+  \end{subfigure}
+
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_simpleExample_c.png}
+    \caption{$\mathcal{E}$: half-edges} \label{subfig:subd_simpleExample_c}
+  \end{subfigure}%
+  \quad \quad%
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_simpleExample_d.png}
+    \caption{$\mathcal{F}$: faces} \label{subfig:subd_simpleExample_d}
+  \end{subfigure}%
+  \caption[xxx]
+          {A simplified demonstration of the subdivision algorithm.}
+  \label{fig:subd_simpleExample}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Intersection procedure}
+This procedure, as presented in algorithm~\ref{alg:intersectionProcedure}, intersects all curves with each other.
+Each intersection point (node as we call them) will be assigned to curves which it is yielded from.
+Furthermore, different curves might intersect at the same location, resulting in duplication of the points.
+The procedure overcomes this problem by removing redundant points while updating the assignment of points to curves.
+
+\begin{algorithm}
+  \caption {Intersect: curve intersection procedure}
+  \label{alg:intersectionProcedure}
+  \begin{algorithmic}    
+    \STATE INPUT  $\mathcal{C}:\{curves\}$
+    \STATE OUTPUT  $\mathcal{N}:\mathit{nodes}$
+    \STATE \quad
+    %% \STATE [step2] find all intersections
+    \STATE $\mathcal{N} = \emptyset$
+    \FORALL {$curve_i, curve_j \in \mathcal{C} \mid i>j$}
+    \STATE $\{nodes\}=intersect\left( curve_i, curve_j \right) $
+    \FORALL {$node_k \in \{nodes\}$}
+    \STATE append $node_k$ to $\mathcal{N}$
+    \STATE assign $node_k$ to $curve_i$ and $curve_j$
+    \ENDFOR
+    \ENDFOR
+    \STATE \quad
+    %% \STATE [step3] remove redundancy
+    \FORALL {$node_i, node_j \in \mathcal{N} \mid i \neq j, distance(node_i,node_j)=0$}
+    \STATE assign $node_i$ to all curves that $node_j$ is assigned to
+    \STATE dump $node_j$ from $\mathcal{N}$
+    \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Non-intersecting Circles}
+The result of intersection procedure is the ground for identifying half-edges (as detailed in the next section).
+Each curve is segmented into half-edges, according to those nodes that are placed on them.
+In the presence of circles, there is a chance that a circle might not be intersecting with any other curve.
+Consequently no half-edges would be identified on that circle.
+We tackle this problem by placing a \emph{pseudo} intersection point on the circle's curve at an arbitrary location, resulting in a node that is only assigned to one curve (i.e. the non-intersecting circle.)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Half-Edge identification} \label{subsec:halfEdgeConstruction}
+
+Following the algorithm~\ref{alg:intersectionProcedure}, every intersection point (node) lying on every curve is provided.
+Algorithm~\ref{alg:halfedgeConstruction} describes the process of segmenting each curve into half-edges that connect nodes to each other.
+Such information are essential for the next step of the algorithm~\ref{alg:subdivisionRestricted}, i.e. face identification (and graph construction in the complete version of the algorithm.)\bigskip
+
+This step of the algorithm requires the ability to sort nodes over each curve.
+As mentioned earlier, in the case of only straight line, the sorting process is performed by looking at the $x$ (or $y$) values of the nodes.
+This would clearly fail in the presence of circles.
+To this end, we employ an alternative representation of the level-curves (denoted by $\dot{f}$), as a function of a single variable $\theta$, that traverses over the level-curve of the multivariable function\footnote{The equations are presented in appendix~\ref{app:alternativeRep}.}.
+Given the ``alternative'' representation of a level-curve as a function of a single variable $\theta$, we use the inverse function of it (denoted by $\dot{f}^{-1}$), to sort nodes over the curve ($\theta = \dot{f}^{-1}(x,y)$).
+Provided that it's possible to sort nodes over the curves, we can proceed with the algorithm~\ref{alg:halfedgeConstruction} which describes the construction of half-edges.
+Figure~\ref{fig:subd_heConstruct} demonstrates two examples of half-edge construction over a line and a circle.
+The algorithm~\ref{alg:halfedgeConstruction} takes segments of the curve under process and turns each segment into two twin half-edges.
+The segments are identified by the consecutive nodes over the curve.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{figures/subd_heConstruct.png}
+    \caption{Examples of half-edge construction over a line and a circle.
+      In each case, half-edges with the same color are twins.}
+    \label{fig:subd_heConstruct}
+\end{figure}
+
+\begin{algorithm}
+  \caption {Segment: half-edge construction}
+  \label{alg:halfedgeConstruction}
+  \begin{algorithmic}
+    \STATE INPUT  $\mathcal{C}:\{curves\}, \quad \mathcal{N}:\{nodes\}$
+    \STATE OUTPUT  $\mathcal{E}:\{half\text{-}edges\}$
+    \STATE \quad
+    \STATE $\mathcal{E} = \emptyset$
+    \FORALL {$curve_i \in \mathcal{C}$}
+    \STATE $list\_n = \{node_j \mid node_j \in \mathcal{N}, node_j \text{ is assigned to } curve_i \}$
+    \STATE sort the $list\_n$ according to $\theta_j=\dot{f}_{i}^{-1}(node_j)$
+    \STATE $I= \text{index set of the } list\_n$
+    \STATE $list\_he=\left\{(curve_i,node_j,node_{j+1}),(curve_i,node_{j+1},node_j) \mid \forall j \in I \right\}$
+    \IF {$curve_i$ is a circle}
+    \STATE $j=max(I)$
+    \STATE append $\{(curve_i,node_j,node_{0}),(curve_i,node_0,node_{j})\}$ to $list\_he$
+    \ENDIF
+    \STATE append $list\_he$ to $\mathcal{E}$
+    \ENDFOR    
+  \end{algorithmic}
+\end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Partitioning procedure: face identification}
+%% When t is increasing, the half-edge is positive, for any curve. Very important to understand the code.
+Identification of faces is performed by a procedure of path following.
+Given that each half-edge belongs to only one face, the process start by picking an arbitrary half-edge and detecting the boundary of the face it belongs to, by picking the correct successor to the last half-edge.
+This is an iterative process that terminats when the last half-edge arrives at the node which the first half-edge started from.
+This procedure is represented by algorithm~\ref{alg:partitioning} and demonstrated in figure~\ref{fig:subd_pathFollower}.
+
+\begin{algorithm}
+  \caption {Partition: face identification}
+  \label{alg:partitioning}
+  \begin{algorithmic}
+    \STATE INPUT  $\mathcal{C}:\{curves\}, \quad \mathcal{N}:\{nodes\}, \quad \mathcal{E}:\{half\text{-}edges\}$
+    \STATE OUTPUT  $\mathcal{F}:\{faces\}$
+    \STATE \quad
+    \STATE $\mathcal{F} = \emptyset$
+    \STATE $open\_list = \mathcal{E}$
+    \WHILE{$open\_list \neq \emptyset$}
+    \STATE fetch a random $half\_edge_i$ and remove it from $open\_list$
+    \STATE $face\_list = \{ half\_edge_i\}$
+    \STATE $start\_node = node_s$, where $half\_edge_i$ departs from $node_s$
+    \STATE $end\_node = node_e$, where $half\_edge_i$ arrives at $node_e$
+    \WHILE{$start\_node \neq end\_node$}
+    \STATE $half\_edge_j= \mathit{find\_successor} \left( \text{last } half\_edge \text{ in } face\_list \right)$
+    \STATE remove $half\_edge_j$ from $open\_list$ and add it to $face\_list$
+    \STATE update $end\_node$ according to $half\_edge_j$
+    \ENDWHILE
+    \STATE construct a face instance from $face\_list$ and append it to $\mathcal{F}$
+    \ENDWHILE
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{figure} %[!ht]
+    \centering
+    \includegraphics[width=1.\textwidth]{figures/subd_pathFollower.png}
+    \caption{The process of face identification towards partitioning.
+      First a half-edge is picked, which initiats the identification of a new face.
+      Then the correct successor (colored green) is identified among candidates.
+      Rejected candidates at each step are colored red.
+      The process terminates, and the face is completely identified, when the last half-edge arrives at the starting node of the first half-edge.}
+    \label{fig:subd_pathFollower}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Finding the correct successor half-edge}
+
+Half-edges departing from the node, which last half-edge of the face arrived at, are flagged as candidates.
+Among the candidates, the twin of the last half-edge is rejected.
+The winning candidate is the one with widest departing angle (CCW) with respect to the departing angle of the last half-edge's twin.
+That is to say, the half-edge that is closest to the twin's departure.
+Few examples of correct successor selections are demonstrated in figure~\ref{fig:subd_findNextHalfEdge}, where the arriving half-edges and the correct successors are colored green, and all the rejected candidates are colored red.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_findNextHalfEdge_a.png}
+    \caption{only straight lines} \label{subfig:subd_findNextHalfEdge_a}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_findNextHalfEdge_b.png}
+    \caption{a line and circles} \label{subfig:subd_findNextHalfEdge_b}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_findNextHalfEdge_c.png}
+    \caption{a line and circles} \label{subfig:subd_findNextHalfEdge_c}
+  \end{subfigure}%
+  \caption[xxx]
+          {Few examples of correct successor selections.
+            Arriving half-edges and the correct successors are colored green, and all the rejected candidates are colored red.}
+  \label{fig:subd_findNextHalfEdge}
+\end{figure}
+
+In cases of only straight lines (e.g. figures~\ref{subfig:subd_findNextHalfEdge_a}), finding the next half-edge would be simply to look at candidate half-edges' angles, as half-edges are vectors.
+However this does not hold in the presence of circles where half-edges are arcs (see figures~\ref{subfig:subd_findNextHalfEdge_b} and \ref{subfig:subd_findNextHalfEdge_c}.)
+To overcome this problem, we rely on the angle of the tangent vector to the level-curves\footnote{The equations for the derivatives are available in appendix~\ref{app:alternativeRep}.}.
+These vectors provide the departing and arriving angles of half-edges at the nodes' location.
+
+
+%% In figure~\ref{fig:subd_derivatives}, the derivatives (red vectors) and their normal (green vectors) are illustrated alongside with the multi-variable functions (gray surfaces) and the level-curves (dashed balck lines.)
+%% \begin{figure}%[!ht]
+%%   \centering
+%%   \begin{subfigure}{.49\textwidth}
+%%     \includegraphics[width=\textwidth]{figures/subd_derivativeLine.png}
+%%     \caption{$f\left(x, y\right) = x - y$} \label{subfig:subd_derivativeLine}
+%%   \end{subfigure}%
+%%   ~%
+%%   \begin{subfigure}{.49\textwidth}
+%%     \includegraphics[width=\textwidth]{figures/subd_derivativeCircle.png}
+%%     \caption{$f\left(x, y\right) = x^2+y^2-2$} \label{subfig:subd_derivativeCircle}
+%%   \end{subfigure}%
+%%   \caption[xxx]
+%%           {Multi-variable functions as gray surfaces, and their level-curves ($f\left(x, y\right) =0$) in dashed balck lines.
+%%             The derivatives are shown as red vectors and their normal vectors are colored green.}
+%%   \label{fig:subd_derivatives}
+%% \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Insufficiency of the first derivative in case of tangency}
+
+When curves intersect while being tangent, the measure of first derivatives' angle at the intersection point is not sufficient to detect the correct successor.
+This challenge is demonstrated in figure~\ref{subfig:subd_tangentCase_a} where four circles intersect at a tangent point.
+While the correct successor is colored green after the arriving half-edge, one can see that there are two other candidates (neglecting the twin of arriving half-edge) that have the same departing angle at the intersection point as the correct successor.\bigskip
+
+\begin{figure} %[!ht]
+    \centering
+  \begin{subfigure}{.49\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_tangentCase_a.png}
+    \caption{a case of tangency} \label{subfig:subd_tangentCase_a}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.49\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_tangentCase_b.png}
+    \caption{derivatives of \emph{half-edges}} \label{subfig:subd_tangentCase_b}
+  \end{subfigure}%
+
+    \caption{Curves that intersect, but do not intercept.
+      When curves intersect while being tangent, the measure of first derivatives' angle at the intersection point is not sufficient to detect the correct successor.
+      A second measure for sorting the cadidates half-edges are provided based on both the first and second derivatives.}
+    \label{fig:subd_tangentCase}
+\end{figure}
+
+We tackle this problem by adding a secondry sorting measure that relies on both first and second derivatives of the curve at the intersection point\footnote{The equations for the derivatives are available in appendix~\ref{app:alternativeRep}.}.
+
+\[
+\begin{array}{l}
+  key_1 = \measuredangle \overrightarrow{\frac{d\dot{f}(\theta)}{d\theta}}\\
+  \quad\\
+  key_2 = \overrightarrow{\frac{d^2\dot{f}(\theta)}{d\theta^2}} \cdot \frac{\overrightarrow{V}}{\|\overrightarrow{V}\|} \quad \text{where: } \overrightarrow{V} = (-y,x) \quad , (x,y) = \overrightarrow{\frac{d\dot{f}(\theta)}{d\theta}}\\
+\end{array}
+\]
+
+If the $key_1$ is not sufficient to detect the correct successor, that is to say in the tangent case,
+the second derivative brings a measure of in which direction, the curve is changing its \emph{course}.
+Along with a measure of the first derivative, this change of ``course'' that is delivered by the second derivative makes up the $key_2$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Resolving the restriction} \label{subsec:}
+
+So far we have presented modified versions of the sub-procedures in algorithm~\ref{alg:subdivisionRestricted}, so that they can handle curves beyond straight lines (i.e. circles.)
+However this does not suffice, since the algorithm~\ref{alg:subdivisionRestricted} itself would fail in the presence of circles.
+Figure~\ref{fig:subd_restrictedFail} show examples of where the ``restricted'' algorithm would fail.
+These failures occure when some curves are located inside other faces without intersecting with them.
+As a consequence, those insider curves are not accounted for in the entailing faces as there is not connected path between the two.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_restrictedFail_a.png}
+    %% \caption{xxx} \label{subfig:subd_restrictedFail_a}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_restrictedFail_b.png}
+    %% \caption{xxx} \label{subfig:subd_restrictedFail_b}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_restrictedFail_c.png}
+    %% \caption{xxx} \label{subfig:subd_restrictedFail_c}
+  \end{subfigure}%
+  \caption[xxx]
+          {The restricted algorithm~\ref{alg:subdivisionRestricted} fails when some curves are enclosed inside other faces without intersecting with each other.
+          Blue areas show the entailing faces in each case, and the regions that should be substracted from those faces are marked red (what we call super-faces) .}
+  \label{fig:subd_restrictedFail}
+\end{figure}
+
+To understand the root of this failure, let's construct a multi-directional graph ($\mathit{MDG}$) from all the nodes $\mathcal{N}$ and half-edges $\mathcal{E}$ as demostrated in figure~\ref{fig:subd_mdg}.
+The restricted algorithm would work under the assumption that $\mathit{MDG}$ is connected.
+This assumption would not hold in the cases of figure~\ref{fig:subd_restrictedFail}.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_mdg_a.png}
+    \caption{curves} \label{subfig:subd_mdg_a}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_mdg_b.png}
+    \caption{nodes and half-edges} \label{subfig:subd_mdg_b}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_mdg_c.png}
+    \caption{$\mathit{MDG}$} \label{subfig:subd_mdg_c}
+  \end{subfigure}%
+  \caption[xxx]
+          {Construction of a multi-directional graph $\mathit{MDG}$ from nodes and half-edges.
+          It is used to identify connected components which result in disconnected partitioning.}
+  \label{fig:subd_mdg}
+\end{figure}
+
+Sub-graphs (connected components of the $\mathit{MDG}$) being disconnected implies that they are topologically disjoint.
+However it does not imply that they are geometrically disjoint.
+If there are multiple disconnected sub-graphs, one can be certain that they are either:
+\begin{inparaenum}[\itshape i\upshape)]
+  \item geometrically disconnected and non-overlapping; or
+  \item on subgraph is completely contained in only \emph{one} face of the other subgraph(s).
+\end{inparaenum}
+Relying on this, we resolve this problem by partitioning each subg-graph of the $\mathit{MDG}$ independently.
+And perform a check afterward, to evaluate the relative position of the sub-graphs with respect to each other.
+This check relies on the ``membership'' functionality of the subdivision's faces that will be described in section~\ref{subsec:memberNeighbour}.
+It involves picking an arbitrary point (node) from each sub-graph and check whether if it is entailed in any other sub-graphs' faces.
+If the test implies the overlapping of two sub-graphs, figuratively speaking a hole in the shape of inside sub-graph is punched in the face entailing it\footnote{The face data structure is curated with an attribute of a \emph{hole}.}.
+The sub-graphs' outer shape that are colored red in figure~\ref{fig:subd_restrictedFail} are called super-face, and will be described next.
+After punching holes, last step to have a whole subdivision would be to append all the faces of each sub-graph to one final list.
+This whole process is summerize in the algorithm~\ref{alg:subdivisionComplete} as a complete version of the subdivision algorithm.
+%% Assume there are two subgraphs $SG_a$ and $SG_b$ that are geometrically overlapping, but not topologically.
+%% That is to say, the subgraphs are plannar and could be drawn on a plane without intersecting each others edges.
+%% There is a face in $SG_a$ ($f_i^a \in SG_a$) that all points covered by $SG_b$ would be inside $f_i^a$.
+%% To combine these two sub-graphs, we must append all the faces of $SG_b$ to $SG_a$.
+%% Then a hole of identified by the ``super-face'' of $SG_b$ must be punched inside $f_i^a$ of $SG_a$.
+%% TODO(saesha) Prove this?
+%% the important point here is that such a hole in $f_i^a$, does not change other attributes of $SG_a$ and its decomposition.
+
+\begin{algorithm}
+  \caption {Subdivision (complete version)}
+  \label{alg:subdivisionComplete}
+  \begin{algorithmic}
+    \STATE INPUT  $\mathcal{C}:\{curves\}$
+    \STATE OUTPUT  $\mathcal{F}:\{faces\}$
+    \STATE \quad
+    \STATE $\mathcal{N}:\{nodes\} = \mathit{intersect} \left( \mathcal{C} \right)$
+    \STATE $\mathcal{E}:\{half\text{-}edges\} = \mathit{segment} \left( \mathcal{C}, \mathcal{N} \right)$
+    \STATE $\mathit{MDG}= \mathit{multi\_directional\_graph} \left( \mathcal{E}, \mathcal{N} \right)$
+    \STATE $\mathcal{SG}:\{sub\_graphs\} = connected\_components(\mathit{MDG})$
+    \STATE \quad
+    \FORALL {$sub\_graph_i \in \mathcal{SG}$}
+    \STATE $ \hat{\mathcal{N}}_i = \{node_j \mid node_j \in sub\_graph_i \} $
+    \STATE $ \hat{\mathcal{E}}_i = \{edge_j \mid edge_j \in sub\_graph_i \} $
+    \STATE $ \hat{\mathcal{F}}_i= \mathit{partition} \left( \hat{\mathcal{N}}_i, \hat{\mathcal{E}}_i \right)$
+    %% \STATE $ subdivision_i = \mathit{Subdivision} \left( \hat{\mathcal{F}} \right) $
+    \ENDFOR
+    \STATE \quad
+    \FORALL {$ sub\_graph_i, sub\_graph_j \in \mathcal{SG}$}
+    \IF {$sub\_graph_i \in face_k \mid face_k \text{ belongs } sub\_graph_j$}
+    \STATE punch a hole (super-face of $sub\_graph_i$) in $face_k$ of $sub\_graph_j$ 
+    \ENDIF
+    \ENDFOR
+    \STATE \quad
+    \STATE $ \mathcal{F} = \displaystyle \bigcup_{i\in I} \hat{\mathcal{F}}_i $, \quad where $I$ is the index set of the $\mathcal{SG}$
+  \end{algorithmic}
+\end{algorithm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Super-faces}
+Incidintally and interesting, one of the useful outcomes of the subdivision algorithm presented in algorithm~\ref{alg:subdivisionComplete} is the detection of what we call a ``super-face''.
+For every connected component in the $\mathit{MDG}$, the subdivision algorithm finds one super-face that entails all the other faces of that coonected component of the $\mathit{MDG}$ (see figure~\ref{fig:subd_superface}.)
+The algorthim returns the super-face amongst all other faces.
+We identify the superface by the size of its surface, which is the biggest face in each subg-graph of the $\mathit{MDG}$.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/intro_curves2.png}
+    \caption{curves} \label{subfig:subd_superface_a}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/intro_partitioning2.png}
+    \caption{partitioning faces} \label{subfig:subd_superface_b}
+  \end{subfigure}%
+  ~%
+  \begin{subfigure}{.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/subd_superface.png}
+    \caption{super-face} \label{subfig:subd_superface_c}
+  \end{subfigure}%
+  \caption[xxx]
+          {Each subdivision process yields a set of partitioning faces, plus a ``super-face'' that covers the whole partitioned area, and represets its outer shape.}
+  \label{fig:subd_superface}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Neighbourhood and membership functions} \label{subsec:memberNeighbour}
+
+Neighbourhood functions of a face is handled by the twin concept of half-edges, as described in \cite{de2000computational}.
+That is to say, two faces are neighbours if they each have one half-edge with a twin belonging to the other face.
+
+\[
+neighbour\left(face_i\right) = \lbrace  face_j \mid \exists e_i, e_i \in face_i, \mathit{twin}(e_i) \in face_j \rbrace
+\]
+
+For cases consisting of only straight lines, membership function could be implemented through a set of tests relying on cross products, as described in \cite{de2000computational}.
+The tests are to check whether if a point is located on the same side of all the bounding edges of a face.
+This would only work if the edge could be represented by a vector.
+As can be seen in figure~\ref{fig:intro_crossProdFail}, edges turn to arcs in the presence of circles.
+As an alternative we suggest the use of ``point-in-polygon'' method, which is based upon the Jordan Curve theorem \footnote{In fact, as will be described in section~\ref{sec:implementation}, in our implementation each face will be represented by ``path'' class of the matplotlib library. This class, based on b\'ezier curves, provides a method for detecting whether if a given point is located in a closed path. As a consequence the modification of point-in-polygon method is skipped here.}.
+Regardless of the method, the membership function behaves as:
+
+\[
+member\left(f,p\right) =
+\begin{cases}
+  1 & \quad \text{if } \left(p \in f\right) \land \left(p \notin hole_i \mid hole_i \in f\right) \\
+  0 & \quad \text{otherwise} \\
+\end{cases}\\
+\]
+
+\begin{figure} %[!ht]
+    \centering
+    \includegraphics[width=1.\textwidth]{figures/intro_crossProdFail.png}
+    \caption{Memebrship function for the case of only straight lines could be based on tests relying on a cross product.
+    However, as the edges are no longer vectors in the presence of circles, the conventional membership procedure requires revision.}
+    \label{fig:intro_crossProdFail}
+\end{figure}
+
+
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \subsection{Face merging, a case of constructive geometry}
