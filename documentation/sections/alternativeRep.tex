@@ -1,4 +1,4 @@
-\section{Univariate representation of lines and circles} \label{app:alternativeRep}
+\section{Univariate representation of the curves} \label{app:alternativeRep}
 
 \paragraph{Line}
 The alternative representation of the level-curve of a linear function $f(x,y)=ax+by+c$ could be written as:
@@ -64,3 +64,25 @@ The first and second derivatives of a circle in this representation would be:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Direction of half-edges and the derivatives}
+half-edges are directional, as the same segment of a curve turns into two half-edges with opposite directions.
+Direction of half-edges is very important in the correct calculation of the first derivative vectors.
+If a half-edge has a negative direction, as demonstrated in figure~\ref{fig:appa_derDirection}, its first derivative vectors are rotated $180^o$ degrees to face in the oppposite direction.
+
+\begin{figure}%[!ht]
+  \centering
+  \begin{subfigure}{.8\textwidth}
+    \includegraphics[width=\textwidth]{figures/appa_derDirection_pos.png}
+    \caption{half-edges with positive direction} \label{subfig:appa_derDirection_pos}
+  \end{subfigure}
+
+  \begin{subfigure}{.8\textwidth}
+    \includegraphics[width=\textwidth]{figures/appa_derDirection_neg.png}
+    \caption{half-edges with negative direction} \label{subfig:appa_derDirection_neg}
+  \end{subfigure}
+  \caption[xxx]
+          {Direction of half-edges and its effect on the derivative vectors.}
+  \label{fig:appa_derDirection}
+\end{figure}
+
+
+

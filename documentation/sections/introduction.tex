@@ -61,7 +61,7 @@ Neighborhood is a function of faces and returns all other faces that are neighbo
 
 \[
 \begin{array}{l}
-  \mathit{member}\left(point\right) = face_i \quad, point \in face_i \\
+  \mathit{member}\left(point\right) = face_i \quad, face_i \text{ encompasses the } point \\
   \mathit{neighbor}\left(face_i\right) = \lbrace  face_j \mid \exists edge_k, edge_k \in face_i \land edge_k \in face_j \rbrace\\
 \end{array}
 \]
@@ -88,9 +88,9 @@ Following the latter approach, we treat the union of all the exterior region as 
     \caption{unified face} \label{subfig:intro_unboundedFaces_c}
   \end{subfigure}%
   \caption[xxx]
-          {Two approaches for dealing with the exterior region, lying out of all faces.
-          In this work we take the approach in figure~\ref{subfig:intro_unboundedFaces_c}.}
-  \label{fig:subd_superface}
+          {Two approaches for dealing with the unbounded exterior region.
+          In this work we take the approach in figure~\ref{subfig:intro_unboundedFaces_c}, that is to say, treating the whole exterior region as one unbounded face.}
+  \label{fig:intro_unboundedFaces}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,17 +104,17 @@ Following the latter approach, we treat the union of all the exterior region as 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{This work}
 
+This work aims at studying the subdivision problem in the presence of circles.
+After identifying the limitation of the existing solutions in handling the more generic cases, challanges are identified and addressed.
+Figure~\ref{fig:intro_curvesPartitioning2} illustrates an example of a planar subdivision in the presence of circles.
 This work relies on the following assumptions:
 \begin{description}
-\item [Assumption 1] the space is a two dimensional plane.
-\item [Assumption 2] if two curves were identical, their intersection would be the same curve which is beyond a finite set of points.
+\item [Dimension] the space is a two dimensional plane.
+\item [Curves] the set $\mathcal{C}$ contains levels curves resulted from either linear functions (straight lines as an example of an unbounded class) or conic sections (circles as an example of a bounded class).
+\item [Redundancy] if two curves were identical, their intersection would be the same curve which is beyond a finite set of points.
   In order to prevents the intersection procedure yielding a result other than a finite set of points, redundant curves are rejected so that;
   \[ \nexists c_i , c_j \in \mathcal{C}, \quad c_i = c_j \]
-\item [Assumption 3] the set $\mathcal{C}$ contains levels curves resulted from either linear functions (straight lines as an example of an unbounded class) or conic sections (circles as an example of a bounded class).
 \end{description}
-
-\td{mention we are introducing circle curves
-Then mention the challenges which the already existing methods would face in the presence of circles. }
 
 \begin{figure}%[!ht]
   \centering
@@ -135,10 +135,53 @@ Then mention the challenges which the already existing methods would face in the
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Challenges}
-\td{briefly mention the challenges, such as membership function, holes, ...}
 
-%% The first problem that rises from a non-convex region is, the expression of the region.
-%% For instance the cross product won't work, therefore we need constraint-based description.
+Introducing circles raises challenges from the meta-algorithm of subdivision, all the way to sub-procedures within.
+Most of these challenges, as we'll see, are based on three essential differences between lines and circles;
+\begin{inparaenum}[\itshape i\upshape)]
+  \item \emph{boundness}: a circle could be enclosed within a closed curve (i.e. a Jordan Curve), while a line stretches to infinity;
+  \item \emph{closed curve}: unlike a line, a circle itself is a closed curve and alone could result in bounded faces; and 
+  \item \emph{segment representation}: while a segment of a line could be represented by a vector, a segment of a circle is represented by an arc.
+\end{inparaenum}
 
-%% The circle in particular has a the circular behavior which means it is a closed (bounded) region.
-%% Special case is where the circle resides inside a leaf, and with no intersection splits the leaf into sub-leaves.
+
+\paragraph{None intersecting circles}
+If a line does not intersect with any other curves in the curve set $\mathcal{C}$, it could be safely discarded as it would not result in any bounded region.
+On the other hand, a circle which does not have any intersection point with other curves would result in a bounded region that should be counted and identified as a face.
+That is to say, in the absence of circles it is safely assumed that the intersection points are well representing all the edges, and consequently all the faces.
+We tackle this problem by introducing dummy intersection points over non-intersecting circles.
+
+\paragraph{Sorting nodes over curves}
+In order to identify the edges resulting from a curve, it is essential to be able to geometrically sort the intersection points over the curve.
+For lines it suffices to sort the points according to their $x$ (or $y$) values.
+This does not hold for circles.
+To this end, we employ a univariate represetation for curves (presented in appendix~\ref{app:alternativeRep}).
+
+\paragraph{Edges are no longer vectors}
+A key information in face identification is the ability to follow a geometric path of edges that bound a face.
+This is an iterative process of finding the correct successor to an edge, until the sequence of edges form a closed curve, which represents the face.
+The correct successor is identified by its departing angle with respect to the arriving angle of the last edge.
+In the case of only lines, the arriving and departing angles of edges are equivalent to the slope of the line.
+But in the case of arc shaped edges, we have to employ the derivatives of the curve and the intersection point to find the correct successor.
+
+\paragraph{Holes}
+A new feature that appears in the presence of circles is the holes.
+That is to say, a face could have a non-continuous sequence of edges that define its boundary.
+This is due to the face that a circle could be enclosed in the closed curve of a face, and creating a ``hole'' in it.
+On the subdivision level, it causes the subdivision to become topologically disconnect (i.e. have separate connected components).
+We approach this problem by partitioning the space according to each connected components of the subdivsion separately, and merging their results at the end.
+
+\paragraph{Membership function}
+Membership function for the subdivision of lines could be implemented through a set of tests relying on cross products, as described in \cite{de2000computational}.
+The tests are to check whether if a point is located on the same side of all the bounding edges of a face.
+This would only work if the edges could be represented by vectors, and if the face is convex.
+As can be seen in figure~\ref{fig:intro_crossProdFail}, edges turn to arcs in the presence of circles, and potentially a face could be concave.
+As an alternative we suggest the use of ``point-in-polygon'' method, which is based upon the Jordan Curve theorem.
+
+\begin{figure} %[!ht]
+    \centering
+    \includegraphics[width=1.\textwidth]{figures/intro_crossProdFail.png}
+    \caption{Membership function for the case of only straight lines could be based on tests relying on a cross product.
+    However, as the edges are no longer vectors in the presence of circles, the conventional membership procedure requires revision.}
+    \label{fig:intro_crossProdFail}
+\end{figure}

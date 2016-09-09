@@ -452,20 +452,31 @@ The tests are to check whether if a point is located on the same side of all the
 This would only work if the edge could be represented by a vector.
 As can be seen in figure~\ref{fig:intro_crossProdFail}, edges turn to arcs in the presence of circles.
 As an alternative we suggest the use of ``point-in-polygon'' method, which is based upon the Jordan Curve theorem \footnote{In fact, as will be described in section~\ref{sec:implementation}, in our implementation each face will be represented by ``path'' class of the \emph{matplotlib} library. This class, based on b\'ezier curves, provides a method for detecting whether if a given point is located in a closed path. As a consequence the modification of point-in-polygon method is skipped here.}.
-Regardless of the method, the membership function behaves as:
+Regardless of the method for checking whether if a point is inside a closed curve, the membership function behaves as:
 
 \[
-member\left(f,p\right) =
+member\left(face,p\right) =
 \begin{cases}
-  1 & \quad \text{if } \left(p \in f\right) \land \left(p \notin hole_i \mid hole_i \in f\right) \\
+  1 & \quad \text{if } \left(p \in face\right) \land \left(p \notin hole_i \mid hole_i \in face\right) \\
   0 & \quad \text{otherwise} \\
 \end{cases}\\
 \]
 
+Another important note regarding the membership function is that the holes are represented with the same data structure as faces.
+It is impotant to ignore nested holes, when checking the second condition of the membership function $\left(point \notin hole_i \mid hole_i \in face\right)$.
+That is to say checking the $point \notin hole_i$ is itself another evaluation of the membership function for the $hole_i$, in which any nested holes inside $hole_i$ should be discarded.
+Figure~\ref{fig:disc_specialCase2} demonstrates an example where missing this point might result ina wrong membership estimation for the outer face.
+%% \[
+%% \begin{array}{l}
+%%   face_1: (circle_1 , hole:\emptyset)\\
+%%   face_2: (circle_2 , hole:face_1)\\
+%%   face_3: (circle_3 , hole:face_2)\\
+%% \end{array}
+%% \]
+
 \begin{figure} %[!ht]
     \centering
-    \includegraphics[width=1.\textwidth]{figures/intro_crossProdFail.png}
-    \caption{Membership function for the case of only straight lines could be based on tests relying on a cross product.
-    However, as the edges are no longer vectors in the presence of circles, the conventional membership procedure requires revision.}
-    \label{fig:intro_crossProdFail}
+    \includegraphics[width=.3\textwidth]{figures/disc_specialCase2.png}
+    \caption{xxx}
+    \label{fig:disc_specialCase2}
 \end{figure}

@@ -99,7 +99,7 @@ myplt.plot_decomposition(mySubdivision,
 ################################################################################
 ###################################################################### animating
 ################################################################################
-# myplt.animate_face_patches(mySubdivision)
+myplt.animate_face_patches(mySubdivision)
 # myplt.animate_halfEdges(mySubdivision)
 
 

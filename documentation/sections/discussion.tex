@@ -3,9 +3,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Degenerate cases}
 
+
+One degenerate(?) case is due to the ``while-loop'' condition in algorithm~\ref{alg:subdivisionComplete}, where the face identification is terminated as the last half-edge arrives at the starting node.
+As can been seen in figure~\ref{fig:disc_specialCase1}, where the hole inside the face is not identified.
+
 \begin{figure} %[!ht]
     \centering
-    \includegraphics[width=.5\textwidth]{figures/disc_specialCase1.png}
+    \includegraphics[width=.3\textwidth]{figures/disc_specialCase1.png}
     \caption{xxx}
     \label{fig:disc_specialCase1}
 \end{figure}

@@ -178,7 +178,7 @@ def plot_decomposition(subdivision,
     if interactive_onClick or interactive_onMove:
         global subdiv
         global ax
-        subdiv = subdivision
+    subdiv = subdivision
 
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
