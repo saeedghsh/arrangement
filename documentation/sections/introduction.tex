@@ -23,7 +23,7 @@ Such an abstraction potentially facilitates some geometric processes required on
   \end{subfigure}%
   \caption[xxx]
           {A planar subdivision, over a set of six straight lines.
-          Figure~\ref{subfig:intro_curves1} shows the set of curves, and the ``faces'' resulting from partitioning are color coded in figure~\ref{subfig:intro_partitioning1}.}
+          Figure~\ref{subfig:intro_curves1} shows the set of curves, and the ``faces'' resulting from partitioning are color coded in Figure~\ref{subfig:intro_partitioning1}.}
   \label{fig:intro_curvesPartitioning1}
 \end{figure}
 
@@ -33,7 +33,7 @@ Such an abstraction potentially facilitates some geometric processes required on
 Here we define some of the terminologies, and briefly explain some of the challenges and requirements.
 
 \paragraph{Curves}
-A curve set $\mathcal{C}$ contains the level-curves of some multivariable functions $f(X)$ defined over a space $\mathcal{S}$.
+A curve set $\mathcal{C}$ contains the level-curves of some multivariate functions $f(X)$ defined over a space $\mathcal{S}$.
 \[
 \mathcal{C} = \lbrace c_i \mid c_i: f_i(X)=0, i \in I, \text{$I$: index set of $\mathcal{C}$} \rbrace
 \]
@@ -68,7 +68,7 @@ Neighborhood is a function of faces and returns all other faces that are neighbo
 
 \paragraph{Unbounded faces}
 The fact that $\bigcup face_i$ is a proper subset of and not equal to $\mathcal{S}$, raise a question about the exterior region which does not belong to any of the normal faces.
-The exterior region could be treated either as separate unbounded faces (as in figure~\ref{subfig:intro_unboundedFaces_b}), or a unified single unbounded face (as in figure~\ref{subfig:intro_unboundedFaces_c}).
+The exterior region could be treated either as separate unbounded faces (as in Figure~\ref{subfig:intro_unboundedFaces_b}), or a unified single unbounded face (as in Figure~\ref{subfig:intro_unboundedFaces_c}).
 Following the latter approach, we treat the union of all the exterior region as a single unbounded face.
 
 \begin{figure}%[!ht]
@@ -89,9 +89,14 @@ Following the latter approach, we treat the union of all the exterior region as 
   \end{subfigure}%
   \caption[xxx]
           {Two approaches for dealing with the unbounded exterior region.
-          In this work we take the approach in figure~\ref{subfig:intro_unboundedFaces_c}, that is to say, treating the whole exterior region as one unbounded face.}
+          In this work we take the approach in Figure~\ref{subfig:intro_unboundedFaces_c}, that is to say, treating the whole exterior region as one unbounded face.}
   \label{fig:intro_unboundedFaces}
 \end{figure}
+
+\paragraph{Node}
+\td{}
+\paragraph{Half-edge}
+\td{}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Background}
@@ -129,7 +134,7 @@ This work relies on the following assumptions:
   \end{subfigure}%
   \caption[xxx]
           {A planar subdivision, over a set of curves containing a straight line and two circles.
-          Figure~\ref{subfig:intro_curves2} shows the set of curves, and the ``faces'' resulting from partitioning are color coded in figure~\ref{subfig:intro_partitioning2}.}
+          Figure~\ref{subfig:intro_curves2} shows the set of curves, and the ``faces'' resulting from partitioning are color coded in Figure~\ref{subfig:intro_partitioning2}.}
   \label{fig:intro_curvesPartitioning2}
 \end{figure}
 
@@ -155,7 +160,7 @@ We tackle this problem by introducing dummy intersection points over non-interse
 In order to identify the edges resulting from a curve, it is essential to be able to geometrically sort the intersection points over the curve.
 For lines it suffices to sort the points according to their $x$ (or $y$) values.
 This does not hold for circles.
-To this end, we employ a univariate represetation for curves (presented in appendix~\ref{app:alternativeRep}).
+To this end, we employ a univariate represetation for curves (presented in Appendix~\ref{app:alternativeRep}).
 
 \paragraph{Edges are no longer vectors}
 A key information in face identification is the ability to follow a geometric path of edges that bound a face.
@@ -175,7 +180,7 @@ We approach this problem by partitioning the space according to each connected c
 Membership function for the subdivision of lines could be implemented through a set of tests relying on cross products, as described in \cite{de2000computational}.
 The tests are to check whether if a point is located on the same side of all the bounding edges of a face.
 This would only work if the edges could be represented by vectors, and if the face is convex.
-As can be seen in figure~\ref{fig:intro_crossProdFail}, edges turn to arcs in the presence of circles, and potentially a face could be concave.
+As can be seen in Figure~\ref{fig:intro_crossProdFail}, edges turn to arcs in the presence of circles, and potentially a face could be concave.
 As an alternative we suggest the use of ``point-in-polygon'' method, which is based upon the Jordan Curve theorem.
 
 \begin{figure} %[!ht]

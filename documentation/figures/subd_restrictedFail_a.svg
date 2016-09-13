@@ -74,9 +74,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="69.158737"
-     inkscape:cy="41.006009"
+     inkscape:zoom="4"
+     inkscape:cx="73.32098"
+     inkscape:cy="69.603806"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -169,6 +169,12 @@
            style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       </g>
     </g>
+    <path
+       style="opacity:0.6;fill:none;fill-opacity:1;stroke:#c7106e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 456.47352,517.54671 c -19.97203,0 -36.16256,-16.20745 -36.16256,-36.20038 0,-19.99293 16.19054,-36.20038 36.16256,-36.20038 7.38264,0 14.24857,2.21459 20.02395,6.00011 5.76554,-3.79812 12.61339,-6.00011 19.97499,-6.00011 19.97202,0 36.16255,16.20745 36.16255,36.20038 0,19.99293 -16.19052,36.20038 -36.16255,36.20038 -7.42421,0 -14.32584,-2.2396 -20.02234,-6.06544 -5.68738,3.83773 -12.57209,6.06544 -19.9766,6.06544 z"
+       id="circle5270"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ssscssscs" />
     <g
        id="g4189"
        transform="translate(9.4510669,5.870938e-6)">
@@ -185,11 +191,5 @@
          cy="481.38348"
          r="36.163528" />
     </g>
-    <path
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#c7106e;stroke-width:1.01862824;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 456.12522,518.62212 c -20.19378,0 -36.56407,-16.61577 -36.56407,-37.11237 0,-20.49658 16.3703,-37.11235 36.56407,-37.11235 7.46459,0 14.40674,2.27038 20.24625,6.15127 5.82956,-3.89381 12.75343,-6.15127 20.19676,-6.15127 20.19376,0 36.56406,16.61577 36.56406,37.11235 0,20.4966 -16.37029,37.11237 -36.56406,37.11237 -7.50663,0 -14.4849,-2.29602 -20.24463,-6.21824 -5.75052,3.9344 -12.71168,6.21824 -20.19838,6.21824 z"
-       id="circle5270"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ssscssscs" />
   </g>
 </svg>

@@ -12,7 +12,7 @@ The alternative representation of the level-curve of a linear function $f(x,y)=a
 \end{cases}\\
 \]
 
-where $(x_l,y_l)$ is an arbitrary (but fixed as a reference) point on the level-curve of the $f(x,y)$, $s$ is the slope of the level-curve of the $f(x,y)$, and $\dot{a}, \dot{b}$ are given by:
+where $(x_l,y_l)$ is an arbitrary (but fixed as a reference) point on the level-curve of the $f(x,y)$, $s$ is the slope of the level-curve of $f(x,y)$, and $\dot{a}, \dot{b}$ are given by:
 \[
 \dot{a} = \frac{\sqrt{ s^2 + 1}}{s^2 + 1}, \quad \dot{b} = \dot{a}s
 \]
@@ -39,7 +39,7 @@ While the second derivative of a line is a null vector, the first derivative of 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Circle}
-Similarly, for the level-curve of a conic function $f(x,y)=(x-x_c)^2+(y-y_c)^2-r_c$ (hence the level-curve would be a conic section, in this case a circle) the alternative representation could be written as:
+Similarly, for the level-curve of a conic function $f(x,y)=(x-x_c)^2+(y-y_c)^2-r_c$ (hence the level-curve would be a conic section, in this case a circle) the alternative representation can be written as:
 
 \[
 \dot{f}(\theta) = (x,y) = \left( x_c + r_c \cos(\theta), y_c + r_c \sin(\theta) \right)
@@ -53,7 +53,7 @@ The inverse function ($\theta = \dot{f}^{-1}(x,y)$) is given by:
 \theta = \dot{f}^{-1}(x,y) = \arctantwo (y - y_c, x - x_c)
 \]
 
-The first and second derivatives of a circle in this representation would be:
+The first and second derivatives of a circle in this representation are:
 \[
 \begin{array}{l}
   \frac{d\dot{f}(\theta)}{d\theta} = \left( -r_c \sin(\theta), r_c \cos(\theta) \right)\\
@@ -64,9 +64,10 @@ The first and second derivatives of a circle in this representation would be:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{Direction of half-edges and the derivatives}
-half-edges are directional, as the same segment of a curve turns into two half-edges with opposite directions.
+The half-edges are directed, as the same segment of a curve turns into two half-edges with opposite directions.
 Direction of half-edges is very important in the correct calculation of the first derivative vectors.
-If a half-edge has a negative direction, as demonstrated in figure~\ref{fig:appa_derDirection}, its first derivative vectors are rotated $180^o$ degrees to face in the oppposite direction.
+If a half-edge has a negative direction with respect to the direction of $\theta$, as demonstrated in figure~\ref{fig:appa_derDirection}, its first derivative vectors are rotated $180^o$ degrees to face in the oppposite direction.
+
 
 \begin{figure}%[!ht]
   \centering

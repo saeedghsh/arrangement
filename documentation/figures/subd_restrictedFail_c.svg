@@ -74,9 +74,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="52.04254"
-     inkscape:cy="-57.220248"
+     inkscape:zoom="5.6"
+     inkscape:cx="-6.6222181"
+     inkscape:cy="24.265638"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -175,16 +175,16 @@
       </g>
     </g>
     <circle
+       style="opacity:0.6;fill:none;fill-opacity:1;stroke:#c7106e;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="circle5372"
+       cx="446.47299"
+       cy="482.38348"
+       r="19.74855" />
+    <circle
        r="19.74855"
        cy="482.38348"
        cx="446.47299"
        id="circle4149"
        style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
-    <circle
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#c7106e;stroke-width:1.04988766;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       id="circle5301"
-       cx="446.47299"
-       cy="482.38348"
-       r="20.733759" />
   </g>
 </svg>
