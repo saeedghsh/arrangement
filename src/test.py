@@ -24,59 +24,91 @@ reload(tcg)
 
 class SubdivisionTests(unittest.TestCase):    
     '''
-    test_cases_key = [
-        'Default',                      # 0: 
-        'Default_Small',                # 1: 
-        'special_case_01',              # 2: 4 tangent circles and a line
-        'special_case_02',              # 3: non-interrsecting circle
-        'special_case_03',              # 4: singel circle 4 intersections
-        'special_case_04',              # 5: 2 lines - one circle
-        'special_case_05',              # 6: a square - a circle
-        'special_case_06',              # 7: concentric circles
-        'special_case_07',              # 8: disjoint
-        'intensive',                    # 9: 
-        'intensive_x2',                 # 10:
-        'intensive_only_line',          # 11:
-        'Random',                       # 12:
-        'star'                          # 13: 
-    ]
     '''
+
+    def test_twinAssignment(self, subdiv):
+        # checking the correctness of twin assignment in half-edge construction
+        
+        res = True
+        for idx in subdiv.get_all_HalfEdge_indices():
+            (s,e,k) = idx
+            
+            tidx = subdiv.MDG[s][e][k]['obj'].twinIdx
+            (ts,te,tk) = tidx
+            
+            ttidx = subdiv.MDG[ts][te][tk]['obj'].twinIdx
+            
+            res = res and (idx == ttidx)
+
+        return res
+
 
     def runTest(self):
         test_cases_key = [
-            'Default',                      # 0: 
-            'Default_Small',                # 1: 
-            # 'special_case_01',              # 2: 4 tangent circles and a line
-            'special_case_02',              # 3: non-interrsecting circle
-            'special_case_03',              # 4: singel circle 4 intersections
-            'special_case_04',              # 5: 2 lines - one circle
-            'special_case_05',              # 6: a square - a circle
-            'special_case_06',              # 7: concentric circles
-            'special_case_07',              # 8: disjoint
-            # 'intensive',                    # 9: 
-            # 'intensive_x2',                 # 10:
-            # 'intensive_only_line',          # 11:
-            # 'Random',                       # 12:
+            'default',                      # 0: 
+            'default_small',                # 1: 
+            'specialCase_01',               # 2: 4 tangent circles and a line
+            'specialCase_02',               # 3: non-interrsecting circle
+            'specialCase_03',               # 4: singel circle 4 intersections
+            'specialCase_04',               # 5: 2 lines - one circle
+            'specialCase_05',               # 6: a square - a circle
+            'specialCase_06',               # 7: concentric circles
+            'specialCase_07',               # 8: disjoint
+            # 'intensive',                  # 9: 
+            # 'intensive_x2',               # 10:
+            # 'intensive_lineOnly',         # 11:
+            # 'random',                     # 12:
             'star'                          # 13: 
         ]
 
         for key in test_cases_key:
-
+            
             print 'testing case: '+key
-            test_case = tcg.get_test(name=key)
-            curves = test_case['curves']
-            n_nodes = test_case['number_of_nodes']
-            n_edges = test_case['number_of_edges']
-            n_faces = test_case['number_of_faces']
-            n_subGraphs = test_case['number_of_subGraphs']
-            
+            file_name = 'testCases/'+key+'.yaml'
+            data = tcg.load_from_csv( file_name )
+            curves = data['curves']
             subdiv = sdv.Subdivision(curves, multiProcessing=4)
+
+
+            ########## testing twin assignment
+            self.assertEqual( self.test_twinAssignment(subdiv), True,
+                              'incorrect twin assignment')
+
+            ########## testing number of nodes
+            if 'number_of_nodes' in data.keys():
+                n_nodes = data['number_of_nodes']
+                self.assertEqual( len(subdiv.MDG.nodes()), n_nodes, 'incorrect number of nodes')
+            else:
+                print 'number of nodes is not available for ' + key, '...'
+
+            ########## testing number of edges
+            if 'number_of_edges' in data.keys():
+                n_edges = data['number_of_edges']
+                self.assertEqual( len(subdiv.MDG.edges()), n_edges,
+                                  'incorrect number of edges')
+            else:
+                print 'number of edges is not available for ' + key, '...'
+
+            ########## testing number of faces
+            if 'number_of_faces' in data.keys():
+                n_faces = data['number_of_faces']
+                self.assertEqual( len(subdiv.decomposition.faces), n_faces,
+                                  'incorrect number of faces')
+            else:
+                print 'number of faces is not available for ' + key, '...'
+
+            ########## testing number of subGraphs
+            if 'number_of_subGraphs' in data.keys():
+                n_subGraphs = data['number_of_subGraphs']
+                self.assertEqual( len(subdiv.subGraphs), n_subGraphs,
+                                  'incorrect number of subGraphs')
+            else:
+                print 'number of subGraphs is not available for ' + key, '...'
             
-            self.assertEqual( len(subdiv.MDG.nodes()), n_nodes, 'incorrect nodes')
-            self.assertEqual( len(subdiv.MDG.edges()), n_edges, 'incorrect edges')
-            self.assertEqual( len(subdiv.decomposition.faces), n_faces, 'incorrect faces')
-            self.assertEqual( len(subdiv.subGraphs), n_subGraphs, 'incorrect subGraphs')
 
 
 if __name__ == '__main__':
     unittest.main()
+
+
+

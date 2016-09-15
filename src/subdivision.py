@@ -230,6 +230,7 @@ class Face:
 
     def punch_hole(self, holeFace):
         ''' '''
+        holeFace.holes = () # withholding nested holes        
         self.holes += (holeFace,)
 
 
@@ -277,8 +278,7 @@ class Decomposition:
     def get_extents(self):
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
-        
-            
+           
 
 
 ################################################################################
@@ -468,7 +468,7 @@ class Subdivision:
         '''
 
         self.intersections = []
-        self.standAloneCurvesIdx = []
+        self.standAloneCurvesIdx = [] # TODO: I actually never use this! should I keep it?
 
         self.intersectionsFlat = []
         self.ipsCurveIdx = []         # make Curve's internal and store all in nodes
@@ -732,16 +732,19 @@ class Subdivision:
 
             for ( sIdx,sTVal, eIdx,eTVal ) in l:
 
-                newKey1 = len(self.MDG[sIdx][eIdx]) if eIdx in self.MDG[sIdx].keys() else 0
-                newKey2 = len(self.MDG[eIdx][sIdx]) if sIdx in self.MDG[eIdx].keys() else 0
+                newPathKey1 = len(self.MDG[sIdx][eIdx]) if eIdx in self.MDG[sIdx].keys() else 0
+                newPathKey2 = len(self.MDG[eIdx][sIdx]) if sIdx in self.MDG[eIdx].keys() else 0
 
-                # in case of non-intersecting circles,  sIdx=eIdx.
-                # which means the twins will share the same key ==0
+                # in cases where sIdx==eIdx, twins will share the same key ==0
+                # this will happen if there is only one node on a circle
+                # ( also a non-intersecting circles with one dummy node)
                 # next line will take care of that only
-                if cIdx in self.standAloneCurvesIdx: newKey2 += 1
+                # if cIdx in self.standAloneCurvesIdx: newPathKey2 += 1
+                if sIdx==eIdx: newPathKey2 += 1
+
                 
-                idx1 = (sIdx, eIdx, newKey1)
-                idx2 = (eIdx, sIdx, newKey2)
+                idx1 = (sIdx, eIdx, newPathKey1)
+                idx2 = (eIdx, sIdx, newPathKey2)
 
                 # Halfedge(selfIdx, twinIdx,
                 #          cIdx, side,
@@ -791,7 +794,7 @@ class Subdivision:
         return allHalfEdgeIdx
 
     ############################################################################
-    def get_next_HalfEdge_Idx(self, halfEdgeIdx, 
+    def find_successor_HalfEdge(self, halfEdgeIdx, 
                               allHalfEdgeIdx=None,
                               direction='ccw_before'):
         
@@ -812,12 +815,18 @@ class Subdivision:
                 candidateEdges.pop(idx)
                 break
 
+
+        # Note that in cases where there is a circle with one node on it,
+        # the half-edge itself would be among candidates,
+        # and we shall it is important not to reject it from the candidates
+        # otherwise the loop for find the face will never terminate!
+
         # reference: the 1st and 2nd derivatives of the twin half-edge
         (tStart, tEnd, tk) = twinIdx
         refObj = self.MDG[tStart][tEnd][tk]['obj']
 
         ''' sorting keys:
-        1st - Alpha = angle(1stDer) \in [0,2*pi]
+        1st - Alpha = angle(1stDer) \in [0,2*pi)
         2nd - Beta  = project( 2ndDer, normalCCW(1stDer) ) \in R
         def normal_ccw([dx,dy]): return [-dy,dx]
         def normal_cw([dx,dy]):  return [dy,-dx]
@@ -830,22 +839,41 @@ class Subdivision:
         refAlpha = np.arctan2(dy,dx)
         refAlpha = np.mod(refAlpha + 2*np.pi , 2*np.pi)
         # 2ndkey:
-        refNormal = np.array( [-dy,dx] )
-        refBeta = np.dot( refObj.s2ndDer, refNormal/np.linalg.norm(refNormal) )
+        # TODO:
+        # refNormal = np.array( [dy,-dx] ) if refObj.side =='positive' else np.array( [-dy,dx] )
+        refNormal = np.array( [-dy,dx] )# if refObj.side =='positive' else np.array( [dy,-dx] )
+        refBeta = np.dot( refObj.s2ndDer, # * (1./np.linalg.norm(refObj.s2ndDer)**2),
+                          refNormal/np.linalg.norm(refNormal) )
 
         # sorting values: candidates
         candidates1stDer = []
         candidates2ndDer = []
+
+        # TODO:
+        # canAlpha = []
+        # canNormal = []
+        # canBeta = []
+
         for candidateIdx in candidateEdges:
             (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
-            obj = self.MDG[cStart][cEnd][ck]['obj']
-            candidates1stDer.append( obj.s1stDer )
-            candidates2ndDer.append( obj.s2ndDer )
+            canObj = self.MDG[cStart][cEnd][ck]['obj']
+
+            candidates1stDer.append( canObj.s1stDer )
+            candidates2ndDer.append( canObj.s2ndDer )
+
+            # TODO:            
+            # (dx,dy) = canObj.s1stDer 
+            # canAlpha.append( np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi) )
+            # n = np.array([dy,-dx]) if canObj.side =='positive' else np.array( [-dy,dx] )
+            # canNormal.append( n )
+            # canBeta.append( np.dot( canObj.s2ndDer  * (1./np.linalg.norm(canObj.s2ndDer)**2),
+            #                         n/np.linalg.norm(n) ) )
+
 
         canAlpha = [ np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi)
                      for (dx,dy) in candidates1stDer ]
-
-        canNormal = [ np.array([-dy,dx]) for (dx,dy) in candidates1stDer]
+        canNormal = [ np.array([-dy,dx]) 
+                      for (dx,dy) in candidates1stDer]
         canBeta = [ np.dot( vec , normal/np.linalg.norm(normal) )
                     for (vec,normal) in zip(candidates2ndDer, canNormal)]
 
@@ -854,16 +882,28 @@ class Subdivision:
         fullList += [(refAlpha,refBeta,'ref')]
         sortList  = sorted( fullList, key=operator.itemgetter(0, 1) )
 
-        # picking the next half-edge
-        for i, (alpha,cross, idx) in enumerate(sortList):
+        # picking the successor
+        for i, (alpha,beta, idx) in enumerate(sortList):
             if idx == 'ref':
                 if direction=='ccw_before':
-                    (a,c,nextHalfEdgeIdx) = sortList[i-1]
+                    (a,c,successorIdx) = sortList[i-1]
                 elif direction=='ccw_after':
-                    (a,c,nextHalfEdgeIdx) = sortList[i+1]
+                    (a,c,successorIdx) = sortList[i+1]
                 break
 
-        return nextHalfEdgeIdx
+        # TODO: debugging - remove
+        ##############################
+        print '\n\tcurrent   half-edge:', halfEdgeIdx
+        for (alpha,beta, idx) in sortList:
+            if idx == 'ref':
+                print twinIdx, (alpha, beta), 'reference-twin'
+            else:
+                (s_, e_, k_) = allHalfEdgeIdx[idx]
+                print (s_, e_, k_), (alpha, beta)
+        print '\tsuccessor   half-edge:', allHalfEdgeIdx[successorIdx]
+        ##############################
+
+        return successorIdx
 
 
     ############################################################################
@@ -932,12 +972,17 @@ class Subdivision:
                 # a trajectory following procedure, until a loop is closed.
                 # through this while-loop, only "eNodeIdx" will update
                 # the "sNodeIdx" will remain fix (i.e. for the current face)
-                while sNodeIdx != eNodeIdx:
+
+                nextHalfEdgeIdx = self.find_successor_HalfEdge( face_tmp[0],
+                                                                allHalfEdgeIdx,
+                                                                direction='ccw_before')
+
+                while face_tmp[0] != nextHalfEdgeIdx:#sNodeIdx == eNodeIdx:
 
                     # find the next half-edge in the trajectory
-                    nextHalfEdgeIdx = self.get_next_HalfEdge_Idx( face_tmp[-1],
-                                                                  allHalfEdgeIdx,
-                                                                  direction='ccw_before')
+                    nextHalfEdgeIdx = self.find_successor_HalfEdge( face_tmp[-1],
+                                                                    allHalfEdgeIdx,
+                                                                    direction='ccw_before')
 
                     # update the face_tmp, if the next half-edge is open
                     if openList[nextHalfEdgeIdx]:
@@ -961,6 +1006,11 @@ class Subdivision:
                     # or the "while-loop" broke, reaching an infinity
                     # connected half edge.
                     faces.append(face_tmp)
+
+                    # TODO: debugging - remove
+                    ##############################
+                    print '\n\t the face:',face_tmp
+                    ##############################
                 else:
                     pass
 

@@ -1,0 +1,31 @@
+---
+dataset: specialCase_04
+
+testValues:
+      - number_of_nodes: 2
+        number_of_edges: 2
+        number_of_faces: 1
+        number_of_subGraphs: 2
+
+
+lines:
+    - [0.0, 0, 0.0, 1]
+    - [0, 0.0, 1, 0.0]
+
+circles:
+    - [5, 5, 4]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+
+    # elif name == 'special_case_04':
+    #     ''' 2 lines - one non-intersecting circle '''
+    #     curves = []
+    #     curves += [ Line( args=(Point(xi,0), Point(xi,1)) )
+    #                for xi in np.linspace(0,10,1) ]
+    #     curves += [ Line( args=(Point(0,yi), Point(1,yi)) )
+    #                for yi in np.linspace(0,10,1) ]
+    #     curves += [ Circle( args=(Point(5,5), 4.) ) ]

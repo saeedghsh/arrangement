@@ -1,0 +1,27 @@
+---
+dataset: specialCase_06
+
+testValues:
+      - number_of_nodes: 4
+        number_of_edges: 8
+        number_of_faces: 4
+        number_of_subGraphs: 4
+
+
+circles:
+    - [0, 0, 2.5]
+    - [0, 0, 5.0]
+    - [0, 0, 7.5]
+    - [0, 0, 10.0]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+    # elif name == 'special_case_06': 
+    #     ''' concentric circles '''
+    #     curves = [ Circle( args=(Point(0,0), i) )
+    #               for i in range(1,5)]
+
+

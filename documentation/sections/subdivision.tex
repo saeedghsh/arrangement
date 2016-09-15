@@ -151,7 +151,7 @@ The segments are identified by the consecutive nodes over the curve.
     \STATE \quad
     \STATE $\mathcal{E} = \emptyset$
     \FORALL {$curve_i \in \mathcal{C}$}
-    \STATE $list\_n = \{node_j \mid node_j \in \mathcal{N}, node_j \text{ set to } curve_i \}$
+    \STATE $list\_n = \{node_j \in \mathcal{N} \mid node_j \text{ set to } curve_i \}$
     \STATE sort the $list\_n$ according to $\theta_j=\dot{f}_{i}^{-1}(node_j)$
     \STATE $I= \text{index set of the } list\_n$
     \STATE $list\_he=\left\{(curve_i,node_j,node_{j+1}),(curve_i,node_{j+1},node_j) \mid \forall j \in I \right\}$
@@ -170,7 +170,7 @@ The segments are identified by the consecutive nodes over the curve.
 %% When t is increasing, the half-edge is positive, for any curve. Very important to understand the code.
 Identification of faces is performed by a procedure of path following.
 Given that each half-edge belongs to only one face, the process starts by picking an arbitrary half-edge and detecting the boundary of the face it belongs to, by picking the correct successor to the last half-edge.
-This iterative process terminates when the last half-edge arrives at the node which the first half-edge started from.
+This iterative process terminates when the successor to the last element in the half-edges list of the face is the same item at the beginning of the list, indicating the closure of the loop.
 This procedure is represented by Algorithm~\ref{alg:partitioning} and demonstrated in Figure~\ref{fig:subd_pathFollower}.
 
 \begin{algorithm}
@@ -185,9 +185,11 @@ This procedure is represented by Algorithm~\ref{alg:partitioning} and demonstrat
     \WHILE{$open\_list \neq \emptyset$}
     \STATE fetch a random $half\_edge_i$ and remove it from $open\_list$
     \STATE $face\_list = \{ half\_edge_i\}$
-    \STATE $start\_node = node_s$, where $half\_edge_i$ departs from $node_s$
-    \STATE $end\_node = node_e$, where $half\_edge_i$ arrives at $node_e$
-    \WHILE{$start\_node \neq end\_node$}
+    %% \STATE $start\_node = node_s$, where $half\_edge_i$ departs from $node_s$
+    %% \STATE $end\_node = node_e$, where $half\_edge_i$ arrives at $node_e$
+    %% \WHILE{$start\_node \neq end\_node$}
+    \STATE $half\_edge_j= \mathit{find\_successor} \left( half\_edge_i \right)$
+    \WHILE{$half\_edge_i \neq half\_edge_j$}
     \STATE $half\_edge_j= \mathit{find\_successor} \left( \text{last } half\_edge \text{ in } face\_list \right)$
     \STATE remove $half\_edge_j$ from $open\_list$ and add it to $face\_list$
     \STATE update $end\_node$ according to $half\_edge_j$
@@ -245,6 +247,16 @@ However this does not work in the presence of circles, where half-edges are arcs
 To overcome this problem, we rely on the angle of the tangent vector to the level-curves\footnote{The equations for the derivatives are available in Appendix~\ref{app:alternativeRep}.}.
 These vectors provide the departing and arriving angles of half-edges at the nodes' location.
 
+
+\td{}
+\begin{algorithm}
+  \caption {$find\_successor$}
+  \label{alg:partitioning}
+  \begin{algorithmic}
+    \STATE INPUT  $half\text{-}edge_i$
+    \STATE OUTPUT  $half\text{-}edge_j$
+  \end{algorithmic}
+\end{algorithm}
 
 %% In Figure~\ref{fig:subd_derivatives}, the derivatives (red vectors) and their normal (green vectors) are illustrated alongside with the multi-variable functions (gray surfaces) and the level-curves (dashed balck lines.)
 %% \begin{figure}%[!ht]

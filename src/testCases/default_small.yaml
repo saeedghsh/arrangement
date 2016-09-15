@@ -1,0 +1,41 @@
+---
+dataset: default_small
+
+testValues:
+    - number_of_nodes: 36
+      number_of_edges: 136
+      number_of_faces: 33
+      number_of_subGraphs: 1
+
+lines:
+    - [0.0, 0, 0.0, 1]
+    - [0.66666666666666663, 0, 0.66666666666666663, 1]
+    - [1.3333333333333333, 0, 1.3333333333333333, 1]
+    - [2.0, 0, 2.0, 1]
+    - [0, 0.0, 1, 0.0]
+    - [0, 0.66666666666666663, 1, 0.66666666666666663]
+    - [0, 1.3333333333333333, 1, 1.3333333333333333]
+    - [0, 2.0, 1, 2.0]
+
+circles:
+    - [0.0, 0.0, 2]
+    - [2.0, 2.0, 2]
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+
+    # elif name == 'Default_Small' or not(name):
+    #     curves = []
+    #     curves += [ Line( args=(Point(xi,0), Point(xi,1)) )
+    #                for xi in np.linspace(0,2,4) ]
+    #     curves += [ Line( args=(Point(0,yi), Point(1,yi)) )
+    #                for yi in np.linspace(0,2,4) ]
+    #     curves += [ Circle( args=(Point(i,i), 2) )
+    #                for i in np.linspace(0,2,2) ]
+
+    #     number_of_nodes = 36
+    #     number_of_edges = 136
+    #     number_of_faces = 33
+    #     number_of_subGraphs = 1

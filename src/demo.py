@@ -49,39 +49,61 @@ reload(tcg)
 ################################################################# initialization
 ################################################################################
 test_cases_key = [
-    'Default',                      # 0: 
-    'Default_Small',                # 1: 
-    'special_case_01',              # 2: 4 tangent circles and a line
-    'special_case_02',              # 3: non-interrsecting circle
-    'special_case_03',              # 4: singel circle 4 intersections
-    'special_case_04',              # 5: 2 lines - one circle
-    'special_case_05',              # 6: a square - a circle
-    'special_case_06',              # 7: concentric circles
-    'special_case_07',              # 8: disjoint
+    'default',                      # 0: 
+    'default_small',                # 1: 
+    'specialCase_01',               # 2: 4 tangent circles and a line  # fails
+    'specialCase_02',               # 3: non-interrsecting circle
+    'specialCase_03',               # 4: single circle 4 intersections
+    'specialCase_04',               # 5: 2 lines - one circle
+    'specialCase_05',               # 6: a square - a circle
+    'specialCase_06',               # 7: concentric circles
+    'specialCase_07',               # 8: disjoint
     'intensive',                    # 9: 
     'intensive_x2',                 # 10:
-    'intensive_only_line',          # 11:
-    'Random',                       # 12:
+    'intensive_lineOnly',           # 11:
+    'random',                       # 12:
     'star',                         # 13: 
-    'example1'                      # 14: 2 circles and a line
+    'example_01'                    # 14: 2 circles and a line
 ]
 
-test_case = tcg.get_test(name=test_cases_key[14])
-curves = test_case['curves']
-n_nodes = test_case['number_of_nodes']
-n_edges = test_case['number_of_edges']
-n_faces = test_case['number_of_faces']
-n_subGraphs = test_case['number_of_subGraphs']
+########################################
+file_name = 'testCases/'+test_cases_key[1]+'.yaml'
+data = tcg.load_from_csv( file_name )
+curves = data['curves']
+
+if 'number_of_nodes' in data.keys(): # len(data.keys()) > 1
+    testing = True
+    n_nodes = data['number_of_nodes']
+    n_edges = data['number_of_edges']
+    n_faces = data['number_of_faces']
+    n_subGraphs = data['number_of_subGraphs']
+else:
+    testing = False
 
 ################################################################################
-################################################## subdivision and decomposition
+###################################### deploying subdivision (and decomposition)
 ################################################################################
 print 'start decomposition'
 mySubdivision = sdv.Subdivision(curves, multiProcessing=4)
-print 'nodes:\t\t', len(mySubdivision.MDG.nodes()), '\t expected:', n_nodes
-print 'edges:\t\t', len(mySubdivision.MDG.edges()), '\t expected:', n_edges
-print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
-print 'subGraphs:\t', len(mySubdivision.subGraphs), '\t expected:', n_subGraphs
+
+if testing:
+    cond =[]
+    cond += [ len(mySubdivision.MDG.nodes()) == n_nodes ]
+    cond += [ len(mySubdivision.MDG.edges()) == n_edges ]
+    cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
+    cond += [ len(mySubdivision.subGraphs) == n_subGraphs ]
+    print 'success' if all(cond) else 'fail'
+
+    print 'nodes:\t\t', len(mySubdivision.MDG.nodes()), '\t expected:', n_nodes
+    print 'edges:\t\t', len(mySubdivision.MDG.edges()), '\t expected:', n_edges
+    print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
+    print 'subGraphs:\t', len(mySubdivision.subGraphs), '\t expected:', n_subGraphs
+
+elif not(testing):
+    print 'nodes:\t\t', len(mySubdivision.MDG.nodes())
+    print 'edges:\t\t', len(mySubdivision.MDG.edges())
+    print 'faces:\t\t', len(mySubdivision.decomposition.faces)
+    print 'subGraphs:\t', len(mySubdivision.subGraphs)
 
 ################################################################################
 ####################################################################### plotting
@@ -93,14 +115,14 @@ print 'subGraphs:\t', len(mySubdivision.subGraphs), '\t expected:', n_subGraphs
 myplt.plot_decomposition(mySubdivision,
                          interactive_onClick=False,
                          interactive_onMove=False,
-                         plotNodes=False, printNodeLabels=False,
-                         plotEdges=True, printEdgeLabels=False)
+                         plotNodes=True, printNodeLabels=False,
+                         plotEdges=True, printEdgeLabels=True)
 
 ################################################################################
 ###################################################################### animating
 ################################################################################
-myplt.animate_face_patches(mySubdivision)
-# myplt.animate_halfEdges(mySubdivision)
+myplt.animate_face_patches(mySubdivision, timeInterval = .1*1000)
+# myplt.animate_halfEdges(mySubdivision, timeInterval = 1.5*1000)
 
 
 ################################################################################
@@ -112,3 +134,18 @@ myplt.animate_face_patches(mySubdivision)
 # Node
 # HalfEdge
 # Face
+
+
+
+# print 'checking twin assignment'
+# for idx in mySubdivision.get_all_HalfEdge_indices():
+#     (s,e,k) = idx
+#     # side = mySubdivision.MDG[s][e][k]['obj'].side
+#     tidx = mySubdivision.MDG[s][e][k]['obj'].twinIdx
+#     (ts,te,tk) = tidx
+
+#     ttidx = mySubdivision.MDG[ts][te][tk]['obj'].twinIdx
+    
+#     if idx != ttidx:
+#         print 'oops'
+

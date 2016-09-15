@@ -1,0 +1,36 @@
+---
+dataset: specialCase_07
+
+testValues:
+      - number_of_nodes: 10
+        number_of_edges: 28
+        number_of_faces: 6
+        number_of_subGraphs: 2
+
+
+lines:
+    - [0.0, 0, 0.0, 1]
+    - [3.3333333333333335, 0, 3.3333333333333335, 1]
+    - [6.666666666666667, 0, 6.666666666666667, 1]
+    - [10.0, 0, 10.0, 1]
+    - [0, 0.0, 1, 0.0]
+    - [0, 10.0, 1, 10.0]
+
+circles:
+    - [-5, 5, 3]
+    - [-4, 5, 3]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+    # elif name == 'special_case_07':
+    #     ''' disjoint'''
+    #     curves = []
+    #     curves += [ Line( args=(Point(xi,0), Point(xi,1)) )
+    #                for xi in np.linspace(0,10,4) ]
+    #     curves += [ Line( args=(Point(0,yi), Point(1,yi)) )
+    #                for yi in np.linspace(0,10,2) ]
+    #     curves += [ Circle( args=(Point(-5,5), 3) ) ]
+    #     curves += [ Circle( args=(Point(-4,5), 3) ) ]

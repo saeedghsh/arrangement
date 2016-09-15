@@ -84,19 +84,20 @@ def plot_edges(axis, subdiv,
 
     for (start, end, k) in halfEdgeList:
         
-        obj = subdiv.MDG[start][end][k]['obj']
-        cIdx = obj.cIdx
+        he_obj = subdiv.MDG[start][end][k]['obj']
+        curve_obj = subdiv.curves[he_obj.cIdx].obj
+        cIdx = he_obj.cIdx
 
-        thei =  obj.twinIdx
+        thei =  he_obj.twinIdx
 
-        sTVal = obj.sTVal
-        s1stDer = obj.s1stDer
-        s2ndDer = obj.s2ndDer
-        eTVal = obj.eTVal
-        e1stDer = obj.e1stDer
-        e2ndDer = obj.e2ndDer
+        sTVal = he_obj.sTVal
+        s1stDer = he_obj.s1stDer
+        s2ndDer = he_obj.s2ndDer
+        eTVal = he_obj.eTVal
+        e1stDer = he_obj.e1stDer
+        e2ndDer = he_obj.e2ndDer
 
-        if isinstance(subdiv.curves[cIdx].obj, sym.Line):
+        if isinstance(curve_obj, sym.Line):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
                 p1 = subdiv.intersectionsFlat[start] #subd.curves[cIdx].DPE(sTVal)
                 p2 = subdiv.intersectionsFlat[end] #subd.curves[cIdx].DPE(eTVal)
@@ -113,16 +114,20 @@ def plot_edges(axis, subdiv,
                     axis.plot ([x,x+dx], [y,y+dy], col, alpha=alp)
 
                 if printLabels:
-                    axis.text( x+(dx/2), y+(dy/2) ,
-                               'e#'+str(start)+'-'+str(end),
-                               fontdict={'color':col,  'size': 16})
+                    if he_obj.side == 'positive':
+                        axis.text( x+(dx/2), y+(dy/2),# + np.sqrt(dx**2 + dy**2)/1.0, 
+                                   'e#'+str(start)+'-'+str(end)+'-'+str(k),
+                                   fontdict={'color':col,  'size': 16})
+                    elif he_obj.side == 'negative':
+                        axis.text( x+(dx/2), y+(dy/2),# - np.sqrt(dx**2 + dy**2)/1.0,
+                                   'e#'+str(start)+'-'+str(end)+'-'+str(k),
+                                   fontdict={'color':col,  'size': 16})
 
-        elif isinstance(subdiv.curves[cIdx].obj , sym.Circle):
+        elif isinstance(curve_obj , sym.Circle):
             tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
             theta = np.linspace(np.float(sTVal), np.float(eTVal),
                                 tStep, endpoint=True)
-            circ = subdiv.curves[cIdx].obj
-            xc, yc, rc = circ.center.x , circ.center.y , circ.radius
+            xc, yc, rc = curve_obj.center.x , curve_obj.center.y , curve_obj.radius
             x = xc + rc * np.cos(theta)
             y = yc + rc * np.sin(theta)
 
@@ -138,10 +143,20 @@ def plot_edges(axis, subdiv,
                             fc = col, ec = col, alpha=alp)
 
             if printLabels:
-                axis.text( (x[0]+x[-1])/2,
-                           (y[0]+y[-1])/2,
-                           'e#'+str(start)+'-'+str(end),
-                           fontdict={'color':col,  'size': 16})
+                xp = x[len(x)/2]
+                yp = y[len(x)/2]
+                if he_obj.side == 'positive':
+
+                    axis.text(xp + (xc-xp)/5. ,
+                              yp + (yc-yp)/5. ,
+                               'e#'+str(start)+'-'+str(end)+'-'+str(k),
+                               fontdict={'color':col,  'size': 16})
+                    
+                elif he_obj.side == 'negative':
+                    axis.text(xp - (xc-xp)/5. ,
+                              yp - (yc-yp)/5. ,
+                               'e#'+str(start)+'-'+str(end)+'-'+str(k),
+                               fontdict={'color':col,  'size': 16})
 
 ################################### plotting nodes
 def plot_nodes (axis, subdiv, nodes=None,
@@ -190,9 +205,9 @@ def plot_decomposition(subdivision,
         cid_move = fig.canvas.mpl_connect('motion_notify_event', onMove)
 
     if plotEdges:
-        plot_edges (ax, subdivision, printLabels=printEdgeLabels)
+        plot_edges (ax, subdiv, printLabels=printEdgeLabels)
     if plotNodes:
-        plot_nodes (ax, subdivision, nodes=None, printLabels=printNodeLabels)
+        plot_nodes (ax, subdiv, nodes=None, printLabels=printNodeLabels)
 
     # set axes limit
     bb = subdiv.decomposition.get_extents()
@@ -281,7 +296,7 @@ def plot_new_face_with_patch(axis, faceIdx=None):
     if False: plt.savefig('face #'+str(faceIdx)+'.png')
 
 ########################################
-def animate_face_patches(subdivision):
+def animate_face_patches(subdivision, timeInterval=1000):
 
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
@@ -292,7 +307,7 @@ def animate_face_patches(subdivision):
     face_counter = -1
 
     # Create a new timer object. 1000 is default
-    timer = fig.canvas.new_timer(interval=1*1000)
+    timer = fig.canvas.new_timer(interval=timeInterval)
     # tell the timer what function should be called.
     timer.add_callback(plot_new_face_with_patch, ax)
     # start the timer
@@ -342,7 +357,36 @@ def plot_new_halfEdge(axis):
                alp=0.9, col='m',
                withArrow=True)
 
-    # print the face's index    
+    ################################# drawing derivatives of the new haldfedge
+    if True:
+        p1 = subdiv.intersectionsFlat[start]
+        px, py = p1.x.evalf() , p1.y.evalf()
+        he_obj = subdiv.MDG[start][end][k]['obj']
+
+        # Blue: 1st derivative - tangent to the curve
+        dx,dy = he_obj.s1stDer
+        axis.arrow(px,py, dx,dy,
+                   length_includes_head = True,
+                   head_width = 0.5, head_length = 1.,
+                   fc = 'b', ec = 'b') , 
+
+        # Green: normal to the 1st derivative
+        dx,dy = he_obj.s1stDer
+        dxn,dyn = np.array( [dy,-dx] ) if he_obj.side =='positive' else np.array( [-dy,dx] )
+        axis.arrow(px,py, dxn,dyn,
+                   length_includes_head = True,
+                   head_width = 0.5, head_length = 1.,
+                   fc = 'g', ec = 'g')
+
+        # Red: 2ns derivative
+        dx,dy = he_obj.s2ndDer
+        axis.arrow(px,py, dx,dy,
+                   length_includes_head = True,
+                   head_width = 0.5, head_length = 1.,
+                   fc = 'r', ec = 'r')
+    ##########################################################################
+
+    # print index of the half-edge
     axis.text(-8, -7,
               'half-edge #' + str(start)+'-'+str(end)+'-'+str(k),
               fontdict={'color':'m', 'size': 25})
@@ -358,7 +402,7 @@ def plot_new_halfEdge(axis):
     if False: plt.savefig('half_edge #'+str(halfEdge_counter)+'.png')
 
 ########################################
-def animate_halfEdges(subdivision):
+def animate_halfEdges(subdivision, timeInterval = .1*1000):
 
     fig = plt.figure(figsize=(12,12))
     ax = fig.add_subplot(111)
@@ -372,7 +416,7 @@ def animate_halfEdges(subdivision):
     plot_nodes (ax, subdiv, printLabels = True)
 
     # Create a new timer object. 1000 is default
-    timer = fig.canvas.new_timer(interval=.1*1000)
+    timer = fig.canvas.new_timer(interval=timeInterval)
     # tell the timer what function should be called.
     timer.add_callback(plot_new_halfEdge, ax)
     # start the timer

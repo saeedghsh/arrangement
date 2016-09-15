@@ -1,0 +1,26 @@
+---
+dataset: example_01
+
+testValues:
+    - number_of_nodes: 6
+      number_of_edges: 22
+      number_of_faces: 6
+      number_of_subGraphs: 1
+
+lines:
+    - [-1, -1, 1, 1]
+
+circles:
+    - [2.0, 0.0, 3]
+    - [-2.0, 0.0, 3]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+    # if name == 'example1':
+    #     curves = []
+    #     curves += [ Line( args=( Point(-1,-1), Point(1,1)) ) ]
+    #     curves += [ Circle( args=(Point(2,0), 3) ) ]
+    #     curves += [ Circle( args=(Point(-2,0), 3) ) ]

@@ -1,0 +1,41 @@
+# ---
+# dataset: star
+
+# testValues:
+#     - number_of_nodes: 25
+#       number_of_edges: 100
+#       number_of_faces: 26
+#       number_of_subGraphs: 1
+
+# lines:
+#     - [  -0.587785252292 , 0.809016994375 , 0 ]
+#     - [  0 , -1 , -0.726542528005 ]
+#     - [  0 , -1 , 0.726542528005 ]
+#     - [  -0.587785252292 , 0.809016994375 , 3.07768353718 ]
+#     - [  0.587785252292 , 0.809016994375 , -3.07768353718 ]
+
+# circles:
+#     - [ 0,0, 0.809016994375 ]
+#     - [ 0,0, 1]
+#     - [ 0,0, 2]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+
+    # elif name == 'star':
+    #     a1 = 36 * np.pi/180
+    #     a2 = 72 * np.pi/180
+    #     p1 = Point(-np.sqrt(1 - np.cos(a1)**2 ), np.cos(a1))
+    #     p2 = Point(+np.sqrt(1 - np.cos(a1)**2 ), np.cos(a1))
+    #     p3 = Point(0, -1)
+    #     curves = [ Line( args=(p1, 0) ),
+    #                Line( args=(p3, -np.tan(a1)) ),
+    #                Line( args=(p3, +np.tan(a1)) ),
+    #                Line( args=(p1, +np.tan(a2)) ),
+    #                Line( args=(p2, -np.tan(a2)) ),
+    #                Circle( args=(Point(0,0), np.cos(a1)) ),
+    #                Circle( args=(Point(0,0), 1) ),
+    #                Circle( args=(Point(0,0), 2) ) ]

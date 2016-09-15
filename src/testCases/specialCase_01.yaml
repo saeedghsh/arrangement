@@ -1,0 +1,37 @@
+---
+dataset: specialCase_01
+
+testValues:
+    - number_of_nodes: 1
+      number_of_edges: 8
+      number_of_faces: 4
+      number_of_subGraphs: 1
+
+
+lines:
+    - [0, 0, 1, 0]
+
+circles:
+    - [0, -4, 4]
+    - [0, -2, 2]
+    - [0, 2, 2]
+    - [0, 4, 4]
+
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# circles [x,y,r]
+
+
+    # elif name == 'special_case_01':
+    #     ''' 4 tangent circles and a tangent line'''
+    #     curves = []
+    #     curves += [ Line( args=(Point(0,yi), Point(1,yi)) )
+    #                for yi in [0]] # np.linspace(0,10,2) ]
+    #     curves += [ Circle( args=(Point(0,i), np.abs(i)) )
+    #                for i in [-4, -2 , 2, 4] ]
+
+    #     number_of_nodes = 1
+    #     number_of_edges = 8
+    #     number_of_faces = 4
+    #     number_of_subGraphs = 1
