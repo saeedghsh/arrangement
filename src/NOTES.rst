@@ -1,43 +1,50 @@
 TODO:
 -----
-
-[v] remove infinity points
-
-[v] detect the superFace of the subgraph:
-find convex hull of all points in the subgraph - sym.convex_hull()
-start from one of the points in the convex hull,
-and follow the same procedure of face finding, with inverse sorting.
-
-[v] intersect subgraphs
-
-[ ]
-
 ..
 
-
-      bugs
+      "bugs"
       ----
+      [ ] fix the failing test cases - test_cases_key[2]
 
-
-      [ ] do we still have to start with all lines and then circles?
-	  or was it a constraint of the first approach?
-	  it's important to figure out as it would allow the update with any given
-	  function? otherwise with new lines everything should be computed from scratch!
+      [ ] fix the failing test cases - test_cases_key[8]
+      
+      [ ] fix the failing test cases - test_cases_key[7]
+      
+      [ ] fix the failing test cases - test_cases_key[13]
+      
+      [ ] create test cases for the improved cases, i.e. ray, segment, arc
+      add line segments and rays
+      
+      [ ] add parser's manual to the readMe file
+      
+      [ ] update subdivision.report over comments from Adam and Slawomir
 
       [ ] check if the point is on any of the border functions
-
-      [ ] how does path.contains_point(p) work?
+      how does path.contains_point(p) work?
       includes the path itself, or not?
+	
+      [ ] what does "http://toblerity.org/shapely/manual.html" do?
 
-      [ ] how to include those unbounded regions (oo, -oo) - should we?
+      [v] Subdivision.csvParser
+
+      [v] the degenerate case - update subdivision over comments from Slawomir
+
+      [v] do we still have to start with all lines and then circles?
+      or was it a constraint of the first approach?
+      it's important to figure out as it would allow the update with any given
+      function? otherwise with new lines everything should be computed from scratch!
+      - the answer is it doesn't matter
+	
+
+      [v] how to include those unbounded regions (oo, -oo) - should we?
 	  a region unbounded to infinity is a degenerate case for pointInPolygone!
 	  I think if i want to include the whole space, ie. faces unbounded to infinity
 	  there should be infinity points oneach line, not only two and shared.
+	  - the answer is treat all exterior region as one,
+	    so if a point is not in any face, it outside!
 
-      [ ] what does "http://toblerity.org/shapely/manual.html" do?
 
       [v] move "face_2_path" to classmethod of subdivision
-
 
       [v] decomposition problems:
 	  [v]  problem #1
@@ -91,15 +98,24 @@ and follow the same procedure of face finding, with inverse sorting.
 
       Developement
       ------------
+
+      [ ] Subdivision.transform(M(R,T,S))
+	- Essential for the dynamic subdivision
+	- Robot-centric subdivision [1]
+	- extended perception field [2]
+	  [1] Robot-centric subdivision (real time)
+	  Subdivision of what ever the robot sense inside a circle with a radius of the sensor range.
+	  [2] extended perception field via *local* communication between agents
+	    - requires local map merging from different agents (subdivision matching)
+	    - maybe using signal amplifiers to enable agents' communication
+
       [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
 
       [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
-
       [ ] Multiple subdivision intersection (for agents tracking)
       [ ] allow "rays" and "line segments" in addition to infinit lines
       to handle it, you can use 
-
 
       [ ] multi-level of abstraction, wrt functions's priority
 	      like the functions could be in 3 groups, [H]igh, [M]iddle, and [L]ow priority
@@ -120,54 +136,59 @@ and follow the same procedure of face finding, with inverse sorting.
 
       [ ] should I switch from sympy to CGAL?
 
-
-
       [v] plot faces with patches
 
       clean-up, optimization, and speed-up
       ------------------------------------
       [x] 'save_to_image(fileName)'
 	      it should be fast. (both for debugging sessions' sake and final application)
-	      it's visualization would be extremely helpful for debugging.
+	      its visualization would be extremely helpful for debugging.
       [ ] pycuda?
       [ ] pointInPolygon - speed up
       [ ] merge_collocated_intersectionPoints - too slow!
       [x] profiling
       [ ] multi-processing
       [ ] index-dependant implementation is a recepie for disaster
-	      at least delet every temporarly varibale right after it's done its job
+	at least delet every temporarly varibale right after it's done its job
       [ ] caching - store sorted outlets from each nodes
       [v] inheritance VS. aggregation - Modified Geometry Instances
       [v] inheritance VS. aggregation - Subdivision
       [ ] instantiation
-	      examine all the internal variables of the subdivision class,
-	      and see whether if they should belong to a class of their own.
-	      [v] nodes
-	      [v] edges
-	      [ ] faces -> path from networkx?
+	examine all the internal variables of the subdivision class,
+	and see whether if they should belong to a class of their own.
+	[v] nodes
+	[v] edges
+	[ ] faces -> path from networkx?
 
 
       documentation
       ------------
+      [ ] Parametric Equations
+
       [ ] doc-tool
-	      https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
-	      https://docs.python.org/devguide/documenting.html
-	      http://docutils.sourceforge.net/
-	      http://docutils.sourceforge.net/rst.html
-	      http://www.sphinx-doc.org/en/stable/
+	https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
+	https://docs.python.org/devguide/documenting.html
+	http://docutils.sourceforge.net/
+	http://docutils.sourceforge.net/rst.html
+	http://www.sphinx-doc.org/en/stable/
 
       [ ] examples
       [ ] GUI?
+	- Load file / interactive drawings / manual entering
+	  Support animation
+
       [v] animation
-	      https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
-	      https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
-	      http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
-	      [gif] convert -delay 10 -loop 0 *.png animation.gif
-	      [mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
+	https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
+	https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+	http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
+	[gif] convert -delay 10 -loop 0 *.png animation.gif
+	[mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
 
       [ ] subdivision.io
 
       https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
+
+
 
       Abstract and other notes
       --------
@@ -212,3 +233,14 @@ and follow the same procedure of face finding, with inverse sorting.
       this approximation won't be much of a problem.
 
 
+
+
+
+[v] remove infinity points
+
+[v] detect the superFace of the subgraph:
+find convex hull of all points in the subgraph - sym.convex_hull()
+start from one of the points in the convex hull,
+and follow the same procedure of face finding, with inverse sorting.
+
+[v] intersect subgraphs

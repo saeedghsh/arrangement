@@ -58,12 +58,13 @@ test_cases_key = [
     'specialCase_05',               # 6: a square - a circle
     'specialCase_06',               # 7: concentric circles
     'specialCase_07',               # 8: disjoint
-    'intensive',                    # 9: 
-    'intensive_x2',                 # 10:
-    'intensive_lineOnly',           # 11:
-    'random',                       # 12:
-    'star',                         # 13: 
-    'example_01'                    # 14: 2 circles and a line
+    'specialCase_08',               # 9: 2 pairs of tangent circles
+    'intensive',                    # 10: 
+    'intensive_x2',                 # 11:
+    'intensive_lineOnly',           # 12:
+    'random',                       # 13:
+    'star',                         # 14: 
+    'example_01'                    # 15: 2 circles and a line
 ]
 
 ########################################
