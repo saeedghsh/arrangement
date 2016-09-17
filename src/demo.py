@@ -23,27 +23,7 @@ reload(sdv)
 reload(myplt)
 reload(tcg)
 
-# TODO(saesha) documentation
-
-# TODO(saesha) testing 
-# use suite() so it runs all tests, even if one fails
-
-# TODO(saesha) bug "test case 2" fails
-# two tangent circles one inside another are not standalone, but behave like one
-# starting from the positive half-edge of the outer circle, the face will close
-# with only one half-edge, ignoring the negative half-edge of the inner circle.
-# that is because the condition of sNodeIdx == eNodeIdx will be satisfied.
-
-# TODO(saesha) bug "test case 13" fails
-# due to unknown
-
-# TODO(saesha) bug-developement
-# for hole in face.holes: assert len(hole.face.hole)==0
-
-# TODO(saesha) developement
-# Decomposition.find_neighbours(), and don't forget to include half-edges from holes.
-# for this actually we need to make sure there is no redundancy in holes!
-
+import time
 
 ################################################################################
 ################################################################# initialization
@@ -54,8 +34,8 @@ test_cases_key = [
     'specialCase_01',               # 2: 4 tangent circles and a line  # fails
     'specialCase_02',               # 3: non-interrsecting circle
     'specialCase_03',               # 4: single circle 4 intersections
-    'specialCase_04',               # 5: 2 lines - one circle
-    'specialCase_05',               # 6: a square - a circle
+    'specialCase_04',               # 5: 2 lines - one non-interrsecting circle
+    'specialCase_05',               # 6: a square - a circle - with no interrsecting
     'specialCase_06',               # 7: concentric circles
     'specialCase_07',               # 8: disjoint
     'specialCase_08',               # 9: 2 pairs of tangent circles
@@ -68,7 +48,10 @@ test_cases_key = [
 ]
 
 ########################################
-file_name = 'testCases/'+test_cases_key[2]+'.yaml'
+testNumber = 14
+timing = False
+
+file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = tcg.load_from_csv( file_name )
 curves = data['curves']
 
@@ -84,8 +67,11 @@ else:
 ################################################################################
 ###################################### deploying subdivision (and decomposition)
 ################################################################################
-print 'start decomposition'
+print '\nstart decomposition:', test_cases_key[testNumber]
+
+tic = time.time()
 mySubdivision = sdv.Subdivision(curves, multiProcessing=4)
+if timing: print 'Subdivision time:', time.time() - tic
 
 if testing:
     cond =[]
@@ -116,14 +102,15 @@ elif not(testing):
 myplt.plot_decomposition(mySubdivision,
                          interactive_onClick=False,
                          interactive_onMove=False,
-                         plotNodes=True, printNodeLabels=False,
-                         plotEdges=True, printEdgeLabels=False)
+                         plotNodes=True, printNodeLabels=True,
+                         plotEdges=True, printEdgeLabels=True)
 
 ################################################################################
 ###################################################################### animating
 ################################################################################
-myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
-# myplt.animate_halfEdges(mySubdivision, timeInterval = 1.5*1000)
+myplt.animate_face_patches(mySubdivision, timeInterval = 2.5*1000)
+
+myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
 
 
 ################################################################################
@@ -135,3 +122,24 @@ myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 # Node
 # HalfEdge
 # Face
+
+
+
+
+# #### test node construction - are nodes assigned correctly to curves?
+# num_of_intersections = len( mySubdivision.intersectionsFlat)
+# num_of_nodes = len( mySubdivision.nodes )
+# if not (num_of_intersections == num_of_nodes):
+#     print 'error in numbers'
+# else:
+#     print 'numbers ok'
+
+# for c_idx, curve in enumerate(mySubdivision.curves):
+#     for n_idx, node in enumerate(mySubdivision.nodes):
+#         point = mySubdivision.nodes[n_idx][1]['obj'].point
+#         if curve.obj.contains(point):
+#             if not( c_idx in mySubdivision.ipsCurveIdx[n_idx] ):
+#                 print 'error'
+
+
+

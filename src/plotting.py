@@ -117,11 +117,11 @@ def plot_edges(axis, subdiv,
                     if he_obj.side == 'positive':
                         axis.text( x+(dx/2), y+(dy/2),# + np.sqrt(dx**2 + dy**2)/1.0, 
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
-                                   fontdict={'color':col,  'size': 16})
+                                   fontdict={'color':col,  'size': 10})
                     elif he_obj.side == 'negative':
                         axis.text( x+(dx/2), y+(dy/2),# - np.sqrt(dx**2 + dy**2)/1.0,
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
-                                   fontdict={'color':col,  'size': 16})
+                                   fontdict={'color':col,  'size': 10})
 
         elif isinstance(curve_obj , sym.Circle):
             tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
@@ -147,16 +147,16 @@ def plot_edges(axis, subdiv,
                 yp = y[len(x)/2]
                 if he_obj.side == 'positive':
 
-                    axis.text(xp + (xc-xp)/5. ,
-                              yp + (yc-yp)/5. ,
+                    axis.text(xp + (xc-xp)/10. ,
+                              yp + (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
-                               fontdict={'color':col,  'size': 16})
+                               fontdict={'color':col,  'size': 10})
                     
                 elif he_obj.side == 'negative':
-                    axis.text(xp - (xc-xp)/5. ,
-                              yp - (yc-yp)/5. ,
+                    axis.text(xp - (xc-xp)/10. ,
+                              yp - (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
-                               fontdict={'color':col,  'size': 16})
+                               fontdict={'color':col,  'size': 10})
 
 ################################### plotting nodes
 def plot_nodes (axis, subdiv, nodes=None,
@@ -253,7 +253,6 @@ def plot_decomposition_colored (subdiv,
 
 ######################################### face - patch
 def plot_new_face_with_patch(axis, faceIdx=None):
-
     global subdiv
     
     if faceIdx is None: # explicit, because faceIdx could be 0
@@ -352,13 +351,23 @@ def plot_new_halfEdge(axis):
     plot_edges (axis, subdiv, alp=0.1)
 
     # drawing new haldfedge
-    plot_edges(axis, subdiv,
-               halfEdgeIdx= [(start,end,k)],
-               alp=0.9, col='m',
-               withArrow=True)
+    halfEdge_side = subdiv.MDG[start][end][k]['obj'].side
+    if halfEdge_side == 'positive':
+        plot_edges(axis, subdiv,
+                   halfEdgeIdx= [(start,end,k)],
+                   alp=0.9, col='g',
+                   withArrow=True)
+    elif halfEdge_side == 'negative':
+        plot_edges(axis, subdiv,
+                   halfEdgeIdx= [(start,end,k)],
+                   alp=0.9, col='r',
+                   withArrow=True)
+    else:
+        print 'something is wrong!'
 
+    ##########################################################################
     ################################# drawing derivatives of the new haldfedge
-    if True:
+    if False:
         p1 = subdiv.intersectionsFlat[start]
         px, py = p1.x.evalf() , p1.y.evalf()
         he_obj = subdiv.MDG[start][end][k]['obj']

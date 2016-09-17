@@ -1,57 +1,35 @@
 TODO:
 -----
-..
 
-      "bugs"
+      Debugging:
       ----
+      [ ] fix the  - test_cases_key[13]
+
       [v] fix the sorting bug
       - test_cases_key[2]
 	test_cases_key[9]
-      
-      [ ] fix the concentric circles problem - test_cases_key[7]
-      f3 = mySubdivision.decomposition.faces[3]
-      f2 = mySubdivision.decomposition.faces[2]
-      print f2.holes
-      the problem is tha two holes are inside each other
 
-      [ ] fix the  - test_cases_key[13]
-      
-
-
-      [ ] create test cases for the improved cases, i.e. ray, segment, arc
-      add line segments and rays
-      
-      [ ] add parser's manual to the readMe file
-      
-      [ ] update subdivision.report over comments from Adam and Slawomir
-
-      [ ] check if the point is on any of the border functions
-      how does path.contains_point(p) work?
-      includes the path itself, or not?
-	
-      [ ] what does "http://toblerity.org/shapely/manual.html" do?
+      [v] fix the concentric circles problem:
+      - test_cases_key[7]
+	the problem is that two holes are inside each other
+	although it won't affect the point_in_face operation,
+	it does mess up the visulization.
+	it was due to the nested holes
 
       [v] Subdivision.csvParser
-
       [v] the degenerate case - update subdivision over comments from Slawomir
-
       [v] do we still have to start with all lines and then circles?
       or was it a constraint of the first approach?
       it's important to figure out as it would allow the update with any given
       function? otherwise with new lines everything should be computed from scratch!
       - the answer is it doesn't matter
-	
-
       [v] how to include those unbounded regions (oo, -oo) - should we?
 	  a region unbounded to infinity is a degenerate case for pointInPolygone!
 	  I think if i want to include the whole space, ie. faces unbounded to infinity
 	  there should be infinity points oneach line, not only two and shared.
 	  - the answer is treat all exterior region as one,
 	    so if a point is not in any face, it outside!
-
-
       [v] move "face_2_path" to classmethod of subdivision
-
       [v] decomposition problems:
 	  [v]  problem #1
 	  should I remove the infinity points?
@@ -65,7 +43,6 @@ TODO:
 	  [v] problem#3
 	  the calculation of the first derivative on the line class is wrong,
 	  not anymore, hopefuly
-
       [v] remove infinity points/node
 	  they overcomplicate things are not useful any way
 	  and makes the update of the subdivision with new function way messy
@@ -104,6 +81,27 @@ TODO:
 
       Developement
       ------------
+      [ ] find_neighbours(),
+      don't forget to include half-edges from holes.
+      for this actually we need to make sure there is no redundancy in holes!
+
+      [ ] create test cases for the improved cases, i.e. ray, segment, arc
+      add line segments and rays
+      
+
+      [ ] testing unit
+      use suite() so it runs all tests, even if one fails
+
+      [ ] add parser's manual to the readMe file
+      [ ] update report over
+	- comments from Adam and Slawomir
+	  sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
+      
+      [ ] check if the point is on any of the border functions
+      how does path.contains_point(p) work?
+      includes the path itself, or not?
+
+      [ ] Multiple subdivision intersection (for agents tracking)
 
       [ ] Subdivision.transform(M(R,T,S))
 	- Essential for the dynamic subdivision
@@ -119,10 +117,6 @@ TODO:
 
       [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
-      [ ] Multiple subdivision intersection (for agents tracking)
-      [ ] allow "rays" and "line segments" in addition to infinit lines
-      to handle it, you can use 
-
       [ ] multi-level of abstraction, wrt functions's priority
 	      like the functions could be in 3 groups, [H]igh, [M]iddle, and [L]ow priority
 	      and the subdivision would be with 3 levels of abstraction
@@ -130,8 +124,20 @@ TODO:
 	      subdivision.graphs['M'].mdg (based on functions from [H] and [M] priority lists)
 	      subdivision.graphs['L'].mdg (based on functions from [H] and [M] and [L] priority lists)
 
+      [ ] what does "http://toblerity.org/shapely/manual.html" do?
 
-      [ ] should I use mpl.path?
+      [ ] should I switch from sympy to CGAL?
+
+      [v] intersect subgraphs
+      [v] plot faces with patches
+      [v] remove infinity points
+
+      [v] detect the superFace of the subgraph:
+      find convex hull of all points in the subgraph - sym.convex_hull()
+      start from one of the points in the convex hull,
+      and follow the same procedure of face finding, with inverse sorting.
+      
+      [v] should I use mpl.path?
 	  path.arc()                      # of a unit circle
 	  path.circle()                   # 
 	  path.intersects_bbox()          # 
@@ -140,113 +146,112 @@ TODO:
 	  path.contains_path()            # 
 	  path.contains_points()          # 
 
-      [ ] should I switch from sympy to CGAL?
 
-      [v] plot faces with patches
 
-      clean-up, optimization, and speed-up
-      ------------------------------------
-      [x] 'save_to_image(fileName)'
-	      it should be fast. (both for debugging sessions' sake and final application)
-	      its visualization would be extremely helpful for debugging.
+      clean-up, and speed-up
+      ----------------------
+      [ ] remove derivatives
+      since we use tangent and curvature for sorting, there is no longer a need for 
+      the derivatives. remove all related values from subdivision class
+      
+      [ ] 'save_to_image(fileName)'
+	it should be fast.
+	(both for debugging sessions' sake and final application)
+	its visualization would be extremely helpful for debugging.
+
       [ ] pycuda?
-      [ ] pointInPolygon - speed up
+
+      [ ] intersection is the bottle-neck - how to improve that?
       [ ] merge_collocated_intersectionPoints - too slow!
-      [x] profiling
-      [ ] multi-processing
-      [ ] index-dependant implementation is a recepie for disaster
-	at least delet every temporarly varibale right after it's done its job
+
       [ ] caching - store sorted outlets from each nodes
+
+      [ ] pointInPolygon - speed up
+
+      [ ] index-dependant implementation is a recepie for disaster
+      at least delet every temporarly varibale right after it's done its job
+
       [v] inheritance VS. aggregation - Modified Geometry Instances
       [v] inheritance VS. aggregation - Subdivision
-      [ ] instantiation
+
+      [v] instantiation
 	examine all the internal variables of the subdivision class,
 	and see whether if they should belong to a class of their own.
 	[v] nodes
 	[v] edges
-	[ ] faces -> path from networkx?
+	[v] faces
 
-
-      documentation
-      ------------
-      [ ] Parametric Equations
-
-      [ ] doc-tool
-	https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
-	https://docs.python.org/devguide/documenting.html
-	http://docutils.sourceforge.net/
-	http://docutils.sourceforge.net/rst.html
-	http://www.sphinx-doc.org/en/stable/
-
-      [ ] examples
-      [ ] GUI?
-	- Load file / interactive drawings / manual entering
-	  Support animation
-
-      [v] animation
-	https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
-	https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
-	http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
-	[gif] convert -delay 10 -loop 0 *.png animation.gif
-	[mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
-
-      [ ] subdivision.io
-
-      https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
+      [v] multi-processing
 
 
 
-      Abstract and other notes
-      --------
-      What are the differences between this method and straight line subdivision?
-      First of all, both use DCEL data structure for the spatial representation of the subdivision
-      Therefore they share the same method for finding neighboring faces
+Documentation
+-------------
+[ ] Parametric Equations
 
-      The angle to the next vertex in the conventional method is
-      equal to the angle of the edge in between the two following vertices, also
-      equal to the gradient (tangent) of the line function in between.
-      However, in the presence of generic functions beyond straight lines,
-      the simple halfEdge's angle won't suffice finding closed loops.
-      This is due to the possibility of intersection points of tangent type.
-      One critical differences of the prosposed extension is to exploit
-      the value of the second derivative of the intersecting functions
-      at the tangent point, in order to ensure detection of simple closed loops (simple faces).
-      We will show that this approach is computationaly less expensive in comparison to
-      other alternatives, such as treating the subdivision as a graph and finding closed loops.
+[ ] doc-tool:
+- https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
+  https://docs.python.org/devguide/documenting.html
+  http://docutils.sourceforge.net/
+  http://docutils.sourceforge.net/rst.html
+  http://www.sphinx-doc.org/en/stable/
 
-      On the other, the presence of halfEdges which are not necessarily straight line segments,
-      invalidates the approach of detecting whether if a given point is inside a face based on
-      the cross-product of the inner-edges, and vectors from vertices to the given point.
-      In the extension, we adopt the pointInPolygon (PIP, aka "crossing number algorithm" or "even-odd rule") approach to answer the raised question.
+[ ] examples
+[ ] GUI?
+- Load file / interactive drawings / manual entering
+  Support animation
+  
+[v] animation
+- https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
+  https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+  http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
+[gif] convert -delay 10 -loop 0 *.png animation.gif
+[mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
+  
+[ ] subdivision.io
 
-      The only restriction of the proposed method is that every class of functions to be included
-      must be expressable in terms of a single variable (namely \theta), and to be diffrensiable wrt to this variable (\theta) at any given point on the function's level curve.
-
-
-      NOTE: there is no exact representation of the circle using Bezier curves.
-
-      NOTE: the hole problem (a non-intersecting circle located inside anthor face)
-      If I had implemented the the "point In Polygone" as a classmethod, it could be sufficient to 
-      just add an extra edge (the whole circle) to the face.
-      But using mpl.path, such approach wouldn't work.
-      Therefore I add a new slot to the face class, that is a list of holes in each face. Each hole in the face.
-
-      NOTE:
-      I use mpl.path to represent faces
-      -> circles are approximated -> consequently find_face_point is also not accurate
-      Nevertheless, I do store edges in the face along with the path repesentation.
-      So anytime I manage to develope that stupid "point in polygone" with a decent speed,
-      this approximation won't be much of a problem.
+https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
 
 
 
+Abstract and other notes
+--------
+What are the differences between this method and straight line subdivision?
+First of all, both use DCEL data structure for the spatial representation of the subdivision
+Therefore they share the same method for finding neighboring faces
+
+The angle to the next vertex in the conventional method is
+equal to the angle of the edge in between the two following vertices, also
+equal to the gradient (tangent) of the line function in between.
+However, in the presence of generic functions beyond straight lines,
+the simple halfEdge's angle won't suffice finding closed loops.
+This is due to the possibility of intersection points of tangent type.
+One critical differences of the prosposed extension is to exploit
+the value of the second derivative of the intersecting functions
+at the tangent point, in order to ensure detection of simple closed loops (simple faces).
+We will show that this approach is computationaly less expensive in comparison to
+other alternatives, such as treating the subdivision as a graph and finding closed loops.
+
+On the other, the presence of halfEdges which are not necessarily straight line segments,
+invalidates the approach of detecting whether if a given point is inside a face based on
+the cross-product of the inner-edges, and vectors from vertices to the given point.
+In the extension, we adopt the pointInPolygon (PIP, aka "crossing number algorithm" or "even-odd rule") approach to answer the raised question.
+
+The only restriction of the proposed method is that every class of functions to be included
+must be expressable in terms of a single variable (namely \theta), and to be diffrensiable wrt to this variable (\theta) at any given point on the function's level curve.
 
 
-[v] remove infinity points
+NOTE: there is no exact representation of the circle using Bezier curves.
 
-[v] detect the superFace of the subgraph:
-find convex hull of all points in the subgraph - sym.convex_hull()
-start from one of the points in the convex hull,
-and follow the same procedure of face finding, with inverse sorting.
+NOTE: the hole problem (a non-intersecting circle located inside anthor face)
+If I had implemented the the "point In Polygone" as a classmethod, it could be sufficient to 
+just add an extra edge (the whole circle) to the face.
+But using mpl.path, such approach wouldn't work.
+Therefore I add a new slot to the face class, that is a list of holes in each face. Each hole in the face.
 
-[v] intersect subgraphs
+NOTE:
+I use mpl.path to represent faces
+-> circles are approximated -> consequently find_face_point is also not accurate
+Nevertheless, I do store edges in the face along with the path repesentation.
+So anytime I manage to develope that stupid "point in polygone" with a decent speed,
+this approximation won't be much of a problem.

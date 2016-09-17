@@ -28,6 +28,8 @@ import contextlib as ctx
 import matplotlib.path as mpath
 import matplotlib.transforms
 
+
+import time
 ################################################################################
 ###################################################### parallelization functions
 ################################################################################
@@ -229,10 +231,30 @@ class Face:
         return False
 
     def punch_hole(self, holeFace):
-        ''' '''
-        holeFace.holes = () # withholding nested holes        
-        self.holes += (holeFace,)
+        '''
+        although the path of the hole is suffiecent to detect inclusion of points,
+        yet, holes are stored as faces, because the face instance of the hole is 
+        required to able to traverse the boundary (half-edges) of the punched face.
+        '''
+       
+        holes = list(self.holes)
+        
+        holeFace.holes = () # hole of hole is irrelevant
+        holes.append(holeFace)
 
+        # withholding nested holes
+        redundant = []
+        for idx1, h1 in enumerate(holes):
+            for idx2, h2 in enumerate(holes):
+                if idx1 != idx2 and h1.path.contains_path(h2.path):
+                    redundant.append(idx2)
+
+        for idx in sorted(redundant, reverse=True):
+            holes.pop(idx)
+
+        # storing final list of holes after conversion to tuple
+        self.holes = tuple(holes)
+            
 
     def get_punched_path(self):
         '''
@@ -332,7 +354,7 @@ class Subdivision:
     # __class__ = 'Subdivision'
 
     ############################################################################
-    def __init__ (self,curves , multiProcessing=True):
+    def __init__ (self,curves , multiProcessing=False):
         '''
         curves are aggregated instances of sympy's geometric module
         (e.g. LineModified, CircleModified)
@@ -344,38 +366,66 @@ class Subdivision:
         self.multiProcessing = multiProcessing
 
 
+        timing = False
         ########## reject duplicated curves and store internally
         self.curves = []
         self.store_curves(curves)
 
         ########## construct the base graph and subGraphs
+        tic = time.time()
         self.MDG = nx.MultiDiGraph()
+        if timing: print 'Graphs:', time.time() - tic
+
         #### STAGE A: construct nodes
+        tic = time.time()
         self.construct_nodes()
+        if timing: print 'nodes:', time.time() - tic
+
         #### STAGE B: construct edges
+        tic = time.time()
         self.construct_edges()
+        if timing: print 'edges:', time.time() - tic
+
         #### STAGE C: split the base graph into connected subgraphs
+        tic = time.time()
         subgraphs = list(nx.connected_component_subgraphs(self.MDG.to_undirected()))
         self.subGraphs = [sg.to_directed() for sg in subgraphs]
         del subgraphs
+        if timing: print 'connected components:', time.time() - tic
 
         ########## decomposition
         #### STAGE A: decomposition of each subgraph and merging
+        tic = time.time()
         subDecompositions = []
         for sg in self.subGraphs:
             faces = self.decompose_graph(sg)
-            if faces:
+            if len(faces) == 0:
                 # we need to check if self.decompose_graph(sg) returns anything
                 # for instance, if two line intersect only with each other,
                 # there will be a subgraph of one node, with no edge or face
-                # therefore, no decomposition
-                facesArea = [face.get_area() for face in faces]
-                superFaceIdx = facesArea.index(max(facesArea))
-                subDecompositions.append( Decomposition(sg, faces, superFaceIdx) )
-            else:
+                # therefore, no decomposition shall be stored
                 subDecompositions.append( None )
 
+            else:
+                # find the superFace of the decomposition
+                
+                if len(faces) == 2:
+                    # if only there are two faces, they will have the same area size
+                    # so we look into the side attribute of half-edges of each face
+                    # the one with negative side is selected as superFace
+                    (s,e,k) = faces[0].halfEdges[0]
+                    side = self.MDG[s][e][k]['obj'].side
+                    superFaceIdx = 0 if side=='negative' else 1
+                else:
+                    facesArea = [face.get_area() for face in faces]
+                    superFaceIdx = facesArea.index(max(facesArea))
+                    
+                subDecompositions.append( Decomposition(sg, faces, superFaceIdx) )
+
+        if timing: print 'decomposition:', time.time() - tic
+
         #### STAGE B: intersection of sub_decomposition
+        tic = time.time()
         for idx1 in range(len(subDecompositions)):
             for idx2 in range(len(subDecompositions)):
                 if idx1 != idx2:
@@ -390,6 +440,7 @@ class Subdivision:
                             subDecompositions[idx1].faces[fIdx].punch_hole ( superFace )
         self.subDecompositions = subDecompositions
         del subDecompositions
+        if timing: print 'intersect graphs', time.time() - tic
 
         #### STAGE C: decomposition <- all together
         allFaces = ()
@@ -445,8 +496,8 @@ class Subdivision:
         these informations are important to construct the nodes:
 
         self.intersectionsFlat ( <- intersections )
-        self.ipsCurveIdx
-        self.ipsCurveTVal
+        self.ipsCurveIdx : curve indices of each ips/node
+        self.ipsCurveTVal : ips/node's tValue over each assigned curve
 
         # step 1: finding all intersections
         # step 2: reject an intersection if it is not a point
@@ -467,12 +518,13 @@ class Subdivision:
         a list of indices to "self.curves" of non-intersecting curves        
         '''
 
-        self.intersections = []
+        self.intersections = [] # 2D array storage of intersection points
         self.standAloneCurvesIdx = [] # TODO: I actually never use this! should I keep it?
 
-        self.intersectionsFlat = []
-        self.ipsCurveIdx = []         # make Curve's internal and store all in nodes
-        self.ipsCurveTVal = []        # make Curve's internal and store all in nodes
+        # the indices to all following 3 lists are the same, i.e. ips_idx
+        self.intersectionsFlat = []   # 1D array storage of intersection points
+        self.ipsCurveIdx = []         # ipsCurveIdx[i]: idx of curves on nodes[i]
+        self.ipsCurveTVal = []        # t-value of each node at assigned curves
 
         self.nodes = [] 
 
@@ -831,7 +883,6 @@ class Subdivision:
         (tStart, tEnd, tk) = twinIdx
         refObj = self.MDG[tStart][tEnd][tk]['obj']
 
-
         # sorting values: reference
         (dx,dy) = refObj.s1stDer
         # 1stKey:
@@ -851,7 +902,6 @@ class Subdivision:
             (dx,dy) = canObj.s1stDer
             canAlpha.append( np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi) )
             canBeta.append( self.curves[canObj.cIdx].curvature(direction=canObj.side) )
-
 
         # sorting
         fullList  = zip( canAlpha, canBeta, candidateEdges )
@@ -886,7 +936,18 @@ class Subdivision:
     def decompose_graph(self, graph):
         '''
         >>> face detection and identification procedure!
-        '''        
+        '''
+
+        # TODO:saesha - speeding up - not urgent
+        # to find the successor to a half-edge, it's successor must be found.
+        # to do so, a sorting of all half-edge is done around a node.
+        # as it is now, the sorting of half-edges are done for every half-edge
+        # but itsead I can sort half-edges around a node and cach all successors
+        # this way I will perform sorting n x times, instead of e x times
+        # n: number of nodes, e: numebr of half-edges
+        # this requires moving the sorting procedure from find_successor_halfEdge
+        # to a seperate method that caches all the successors in advance.
+        
 
         faces = []
         allHalfEdgeIdx = self.get_all_HalfEdge_indices(graph)

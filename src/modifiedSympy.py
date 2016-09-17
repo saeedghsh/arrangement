@@ -107,7 +107,7 @@ class LineModified:
             return (point.x-self.obj.p1.x)/a.evalf() if a != 0 else (point.y-self.obj.p1.y)/b.evalf()
 
     ####################################
-    def firstDerivative (self, point, direction='positive'):
+    def firstDerivative (self, point=None, direction='positive'):
         '''
         generally:
         dy/dx = lim_{ Delta_x -> 0 } Delta_y / Delta_x
@@ -131,13 +131,23 @@ class LineModified:
 
 
     ####################################
-    def secondDerivative(self, point, direction='positive'):
+    def secondDerivative(self, point=None, direction='positive'):
         '''
         although it is independant of the location of the point
         we include for consistency with a general form of curves
         note: direction does not affect the 2nd derivative of a line
         '''
         return np.array([0. ,0.], float)
+
+    ####################################
+    def tangentAngle(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        '''
+        (dx,dy) = self.firstDerivative(point, direction)
+        alpha = np.arctan2(dy,dx)
+        return np.mod(alpha + 2*np.pi , 2*np.pi)
 
     ####################################
     def curvature(self, point=None, direction='positive'):
@@ -211,6 +221,16 @@ class CircleModified:
         y_ = -self.obj.radius * np.sin(theta) # sym.sin(theta).evalf()
         # print self, theta, x_, y_
         return np.array([x_.evalf(), y_.evalf()], float)
+
+    ####################################
+    def tangentAngle(self, point, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        '''
+        (dx,dy) = self.firstDerivative(point, direction)
+        alpha = np.arctan2(dy,dx)
+        return np.mod(alpha + 2*np.pi , 2*np.pi)
 
 
     ####################################
