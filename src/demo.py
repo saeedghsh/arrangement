@@ -68,7 +68,7 @@ test_cases_key = [
 ]
 
 ########################################
-file_name = 'testCases/'+test_cases_key[1]+'.yaml'
+file_name = 'testCases/'+test_cases_key[2]+'.yaml'
 data = tcg.load_from_csv( file_name )
 curves = data['curves']
 
@@ -117,12 +117,12 @@ myplt.plot_decomposition(mySubdivision,
                          interactive_onClick=False,
                          interactive_onMove=False,
                          plotNodes=True, printNodeLabels=False,
-                         plotEdges=True, printEdgeLabels=True)
+                         plotEdges=True, printEdgeLabels=False)
 
 ################################################################################
 ###################################################################### animating
 ################################################################################
-myplt.animate_face_patches(mySubdivision, timeInterval = .1*1000)
+myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.5*1000)
 
 
@@ -135,18 +135,3 @@ myplt.animate_face_patches(mySubdivision, timeInterval = .1*1000)
 # Node
 # HalfEdge
 # Face
-
-
-
-# print 'checking twin assignment'
-# for idx in mySubdivision.get_all_HalfEdge_indices():
-#     (s,e,k) = idx
-#     # side = mySubdivision.MDG[s][e][k]['obj'].side
-#     tidx = mySubdivision.MDG[s][e][k]['obj'].twinIdx
-#     (ts,te,tk) = tidx
-
-#     ttidx = mySubdivision.MDG[ts][te][tk]['obj'].twinIdx
-    
-#     if idx != ttidx:
-#         print 'oops'
-

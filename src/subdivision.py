@@ -797,13 +797,19 @@ class Subdivision:
     def find_successor_HalfEdge(self, halfEdgeIdx, 
                               allHalfEdgeIdx=None,
                               direction='ccw_before'):
+
+
+        # Note that in cases where there is a circle with one node on it,
+        # the half-edge itself would be among candidates,
+        # and it is important not to reject it from the candidates
+        # otherwise the loop for find the face will never terminate!
         
         if allHalfEdgeIdx == None:
             allHalfEdgeIdx = self.get_all_HalfEdge_indices(self.MDG)
             
         (start, end, k) = halfEdgeIdx
 
-        # "candidateEdges" are those edges starting from the current "end"
+        # "candidateEdges" are those edges starting from the "end" node
         candidateEdges = [idx
                           for (idx, heIdx) in enumerate(allHalfEdgeIdx)
                           if (heIdx[0] == end)]# and openList[idx] ]
@@ -815,23 +821,16 @@ class Subdivision:
                 candidateEdges.pop(idx)
                 break
 
-
-        # Note that in cases where there is a circle with one node on it,
-        # the half-edge itself would be among candidates,
-        # and we shall it is important not to reject it from the candidates
-        # otherwise the loop for find the face will never terminate!
+        '''
+        sorting keys:
+        1st - Alpha = angle(1stDer) \in [0,2*pi)
+        2nd - Beta  = curvature of the edge, considering the direction of it
+        '''
 
         # reference: the 1st and 2nd derivatives of the twin half-edge
         (tStart, tEnd, tk) = twinIdx
         refObj = self.MDG[tStart][tEnd][tk]['obj']
 
-        ''' sorting keys:
-        1st - Alpha = angle(1stDer) \in [0,2*pi)
-        2nd - Beta  = project( 2ndDer, normalCCW(1stDer) ) \in R
-        def normal_ccw([dx,dy]): return [-dy,dx]
-        def normal_cw([dx,dy]):  return [dy,-dx]
-        def project(v1,v2): return np.dot( v1, v2/norm(v2) )
-        '''
 
         # sorting values: reference
         (dx,dy) = refObj.s1stDer
@@ -839,43 +838,20 @@ class Subdivision:
         refAlpha = np.arctan2(dy,dx)
         refAlpha = np.mod(refAlpha + 2*np.pi , 2*np.pi)
         # 2ndkey:
-        # TODO:
-        # refNormal = np.array( [dy,-dx] ) if refObj.side =='positive' else np.array( [-dy,dx] )
-        refNormal = np.array( [-dy,dx] )# if refObj.side =='positive' else np.array( [dy,-dx] )
-        refBeta = np.dot( refObj.s2ndDer, # * (1./np.linalg.norm(refObj.s2ndDer)**2),
-                          refNormal/np.linalg.norm(refNormal) )
+        refBeta = self.curves[refObj.cIdx].curvature(direction=refObj.side)
 
         # sorting values: candidates
-        candidates1stDer = []
-        candidates2ndDer = []
-
-        # TODO:
-        # canAlpha = []
-        # canNormal = []
-        # canBeta = []
+        canAlpha = []
+        canBeta = []
 
         for candidateIdx in candidateEdges:
             (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
             canObj = self.MDG[cStart][cEnd][ck]['obj']
 
-            candidates1stDer.append( canObj.s1stDer )
-            candidates2ndDer.append( canObj.s2ndDer )
+            (dx,dy) = canObj.s1stDer
+            canAlpha.append( np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi) )
+            canBeta.append( self.curves[canObj.cIdx].curvature(direction=canObj.side) )
 
-            # TODO:            
-            # (dx,dy) = canObj.s1stDer 
-            # canAlpha.append( np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi) )
-            # n = np.array([dy,-dx]) if canObj.side =='positive' else np.array( [-dy,dx] )
-            # canNormal.append( n )
-            # canBeta.append( np.dot( canObj.s2ndDer  * (1./np.linalg.norm(canObj.s2ndDer)**2),
-            #                         n/np.linalg.norm(n) ) )
-
-
-        canAlpha = [ np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi)
-                     for (dx,dy) in candidates1stDer ]
-        canNormal = [ np.array([-dy,dx]) 
-                      for (dx,dy) in candidates1stDer]
-        canBeta = [ np.dot( vec , normal/np.linalg.norm(normal) )
-                    for (vec,normal) in zip(candidates2ndDer, canNormal)]
 
         # sorting
         fullList  = zip( canAlpha, canBeta, candidateEdges )
@@ -891,17 +867,17 @@ class Subdivision:
                     (a,c,successorIdx) = sortList[i+1]
                 break
 
-        # TODO: debugging - remove
-        ##############################
-        print '\n\tcurrent   half-edge:', halfEdgeIdx
-        for (alpha,beta, idx) in sortList:
-            if idx == 'ref':
-                print twinIdx, (alpha, beta), 'reference-twin'
-            else:
-                (s_, e_, k_) = allHalfEdgeIdx[idx]
-                print (s_, e_, k_), (alpha, beta)
-        print '\tsuccessor   half-edge:', allHalfEdgeIdx[successorIdx]
-        ##############################
+        # # TODO: debugging - remove
+        # ##############################
+        # print '\n\tcurrent   half-edge:', halfEdgeIdx
+        # for (alpha,beta, idx) in sortList:
+        #     if idx == 'ref':
+        #         print twinIdx, (alpha, beta), 'reference-twin'
+        #     else:
+        #         (s_, e_, k_) = allHalfEdgeIdx[idx]
+        #         print (s_, e_, k_), (alpha, beta)
+        # print '\tsuccessor   half-edge:', allHalfEdgeIdx[successorIdx]
+        # ##############################
 
         return successorIdx
 
@@ -1007,10 +983,11 @@ class Subdivision:
                     # connected half edge.
                     faces.append(face_tmp)
 
-                    # TODO: debugging - remove
-                    ##############################
-                    print '\n\t the face:',face_tmp
-                    ##############################
+                    # # TODO: debugging - remove
+                    # ##############################
+                    # print '\n\t the face:',face_tmp
+                    # ##############################
+
                 else:
                     pass
 

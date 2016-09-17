@@ -120,17 +120,33 @@ class LineModified:
         slope = tan(theta) -> theta = arctan(slope)
         ( note that theta \in [-pi/2, pi/2] )
         [dx, dy] = [cos(theta) , sin(theta)]
-        ( note that always dx>=0, because theta \in [-pi/2, pi/2])            
+        ( note that always dx>=0, because theta \in [-pi/2, pi/2])
+
+        note that slopeAngle is constant for the line
+        and that's why the second derivative is a null vector
         '''
-        theta = np.arctan(np.float(self.obj.slope.evalf()))
-        res = np.array([np.cos(theta) , np.sin(theta)], float)
+        slopeAngle = np.arctan(np.float(self.obj.slope.evalf()))
+        res = np.array([np.cos(slopeAngle) , np.sin(slopeAngle)], float)
         return res if direction == 'positive' else -1*res
 
 
     ####################################
     def secondDerivative(self, point, direction='positive'):
-        ''' note: direction does not affect the 2nd derivative of a line '''
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the 2nd derivative of a line
+        '''
         return np.array([0. ,0.], float)
+
+    ####################################
+    def curvature(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the curvature of a line
+        '''
+        return 0.
     
 
 ################################################################################
@@ -195,3 +211,13 @@ class CircleModified:
         y_ = -self.obj.radius * np.sin(theta) # sym.sin(theta).evalf()
         # print self, theta, x_, y_
         return np.array([x_.evalf(), y_.evalf()], float)
+
+
+    ####################################
+    def curvature(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        '''
+        k = 1./self.obj.radius
+        return k if direction == 'positive' else -1*k

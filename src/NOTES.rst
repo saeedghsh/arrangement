@@ -4,14 +4,20 @@ TODO:
 
       "bugs"
       ----
-      [ ] fix the failing test cases - test_cases_key[2]
+      [v] fix the sorting bug
+      - test_cases_key[2]
+	test_cases_key[9]
+      
+      [ ] fix the concentric circles problem - test_cases_key[7]
+      f3 = mySubdivision.decomposition.faces[3]
+      f2 = mySubdivision.decomposition.faces[2]
+      print f2.holes
+      the problem is tha two holes are inside each other
 
-      [ ] fix the failing test cases - test_cases_key[8]
+      [ ] fix the  - test_cases_key[13]
       
-      [ ] fix the failing test cases - test_cases_key[7]
-      
-      [ ] fix the failing test cases - test_cases_key[13]
-      
+
+
       [ ] create test cases for the improved cases, i.e. ray, segment, arc
       add line segments and rays
       
