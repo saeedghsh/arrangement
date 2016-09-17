@@ -3,7 +3,12 @@ TODO:
 
       Debugging:
       ----
+
       [ ] fix the  - test_cases_key[13]
+      it happens to be genuinely a degenerate case, that is to say the peoblem 
+      happens when the angles of tangent to two tangent half-edge differ after
+      the 7th digit of the fractional part
+
 
       [v] fix the sorting bug
       - test_cases_key[2]

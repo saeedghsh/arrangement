@@ -44,11 +44,12 @@ test_cases_key = [
     'intensive_lineOnly',           # 12:
     'random',                       # 13:
     'star',                         # 14: 
-    'example_01'                    # 15: 2 circles and a line
+    'example_01',                   # 15: 2 circles and a line
+    'specialCase_09',               # 16: 
 ]
 
 ########################################
-testNumber = 14
+testNumber = 16
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
@@ -108,9 +109,9 @@ myplt.plot_decomposition(mySubdivision,
 ################################################################################
 ###################################################################### animating
 ################################################################################
-myplt.animate_face_patches(mySubdivision, timeInterval = 2.5*1000)
+myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 
-myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
+# myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
 
 
 ################################################################################
@@ -126,14 +127,17 @@ myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
 
 
 
-# #### test node construction - are nodes assigned correctly to curves?
+# #### test node construction
+# # does mySubdivision.nodes correspond to mySubdivision.intersectionFlat?
 # num_of_intersections = len( mySubdivision.intersectionsFlat)
 # num_of_nodes = len( mySubdivision.nodes )
-# if not (num_of_intersections == num_of_nodes):
-#     print 'error in numbers'
-# else:
-#     print 'numbers ok'
+# asser (num_of_intersections == num_of_nodes)
 
+# for (n, p) in zip (mySubdivision.nodes, mySubdivision.intersectionsFlat):
+#     n_point = mySubdivision.nodes[n_idx][1]['obj'].point
+#     assert(n_point.compare(p) == 0)
+
+# # are nodes assigned correctly to curves?
 # for c_idx, curve in enumerate(mySubdivision.curves):
 #     for n_idx, node in enumerate(mySubdivision.nodes):
 #         point = mySubdivision.nodes[n_idx][1]['obj'].point
@@ -143,3 +147,16 @@ myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
 
 
 
+# #### test face construction
+# # could a pair of twins be in oen face simultaneously?
+
+
+# allHalfEdge = mySubdivision.get_all_HalfEdge_indices()
+
+# he = (2,8,0)
+
+# idx = mySubdivision.find_successor_HalfEdge(he)
+# he = allHalfEdge[idx]
+# print he
+
+# mySubdivision.find_successor_HalfEdge(he)
