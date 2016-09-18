@@ -48,6 +48,14 @@ test_cases_key = [
     'specialCase_09',               # 16: 
 ]
 
+# nodes = ( (1,{'obj':1}),(3,{'obj':3}) )
+# MDG.add_nodes_from( nodes )
+
+
+# TODO:
+# nodes:  ( (idx,{'obj':node}),... ) -> ( (idx,{'point':point}),... )
+# MDG.node[idx]['obj'].point -> MDG.node[idx]['point']
+
 ########################################
 testNumber = 16
 timing = False

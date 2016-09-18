@@ -204,10 +204,17 @@ TODO:
 	instead of:
 	point = subdiv.MDG.node[nodeIdx]['obj'].point
 
+      [ ] remove self.intersectionsFlat (and other unused), after decomposition is done
+
       [ ] API documentation
 	$ cd Dropbox/myGits/dev/subdivision/
 	$ pyreverse -o svg -p subdivision src/*.py
 
+
+	important note about nodes of networkx:
+	MDG.nodes() is not neccessarily [0,1,2,...]
+	it's important to remember that MDG.node is a dict, not a list
+	MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 
 	access nodes of networkX graph:
 	for nodeIdx in subdiv.MDG.nodes():

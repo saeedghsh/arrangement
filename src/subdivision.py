@@ -133,18 +133,6 @@ def distance_star(*args):
 ################################################################# Face
 ################################################################################
 
-
-################################################################################
-class Node:
-    def __init__(self, point,
-                 intersecting_curves_Idx=(),
-                 intersecting_curves_Tval=()):
-        
-        self.point = point
-        self.curveIdx = intersecting_curves_Idx
-        self.curveTval = intersecting_curves_Tval
-
-################################################################################
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
@@ -430,7 +418,9 @@ class Subdivision:
                     sd2 = subDecompositions[idx2]
                     if sd1 and sd2: # sd1 or sd2 could be "None"
                         sampleNodeIdx = sd2.graph.nodes()[0]
-                        samplePoint = self.intersectionsFlat[sampleNodeIdx]
+                        # samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point # here
+                        samplePoint = sd2.graph.node[sampleNodeIdx]['point'] # here
+
                         fIdx = sd1.find_face ( samplePoint )
                         if fIdx != None :
                             superFace = subDecompositions[idx2].superFace
@@ -691,10 +681,8 @@ class Subdivision:
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        nodes = tuple( (pIdx, { 'obj': Node(self.intersectionsFlat[pIdx],
-                                       self.ipsCurveIdx[pIdx],
-                                       self.ipsCurveTVal[pIdx])} )
-                  for pIdx in range(len(self.intersectionsFlat)) )
+        nodes = tuple( (pIdx, {'point':self.intersectionsFlat[pIdx]})
+                       for pIdx in range(len(self.intersectionsFlat)) )
 
         self.MDG.add_nodes_from( nodes )
         assert len(self.MDG.nodes()) == len(self.intersectionsFlat)
@@ -879,7 +867,7 @@ class Subdivision:
         # sorting values of the reference (twin of the current half-edge)
         # 1stKey: alpha - 2ndkey: beta
         refObjCurve = self.curves[refObj.cIdx]
-        sPoint = self.MDG.node[tStart]['obj'].point
+        sPoint = self.MDG.node[tStart]['point']
         refAlpha = refObjCurve.tangentAngle(sPoint, refObj.side)
         refBeta = refObjCurve.curvature(sPoint, refObj.side)
 
@@ -1068,8 +1056,8 @@ class Subdivision:
             eTVal = halfEdge_obj.eTVal
 
             # # TODO: eliminating sTVal and eTVal
-            # sPoint = self.MDG.node[start]['obj'].point
-            # ePoint = self.MDG.node[end]['obj'].point
+            # sPoint = self.MDG.node[start]['point']
+            # ePoint = self.MDG.node[end]['point']
             # sTVal = self.curves[cIdx].IPE(sPoint)
             # eTVal = self.curves[cIdx].IPE(ePoint)
 

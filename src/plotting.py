@@ -93,8 +93,8 @@ def plot_edges(axis, subdiv,
         eTVal = he_obj.eTVal
 
         # # TODO: eliminating sTVal and eTVal
-        # sPoint = subdiv.MDG.node[start]['obj'].point
-        # ePoint = subdiv.MDG.node[end]['obj'].point
+        # sPoint = subdiv.MDG.node[start]['point']
+        # ePoint = subdiv.MDG.node[end]['point']
         # sTVal = subdiv.curves[he_obj.cIdx].IPE(sPoint)
         # eTVal = subdiv.curves[he_obj.cIdx].IPE(ePoint)
 
@@ -161,21 +161,15 @@ def plot_edges(axis, subdiv,
                                fontdict={'color':col,  'size': 10})
 
 
-
-
-
-
-
-
 ################################### plotting nodes
 def plot_nodes (axis, subdiv, nodes=None,
                alp = 0.5, col = 'k',
                printLabels = False):
 
-    if nodes==None:
-        points = subdiv.intersectionsFlat
-    else:
-        points = [subdiv.intersectionsFlat[idx] for idx in nodes]
+    if nodes==None:  nodes = subdiv.MDG.nodes()
+    points = [subdiv.MDG.node[idx]['point'] for idx in nodes]
+        
+
         
     nx = [p.x for p in points]
     ny = [p.y for p in points]
