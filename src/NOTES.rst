@@ -1,6 +1,5 @@
 TODO:
 -----
-
       Debugging:
       ----
 
@@ -9,20 +8,16 @@ TODO:
       happens when the angles of tangent to two tangent half-edge differ after
       the 7th digit of the fractional part
 
-
       [v] fix the sorting bug
       - test_cases_key[2]
 	test_cases_key[9]
-
       [v] fix the concentric circles problem:
       - test_cases_key[7]
 	the problem is that two holes are inside each other
 	although it won't affect the point_in_face operation,
 	it does mess up the visulization.
 	it was due to the nested holes
-
-      [v] Subdivision.csvParser
-      [v] the degenerate case - update subdivision over comments from Slawomir
+      [v] the wrong while loop condition - update subdivision over comments from Slawomir
       [v] do we still have to start with all lines and then circles?
       or was it a constraint of the first approach?
       it's important to figure out as it would allow the update with any given
@@ -52,9 +47,9 @@ TODO:
 	  they overcomplicate things are not useful any way
 	  and makes the update of the subdivision with new function way messy
 	  remove and test with only lines.
-      [x] find_face_of_point doesn't work properly, why?
-	  [ ] because we include the superFace, it returns the superFace in most cases
-	  [ ] a crossing at an intersection of multiple half edges will be counted as multiple crossing!
+      [v] find_face_of_point doesn't work properly, why?
+	  because we include the superFace, it returns the superFace in most cases
+	  a crossing at an intersection of multiple half edges will be counted as multiple crossing!
 	  I'm gonna most likely use the matplolib anyway
       [v] how to detect the superFace? -step four
 	  for now I decided to prevent its creation, instead of detection
@@ -82,9 +77,6 @@ TODO:
 	      (in: merge_collocated_intersectionPoints)
       [v] plotting: the problem of pathes-pathces
 	  it seems to be related to the ordering of the starting and ending point of the arc
-
-
-
 
 
       Developement
@@ -122,6 +114,7 @@ TODO:
 
       [ ] testing unit
       use suite() so it runs all tests, even if one fails
+      bring all asserts from subdivision.py to test.py
 
       [ ] Multiple subdivision intersection (for agents tracking)
 
@@ -161,16 +154,14 @@ TODO:
       [v] Decomposition.find_neighbours(),
 	don't forget to include half-edges from holes.
 	for this actually we need to make sure there is no redundancy in holes!
-
-      [v] intersect subgraphs
+      [v] Subdivision.csvParser
+      [v] punch hole
       [v] plot faces with patches
       [v] remove infinity points
-
       [v] detect the superFace of the subgraph:
 	find convex hull of all points in the subgraph - sym.convex_hull()
 	start from one of the points in the convex hull,
-	and follow the same procedure of face finding, with inverse sorting.
-      
+	and follow the same procedure of face finding, with inverse sorting.      
       [v] should I use mpl.path?
 	path.arc()                      # of a unit circle
 	path.circle()                   # 
@@ -180,60 +171,25 @@ TODO:
 	path.contains_path()            # 
 	path.contains_points()          # 
 
-
-
-
-
-
-
-
       clean-up, and speed-up
       ----------------------
-      [ ] half edge attributes:
-	- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
-	- [v] 1stDer, 2ndDer removed.
-	- [] TVal  needed? - something is wrong in visualization! I don't know what!
-	  -> I don't have to use IPE for eTVal and sTVal,
-	  -> just need to fetch them from the node!
-	  -> we have the node, and the current curve, easily find the corresponding tVal
+      [ ] ask Slawomir:
+      shall I move those methods that are not useful after decomposition?
+	- edgeList_to_mplPath
+	- store_curves
+	- find_successor_halfEdge
+	- decompose_graph
+	- construct_nodes
+	- construct_edges
 
-      [ ] do we need the node class?
-	isn't the dictionary of the MDG.node[0]
-	to write:
-	point = subdiv.MDG.node[nodeIdx]['point']
-	instead of:
-	point = subdiv.MDG.node[nodeIdx]['obj'].point
-
-      [ ] remove self.intersectionsFlat (and other unused), after decomposition is done
+	for instance:
+	construct_node(subdivision) and all self. -> subdivision.
+	construct_edge(subdivision) and all self. -> subdivision.
+	and so on, ...	  
 
       [ ] API documentation
 	$ cd Dropbox/myGits/dev/subdivision/
 	$ pyreverse -o svg -p subdivision src/*.py
-
-
-	important note about nodes of networkx:
-	MDG.nodes() is not neccessarily [0,1,2,...]
-	it's important to remember that MDG.node is a dict, not a list
-	MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
-
-	access nodes of networkX graph:
-	for nodeIdx in subdiv.MDG.nodes():
-	    print subdiv.MDG.node[nodeIdx]
-
-	access "node instances" of nodes:
-	for nodeIdx in subdiv.MDG.nodes():
-	    print subdiv.MDG.node[nodeIdx]['obj']
-
-	access edges of networkX graph:
-	for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
-	(s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-	    print subdiv.MDG[s][e][k]
-
-	access "half-edges":
-	for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
-	    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-	    print subdiv.MDG[s][e][k]['obj']
-
 
 	- what are the date structures?
 	  - a tree of data structures; e.g
@@ -242,11 +198,6 @@ TODO:
 	    MDG: (nodes, edges)
 	  
 	- how to index each data structure and access their object?
-	  - nodes: subdivision.nodes[idx], where else are they accessible?
-	    edges: subdivision.edges[idx], where else are they accessible?
-	    faces: subdivision.decomposition.faces[idx]
-	    half-edges: subdivision.MDG[s][e][k]
-	    ...
 	  
 	- what is the relation between indices of different lists,
 	  e.g. nodes vs ips vs edges ...
@@ -257,11 +208,21 @@ TODO:
 	- comments from Adam and Slawomir
 	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
 
+      [ ] half edge attributes:
+	- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
+	- [v] 1stDer, 2ndDer removed.
+	- [] TVal  needed? - something is wrong in visualization! I don't know what!
+	  -> I don't have to use IPE for eTVal and sTVal,
+	  -> just need to fetch them from the node!
+	  -> we have the node, and the current curve, easily find the corresponding tVal
+	- search for TValHere
+
       [ ] pycuda?
 
       [ ] should I switch from sympy to CGAL?
 
       [ ] intersection is the bottle-neck - how to improve that?
+
       [ ] merge_collocated_intersectionPoints - too slow!
 
       [ ] caching - store sorted outlets from each nodes
@@ -271,30 +232,38 @@ TODO:
       [ ] index-dependant implementation is a recepie for disaster
       at least delet every temporarly varibale right after it's done its job
 
+      [v] get away from the spaghetti style - don't store self.variables
+	- [v] self.intersectionsFlat
+	- [v] self.intersections
+	- [v] self.ipsCurveTVal
+	- [v] self.ipsCurveIdx
+	- [v] self.curveIpsTVal
+	- [v] self.curveIpsIdx
+	- [v] self.edges
+	- [v] standAloneCurvesIdx
+      [v] do we need the Node class?
+	isn't the dictionary of the MDG.node[0]
+	to write:
+	point = subdiv.MDG.node[nodeIdx]['point']
+	instead of:
+	point = subdiv.MDG.node[nodeIdx]['obj'].point
       [v] nodes[idx] = (idx,nodeObject)
-	obviously the idx in the tuple is redundant
 	I had this format of tuple, because it was required by the networkX
 	TODO: 
 	- [v] remove self.nodes[idx]
 	  [v] subdiv.nodes[idx][1]['obj'] -> subdiv.MDG.node[idx]['obj']
-
       [v] remove derivatives
       since we use tangent and curvature for sorting, there is no longer a need for 
-      the derivatives. remove all related values from subdivision class
-      
+      the derivatives. remove all related values from subdivision class     
       [v] inheritance VS. aggregation - Modified Geometry Instances
       [v] inheritance VS. aggregation - Subdivision
-
       [v] instantiation
 	examine all the internal variables of the subdivision class,
 	and see whether if they should belong to a class of their own.
 	[v] nodes
 	[v] edges
 	[v] faces
-
       [v] multi-processing
-
-
 
 Documentation
 -------------
@@ -320,38 +289,10 @@ Documentation
 [mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
   
 [ ] subdivision.io
-
 https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
 
-
-
-Abstract and other notes
+other notes
 --------
-What are the differences between this method and straight line subdivision?
-First of all, both use DCEL data structure for the spatial representation of the subdivision
-Therefore they share the same method for finding neighboring faces
-
-The angle to the next vertex in the conventional method is
-equal to the angle of the edge in between the two following vertices, also
-equal to the gradient (tangent) of the line function in between.
-However, in the presence of generic functions beyond straight lines,
-the simple halfEdge's angle won't suffice finding closed loops.
-This is due to the possibility of intersection points of tangent type.
-One critical differences of the prosposed extension is to exploit
-the value of the second derivative of the intersecting functions
-at the tangent point, in order to ensure detection of simple closed loops (simple faces).
-We will show that this approach is computationaly less expensive in comparison to
-other alternatives, such as treating the subdivision as a graph and finding closed loops.
-
-On the other, the presence of halfEdges which are not necessarily straight line segments,
-invalidates the approach of detecting whether if a given point is inside a face based on
-the cross-product of the inner-edges, and vectors from vertices to the given point.
-In the extension, we adopt the pointInPolygon (PIP, aka "crossing number algorithm" or "even-odd rule") approach to answer the raised question.
-
-The only restriction of the proposed method is that every class of functions to be included
-must be expressable in terms of a single variable (namely \theta), and to be diffrensiable wrt to this variable (\theta) at any given point on the function's level curve.
-
-
 NOTE: there is no exact representation of the circle using Bezier curves.
 
 NOTE: the hole problem (a non-intersecting circle located inside anthor face)

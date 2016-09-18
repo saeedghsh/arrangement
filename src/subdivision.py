@@ -51,7 +51,6 @@ def intersection_star(*args):
     obj2Circ = isinstance(obj2, sym.Circle)
     # obj2Ray = isinstance(obj1, sym.Ray)
 
-
     # Line-Line intersection - OK (speedwise)
     if obj1Line and obj2Line: #(obj1Line or obj1Ray) and (obj2Line or obj2Ray):
         P1, P2 = obj1.p1 , obj1.p2
@@ -64,57 +63,11 @@ def intersection_star(*args):
         else:
             return []
 
-    # # Circle-Circle intersection - Not OK (speedwise)
-    # elif obj1Circ and obj2Circ:
-    #     # print 'circ-circ - start'
-    #     c1, c2 = obj1.center, obj2.center
-    #     r1, r2 = obj1.radius, obj2.radius
-    #     d = sym.sqrt((c1.x-c2.x)**2 + (c1.y-c2.y)**2)
-
-    #     if  d > r1+r2 : # no intersection
-    #         # print '0a intersection'
-    #         return []
-
-    #     elif d < np.abs(r1-r2):  # no intersection
-    #         # print '0b intersection'
-    #         return []
-
-    #     elif d == r1+r2:  # one intersection
-    #         # print '1 intersection'
-    #         a = (r1**2 - r2**2 + d**2) / (2*d) 
-    #         # h = sym.sqrt(r1**2 - a**2)
-    #         dx = a * (c2.x - c1.x) / d
-    #         dy = a * (c2.y - c1.y) / d
-    #         pMid = sym.Point(c1.x+dx , c1.y+dy)
-    #         return [pMid]
-
-    #     elif d < r1+r2:  # two intersections
-    #         # print '2 intersections'
-    #         a = (r1**2 - r2**2 + d**2) / (2*d) 
-    #         h = sym.sqrt(r1**2 - a**2)
-    #         dx = a * (c2.x - c1.x) / d
-    #         dy = a * (c2.y - c1.y) / d
-    #         pMid = [c1.x+dx , c1.y+dy]
-
-    #         x3 = pMid[0] + h * ( c2.y - c1.y ) / d
-    #         y3 = pMid[1] - h * ( c2.x - c1.x ) / d
-    #         x4 = pMid[0] - h * ( c2.y - c1.y ) / d
-    #         y4 = pMid[1] + h * ( c2.x - c1.x ) / d
-
-    #         p3 = sym.Point(x3,y3)
-    #         p4 = sym.Point(x4,y4)
-    #         return [p3 ,p4]
-
     else:
         return sym.intersection( obj1, obj2 )
 
 
 ################################################################################
-def distance_star_(*args):
-    global intersectionPoints
-    idx1, idx2 = args[0][0], args[0][1]
-    return intersectionPoints[idx1].distance( intersectionPoints[idx2] )
-
 def distance_star(*args):
     global intersectionPoints
     idx1, idx2 = args[0][0], args[0][1]
@@ -125,14 +78,11 @@ def distance_star(*args):
     x2, y2 = p2.x, p2.y
     return sym.sqrt( (x1-x2)**2 + (y1-y2)**2 )
 
-
 ################################################################################
 ################################################################# object classes
-################################################################# Node
 ################################################################# HalfEdge
 ################################################################# Face
 ################################################################################
-
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
@@ -290,66 +240,23 @@ class Decomposition:
 
 ################################################################################
 ############################################################## Subdivision class
-####################################################### aggregated from networkx
+####################################################### aggregates from networkx
 ################################################################################
 class Subdivision:
 
     '''
-    N: number of functions
-    M: numebr of intersection points
-    
-    >>> intersections:
-    all intersections stored in a list of lists of lists:
-    fun1,  fun2, ...,  funN
-    fun1:[[  [],    [], ...,    []],
-    fun2: [  [],    [], ...,    []],
-    ...                             
-    funN: [  [],    [], ...,    []]]
-    
-    >>> ips:
-    flat list of intersection points
-    [p0, p1, ..., pM]
-    
-    >>> ipsFunIdx: [i.e. indices of functions of points]
-    indeces of intersecting functions corresponding to ips
-    each set_i is a set of indeces of functions resulting point_i
-    [s0, s1, ..., sM], s_i = [idx | idx \in [0,N-1] ]
-    
-    >>> ipsFunTVal: [i.e. t-value of functions at points]
-    t-value of each function at the intersection
-    [tv0, tv1, ..., tvM], tv_i = [ f[idx].IPE(p_i) | idx \in s_i]
-    
-    >>> funIpsIdx: [i.e. indices of points over functions]
-    indeces of intersection points corresponding to functions
-    [s0, s1, ..., sN], s_i = [idx | idx \in [0,M-1] ]
-    each set_i is a set of indeces of intersection points resulted from functions[i]
-    
-    >>> funIpsTVal: [i.e. functions t-value at each point]
-    t-value of each function at the intersection
-    [tv0, tv1, ..., tvN], tv_i = [f[idx].IPE(p_i) | idx \in s_i]
     '''
-    # __slots__ = [ 'functions',
-    #               'intersections',
-    #               'ips',
-    #               'ipsFunIdx',
-    #               'ipsFunTVal',
-    #               'funIpsIdx',
-    #               'funIpsTVal' ]
-
-    # __class__ = 'Subdivision'
 
     ############################################################################
-    def __init__ (self,curves , multiProcessing=False):
+    def __init__ (self,curves , multiProcessing=0):
         '''
         curves are aggregated instances of sympy's geometric module
-        (e.g. LineModified, CircleModified)
-
+        (e.g. LineModified, CircleModified, ...)
 
         multiProcessing=0 -> no multi-processing
         multiProcessing=n -> n: number of processes
         '''
         self.multiProcessing = multiProcessing
-
 
         timing = False
         ########## reject duplicated curves and store internally
@@ -392,8 +299,7 @@ class Subdivision:
                 subDecompositions.append( None )
 
             else:
-                # find the superFace of the decomposition
-                
+                # find the superFace of the decomposition                
                 if len(faces) == 2:
                     # if only there are two faces, they will have the same area size
                     # so we look into the side attribute of half-edges of each face
@@ -483,9 +389,9 @@ class Subdivision:
         at that intersection point.
         these informations are important to construct the nodes:
 
-        self.intersectionsFlat ( <- intersections )
-        self.ipsCurveIdx : curve indices of each ips/node
-        self.ipsCurveTVal : ips/node's tValue over each assigned curve
+        intersectionsFlat ( <- intersections )
+        ipsCurveIdx : curve indices of each ips/node
+        ipsCurveTVal : ips/node's tValue over each assigned curve
 
         # step 1: finding all intersections
         # step 2: reject an intersection if it is not a point
@@ -497,29 +403,25 @@ class Subdivision:
         # step 8: find the t-value of each curve at the intersection
         # step 9: creating nodes from >intersection points<
 
-        self.intersections
+        intersections
         this variable is a 2d matrix (list of lists) where each element at
-        self.intersections[row][col] is itself a list of intersection points between
+        intersections[row][col] is itself a list of intersection points between
         two curves self.curves[row] and self.curves[col].
-
-        self.standAloneCurvesIdx
-        a list of indices to "self.curves" of non-intersecting curves        
         '''
 
-        self.intersections = [] # 2D array storage of intersection points
-        self.standAloneCurvesIdx = [] # TODO: I actually never use this! should I keep it?
+        intersections = [] # 2D array storage of intersection points
 
         # the indices to all following 3 lists are the same, i.e. ips_idx
-        self.intersectionsFlat = []   # 1D array storage of intersection points
-        self.ipsCurveIdx = []         # ipsCurveIdx[i]: idx of curves on nodes[i]
-        self.ipsCurveTVal = []        # t-value of each node at assigned curves
+        intersectionsFlat = []   # 1D array storage of intersection points
+        ipsCurveIdx = []         # ipsCurveIdx[i]: idx of curves on nodes[i]
+        ipsCurveTVal = []        # t-value of each node at assigned curves
 
 
         ########################################
         # step 1: finding all intersections
-        self.intersections = [ [ []
-                                 for col in range(len(self.curves)) ]
-                               for row in range(len(self.curves)) ]
+        intersections = [ [ []
+                            for col in range(len(self.curves)) ]
+                          for row in range(len(self.curves)) ]
 
         if self.multiProcessing: # with multiProcessing
             curvesTuplesIdx = [ [row,col]
@@ -529,12 +431,12 @@ class Subdivision:
             global curves
             curves = self.curves
             with ctx.closing(mp.Pool(processes=self.multiProcessing)) as p:
-                intersections = p.map( intersection_star, curvesTuplesIdx)
+                intersections_tmp = p.map( intersection_star, curvesTuplesIdx)
             del curves, p
             
-            for (row,col),ips in zip (curvesTuplesIdx, intersections):
-                self.intersections[row][col] = ips
-                self.intersections[col][row] = ips
+            for (row,col),ips in zip (curvesTuplesIdx, intersections_tmp):
+                intersections[row][col] = ips
+                intersections[col][row] = ips
             del col,row, ips
                 
         else:  # without multiProcessing
@@ -543,20 +445,20 @@ class Subdivision:
                     obj1 = self.curves[row].obj
                     obj2 = self.curves[col].obj
                     ip_tmp = sym.intersection(obj1,obj2)
-                    self.intersections[row][col] = ip_tmp
-                    self.intersections[col][row] = ip_tmp
+                    intersections[row][col] = ip_tmp
+                    intersections[col][row] = ip_tmp
             del col, row, ip_tmp
 
         ########################################
         # step 2: reject an intersection if it is not a point
         for row in range(len(self.curves)):
             for col in range(row):
-                ips = self.intersections[row][col]
+                ips = intersections[row][col]
                 if len(ips)>0 and isinstance(ips[0], sym.Point):
                     pass
                 else:
-                    self.intersections[row][col] = []
-                    self.intersections[col][row] = []
+                    intersections[row][col] = []
+                    intersections[col][row] = []
         del col,row, ips
 
         ########################################
@@ -579,44 +481,28 @@ class Subdivision:
         # the sake of simplicity, we add a self-intersection point to all
         # bounded curves.
 
-
         t = sym.Symbol('t')
         for row in range(len(self.curves)):
             if isinstance(self.curves[row].obj, sym.Circle):
-                ips_n = np.sum( [ len(self.intersections[row][col])
+                ips_n = np.sum( [ len(intersections[row][col])
                                   for col in range(len(self.curves)) ] )
                 if ips_n==0:
                     p = self.curves[row].obj.arbitrary_point(t)
-                    self.intersections[row][row] = [ p.subs([(t,0)]).evalf() ]
-                    self.standAloneCurvesIdx += [row]
+                    intersections[row][row] = [ p.subs([(t,0)]).evalf() ]
 
         ########################################
         # step 4: flattening the intersections list-of-lists-of-lists
-        self.intersectionsFlat = [p
-                    for row in range(len(self.curves))
-                    for col in range(row+1) # for self-intersection
-                    for p in self.intersections[row][col] ]
-
-        # ########################################
-        # # step 5: adding two virtual intersection points at the -oo and +oo
-        # # these will be used for handling unbounded regions (exterior faces)
-        # self.intersectionsFlat.append(sym.Point(-sym.oo, -sym.oo))
-        # self.intersectionsFlat.append(sym.Point(+sym.oo, +sym.oo))
+        intersectionsFlat = [p
+                             for row in range(len(self.curves))
+                             for col in range(row+1) # for self-intersection
+                             for p in intersections[row][col] ]
 
         ########################################
         # step 6: find indeces of curves corresponding to each intersection point
-        self.ipsCurveIdx = [list(set([row,col]))
-                            for row in range(len(self.curves))
-                            for col in range(row+1) # for self-intersection 
-                            for p in self.intersections[row][col] ]
-
-        # # step6_b: indexing all unbounded curves for infinity points
-        # # lines are unbounded on both sides
-        # lineIdx = [ idx  for idx, f in enumerate(self.curves)
-        #             if isinstance(f.obj, sym.Line) ]
-        # # assigning all line curves to both negative and positive infinity
-        # self.ipsCurveIdx.append( lineIdx ) # for negative infinity
-        # self.ipsCurveIdx.append( lineIdx ) # for positive infinity
+        ipsCurveIdx = [list(set([row,col]))
+                       for row in range(len(self.curves))
+                       for col in range(row+1) # for self-intersection 
+                       for p in intersections[row][col] ]
 
         ########################################
         # step 7: merge collocated intersection points
@@ -626,15 +512,15 @@ class Subdivision:
         '''
         if self.multiProcessing:
             distances = [ [ 0
-                            for col in range(len(self.intersectionsFlat)) ]
-                          for row in range(len(self.intersectionsFlat)) ]
+                            for col in range(len(intersectionsFlat)) ]
+                          for row in range(len(intersectionsFlat)) ]
 
             ipsTuplesIdx = [ [row,col]
-                             for row in range(len(self.intersectionsFlat))
+                             for row in range(len(intersectionsFlat))
                              for col in range(row) ]
 
             global intersectionPoints
-            intersectionPoints = self.intersectionsFlat
+            intersectionPoints = intersectionsFlat
             with ctx.closing(mp.Pool(processes=self.multiProcessing)) as p:
                 distancesFlat = p.map( distance_star, ipsTuplesIdx)
             del intersectionPoints
@@ -644,35 +530,35 @@ class Subdivision:
                 distances[row][col] = dVal
                 distances[col][row] = dVal
 
-            for idx1 in range(len(self.intersectionsFlat)-1,-1,-1):
+            for idx1 in range(len(intersectionsFlat)-1,-1,-1):
                 for idx2 in range(idx1):
                     if distances[idx1][idx2] < np.spacing(10**10): # == 0:
-                        self.intersectionsFlat.pop(idx1)
-                        s1 = set(self.ipsCurveIdx[idx1])
-                        s2 = set(self.ipsCurveIdx[idx2])
-                        self.ipsCurveIdx[idx2] = list(s1.union(s2)) 
-                        self.ipsCurveIdx.pop(idx1)
+                        intersectionsFlat.pop(idx1)
+                        s1 = set(ipsCurveIdx[idx1])
+                        s2 = set(ipsCurveIdx[idx2])
+                        ipsCurveIdx[idx2] = list(s1.union(s2)) 
+                        ipsCurveIdx.pop(idx1)
                         break
 
         else:
-            for idx1 in range(len(self.intersectionsFlat)-1,-1,-1):
+            for idx1 in range(len(intersectionsFlat)-1,-1,-1):
                 for idx2 in range(idx1):
-                    if self.intersectionsFlat[idx1].distance( self.intersectionsFlat[idx2] ) == 0:
-                        s1 = set(self.ipsCurveIdx[idx2])
-                        s2 = set(self.ipsCurveIdx[idx1])
-                        self.ipsCurveIdx[idx2] = list(s1.union(s2)) 
-                        self.ipsCurveIdx.pop(idx1)
-                        self.intersectionsFlat.pop(idx1)
+                    if intersectionsFlat[idx1].distance( intersectionsFlat[idx2] ) == 0:
+                        s1 = set(ipsCurveIdx[idx2])
+                        s2 = set(ipsCurveIdx[idx1])
+                        ipsCurveIdx[idx2] = list(s1.union(s2)) 
+                        ipsCurveIdx.pop(idx1)
+                        intersectionsFlat.pop(idx1)
                         break
 
-        assert len(self.intersectionsFlat) == len(self.ipsCurveIdx)
+        assert len(intersectionsFlat) == len(ipsCurveIdx)
 
 
         ########################################
         # step 8: find the t-value of each Curve at the intersection
-        self.ipsCurveTVal = [ [ self.curves[cIdx].IPE(p) for cIdx in cIndices]
-                            for (cIndices,p) in zip(self.ipsCurveIdx, self.intersectionsFlat) ]
-        assert len(self.intersectionsFlat) == len(self.ipsCurveTVal)
+        ipsCurveTVal = [ [ self.curves[cIdx].IPE(p) for cIdx in cIndices]
+                            for (cIndices,p) in zip(ipsCurveIdx, intersectionsFlat) ]
+        assert len(intersectionsFlat) == len(ipsCurveTVal)
 
         ########################################
         # step 9: creating nodes from >intersection points<
@@ -681,11 +567,14 @@ class Subdivision:
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        nodes = tuple( (pIdx, {'point':self.intersectionsFlat[pIdx]})
-                       for pIdx in range(len(self.intersectionsFlat)) )
+        nodes = tuple( ( pIdx,
+                         {'point': intersectionsFlat[pIdx],
+                          'curveIdx': ipsCurveIdx[pIdx],
+                          'curveTval':ipsCurveTVal[pIdx]} )
+                       for pIdx in range(len(intersectionsFlat)) )
 
         self.MDG.add_nodes_from( nodes )
-        assert len(self.MDG.nodes()) == len(self.intersectionsFlat)
+        assert len(self.MDG.nodes()) == len(intersectionsFlat)
 
     ############################################################################
     def construct_edges(self):
@@ -695,41 +584,28 @@ class Subdivision:
         located on each Curve, along with the t-value of the Curve
         at each intersection point
 
-        self.curveIpsIdx
-        self.curveIpsTVal
+        curveIpsIdx
+        curveIpsTVal
         '''
-        self.edges = ()
-        self.curveIpsIdx = []
-        self.curveIpsTVal = []
-
         ########################################
         # step 1: find intersection points of curves
         # indeces of intersection points corresponding to each curves
-        self.curveIpsIdx = [[] for i in range(len(self.curves))]
-        self.curveIpsTVal = [[] for i in range(len(self.curves))]
-        for pIdx in range(len(self.intersectionsFlat)):
-            for (tVal,cIdx) in zip(self.ipsCurveTVal[pIdx], self.ipsCurveIdx[pIdx]) :
-                self.curveIpsIdx[cIdx].append(pIdx)
-                self.curveIpsTVal[cIdx].append(tVal)
+        curveIpsIdx = [[] for i in range(len(self.curves))]
+        curveIpsTVal = [[] for i in range(len(self.curves))]
+
+        for nodeIdx in self.MDG.nodes():
+            for (tVal,cIdx) in zip(self.MDG.node[nodeIdx]['curveTval'],
+                                   self.MDG.node[nodeIdx]['curveIdx']) :
+                curveIpsIdx[cIdx].append(nodeIdx)
+                curveIpsTVal[cIdx].append(tVal)
 
         ########################################
         # step 2: sort intersection points over curves
         # sorting iptersection points, according to corresponding tVal
         for cIdx in range(len(self.curves)):
-            # print 'on Curve ',cIdx,':', self.curveIpsTVal[cIdx], self.curveIpsIdx[cIdx]
-            tmp = sorted(zip( self.curveIpsTVal[cIdx], self.curveIpsIdx[cIdx] ))
-            self.curveIpsIdx[cIdx] = [pIdx for (tVal,pIdx) in tmp]
-            self.curveIpsTVal[cIdx].sort()
-
-        # ########################################
-        # # step 3: derivatives over curves
-        # self.curveDer1st = [[] for i in range(len(self.curves))]
-        # self.curveDer2nd = [[] for i in range(len(self.curves))]
-        # for (cIdx,f) in enumerate(self.curves):
-        #     self.curveDer1st[cIdx] = [ f.firstDerivative(self.intersectionsFlat[pIdx])
-        #                              for pIdx in self.curveIpsIdx[cIdx] ]
-        #     self.curveDer2nd[cIdx] = [ f.secondDerivative(self.intersectionsFlat[pIdx])
-        #                              for pIdx in self.curveIpsIdx[cIdx] ]
+            tmp = sorted(zip( curveIpsTVal[cIdx], curveIpsIdx[cIdx] ))
+            curveIpsIdx[cIdx] = [pIdx for (tVal,pIdx) in tmp]
+            curveIpsTVal[cIdx].sort()
 
         # ########################################
         # step 4: half-edge construction
@@ -738,8 +614,8 @@ class Subdivision:
             # step a:
             # for each curve, create all edges (half-edges) located on it
             if isinstance(c.obj, sym.Line):
-                ipsIdx = self.curveIpsIdx[cIdx]
-                tvals = self.curveIpsTVal[cIdx]
+                ipsIdx = curveIpsIdx[cIdx]
+                tvals = curveIpsTVal[cIdx]
 
                 startIdxList = ipsIdx[:-1]
                 startTValList = tvals[:-1]
@@ -749,8 +625,8 @@ class Subdivision:
 
             elif isinstance(c.obj, sym.Circle):
                 # this case duplicaties the first point at the end of list
-                ipsIdx = self.curveIpsIdx[cIdx]
-                tvals = self.curveIpsTVal[cIdx]
+                ipsIdx = curveIpsIdx[cIdx]
+                tvals = curveIpsTVal[cIdx]
 
                 startIdxList = ipsIdx
                 startTValList = tvals
@@ -777,7 +653,6 @@ class Subdivision:
                 # this will happen if there is only one node on a circle
                 # ( also a non-intersecting circles with one dummy node)
                 # next line will take care of that only
-                # if cIdx in self.standAloneCurvesIdx: newPathKey2 += 1
                 if sIdx==eIdx: newPathKey2 += 1
 
                 
@@ -788,8 +663,8 @@ class Subdivision:
                 #          cIdx, side,
                 #          sTVal, eTVal)
 
-                ps = self.intersectionsFlat[sIdx]
-                pe = self.intersectionsFlat[eIdx]
+                ps = self.MDG.node[sIdx]['point']
+                pe = self.MDG.node[eIdx]['point']
                 c = self.curves[cIdx]
 
                 # first half-edge
@@ -805,8 +680,6 @@ class Subdivision:
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.MDG.add_edges_from([e1, e2])
-                self.edges = self.edges + (e1, e2)
-
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
@@ -931,37 +804,6 @@ class Subdivision:
         allHalfEdgeIdx = self.get_all_HalfEdge_indices(graph)
         openList = [ 1 for heIdx in allHalfEdgeIdx]
         # note that the index to "openList" is equivalent to "allHalfEdgeIdx"
-
-        # ################################        
-        # # step one:
-        # # put all edges conndected to infinity in the
-        # # closed loop without creating a face from them 
-        # pInfIdx = len(self.intersectionsFlat)-1
-        # nInfIdx = len(self.intersectionsFlat)-2
-
-        # for (openListIdx, isOpen) in enumerate(openList):
-        #     if isOpen:
-        #         sNodeIdx = allHalfEdgeIdx[openListIdx][0]
-        #         eNodeIdx = allHalfEdgeIdx[openListIdx][1]
-
-        #         c1 = (sNodeIdx==pInfIdx)
-        #         c2 = (sNodeIdx==nInfIdx)
-        #         c3 = (eNodeIdx==pInfIdx)
-        #         c4 = (eNodeIdx==nInfIdx)
-                
-        #         if  c1 or c2 or c3 or c4:
-        #             # print 'closing edge: ', self.allHalfEdgeIdx[openListIdx]
-        #             openList[openListIdx] = 0
-
-        # ################################        
-        # # step two: 
-        # # put the stand alone curves in the closed list
-        # for (openListIdx, isOpen) in enumerate(openList):
-        #     if isOpen:
-        #         start, end, k = allHalfEdgeIdx[openListIdx]
-        #         cIdx = graph[start][end][k]['obj'].cIdx
-        #         if cIdx in self.standAloneCurvesIdx:
-        #             openList[openListIdx] = 0
         
         ################################        
         # step three:
@@ -1040,7 +882,7 @@ class Subdivision:
 
         # step1: initialization - openning the path
         (start, end, k) = edgeList[0]
-        p = self.intersectionsFlat[start]
+        p = self.MDG.node[start]['point']
         x, y = p.x.evalf(), p.y.evalf()
 
         verts = [ (x,y) ]
@@ -1063,7 +905,7 @@ class Subdivision:
 
 
             if isinstance(self.curves[cIdx].obj, sym.Line):
-                p2 = self.intersectionsFlat[end]
+                p2 = self.MDG.node[end]['point']
                 x, y = p2.x.evalf(), p2.y.evalf()
                 verts.append( (x,y) )
                 codes.append( mpath.Path.LINETO )
@@ -1108,10 +950,10 @@ class Subdivision:
         assert len(verts) == len(codes)
 
         # step3: finialize - closing the path
-        # make sure that the last point of the path is not a control point of an arc
+        # making sure that the last point of the path is not a control point of an arc
         if codes[-1] == 4:
             (start, end, k) = edgeList[0]
-            p = self.intersectionsFlat[start]
+            p = self.MDG.node[start]['point']
             x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
             verts.append( (x,y) )
             codes.append( mpath.Path.CLOSEPOLY )

@@ -101,8 +101,8 @@ def plot_edges(axis, subdiv,
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
-                p1 = subdiv.intersectionsFlat[start] #subd.curves[cIdx].DPE(sTVal)
-                p2 = subdiv.intersectionsFlat[end] #subd.curves[cIdx].DPE(eTVal)
+                p1 = subdiv.MDG.node[start]['point']
+                p2 = subdiv.MDG.node[end]['point']
                 x, y = p1.x.evalf() , p1.y.evalf()
                 dx, dy = p2.x.evalf()-x, p2.y.evalf()-y
 
@@ -169,20 +169,16 @@ def plot_nodes (axis, subdiv, nodes=None,
     if nodes==None:  nodes = subdiv.MDG.nodes()
     points = [subdiv.MDG.node[idx]['point'] for idx in nodes]
         
-
-        
     nx = [p.x for p in points]
     ny = [p.y for p in points]
     axis.plot (nx,ny, col+'o', alpha= alp)
 
     if printLabels:
         font = {'color':col, 'size': 10}
-        for idx in range(len(subdiv.intersectionsFlat)):
-            
-            if subdiv.intersectionsFlat[idx].x != sym.oo and subdiv.intersectionsFlat[idx].x != -sym.oo:
-                axis.text(subdiv.intersectionsFlat[idx].x,
-                          subdiv.intersectionsFlat[idx].y,
-                          'n#'+str(idx))
+        for idx in subdiv.MDG.nodes():            
+            axis.text(subdiv.MDG.node[idx]['point'].x,
+                      subdiv.MDG.node[idx]['point'].y,
+                      'n#'+str(idx))
 
 
 
@@ -371,7 +367,7 @@ def plot_new_halfEdge(axis):
     # ##########################################################################
     # ################################# drawing derivatives of the new haldfedge
     # if False:
-    #     p1 = subdiv.intersectionsFlat[start]
+    #     p1 = subdiv.MDG.node[start]['point']
     #     px, py = p1.x.evalf() , p1.y.evalf()
     #     he_obj = subdiv.MDG[start][end][k]['obj']
 
@@ -445,82 +441,3 @@ def animate_halfEdges(subdivision, timeInterval = .1*1000):
     plt.tight_layout()
     plt.show()
     timer.stop()
-
-
-
-
-
-
-
-################################################################################
-########################################################################### dump
-################################################################################
-
-
-
-
-
-# ################################### plotting faces
-# def plotFaces_half_edge(axis, subdiv,
-#                         faceIdx=None,
-#                         col='m', alp=0.8):
-
-#     ''' plot face by its half-edges'''
-
-#     faces = subdiv.faces if faceIdx is None else [subdiv.faces[idx]
-#                                                   for idx in faceIdx]
-
-#     facePlots = []
-
-#     for face in faces:
-#         for edge in face:
-
-#             (start, end, k) = edge
-#             obj = subdiv.MDG[start][end][k]['obj']
-#             cIdx = obj.cIdx
-#             sTVal = obj.sTVal
-#             eTVal = obj.eTVal
-
-#             if isinstance(subdiv.curves[cIdx].obj, sym.Line):
-#                 if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
-#                     p1 = subdiv.intersectionsFlat[start]#subd.curves[cIdx].DPE(sTVal)
-#                     p2 = subdiv.intersectionsFlat[end]#subd.curves[cIdx].DPE(eTVal)
-#                     x, y = p1.x.evalf() , p1.y.evalf()
-#                     dx, dy = p2.x.evalf()-x, p2.y.evalf()-y
-
-#                     facePlots.append( axis.plot ([x,x+dx], [y,y+dy], col, alpha=alp) )
-
-#             elif isinstance(subdiv.curves[cIdx].obj, sym.Circle):
-#                 tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
-#                 theta = np.linspace(np.float(sTVal), np.float(eTVal),
-#                                     tStep, endpoint=True)
-#                 circ = subdiv.curves[cIdx].obj
-#                 xc, yc, rc = circ.center.x , circ.center.y , circ.radius
-#                 x = xc + rc * np.cos(theta)
-#                 y = yc + rc * np.sin(theta)
-
-#                 facePlots.append( axis.plot (x, y, col,alpha=alp) )
-
-#     return facePlots
-
-
-
-# ################### plotting decomposing functions
-# def plotCurves(axis, curves,
-#               alp=0.4, col='b',
-#               printLabels=False):
-
-#     for c in curves:
-#         if isinstance(c.obj , sym.Line):
-#             x = [c.obj.p1.x , c.obj.p2.x]
-#             y = [c.obj.p1.y , c.obj.p2.y]
-
-#         elif isinstance(c.obj , sym.Circle):
-#             x = c.obj.center.x + c.obj.radius * np.cos(np.linspace(0,2*np.pi,50, endpoint=True))
-#             y = c.obj.center.y + c.obj.radius * np.sin(np.linspace(0,2*np.pi,50, endpoint=True))
-
-#         axis.plot (x, y, col+'-', alpha=alp)
-
-#         if printLabels:
-#             pass
-

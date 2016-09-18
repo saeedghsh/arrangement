@@ -31,7 +31,7 @@ import time
 test_cases_key = [
     'default',                      # 0: 
     'default_small',                # 1: 
-    'specialCase_01',               # 2: 4 tangent circles and a line  # fails
+    'specialCase_01',               # 2: 4 tangent circles and a line
     'specialCase_02',               # 3: non-interrsecting circle
     'specialCase_03',               # 4: single circle 4 intersections
     'specialCase_04',               # 5: 2 lines - one non-interrsecting circle
@@ -46,18 +46,11 @@ test_cases_key = [
     'star',                         # 14: 
     'example_01',                   # 15: 2 circles and a line
     'specialCase_09',               # 16: 
+    'specialCase_10',               # 17: 
 ]
 
-# nodes = ( (1,{'obj':1}),(3,{'obj':3}) )
-# MDG.add_nodes_from( nodes )
-
-
-# TODO:
-# nodes:  ( (idx,{'obj':node}),... ) -> ( (idx,{'point':point}),... )
-# MDG.node[idx]['obj'].point -> MDG.node[idx]['point']
-
 ########################################
-testNumber = 16
+testNumber = 9
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
@@ -72,7 +65,6 @@ if 'number_of_nodes' in data.keys(): # len(data.keys()) > 1
     n_subGraphs = data['number_of_subGraphs']
 else:
     testing = False
-
 
 ################################################################################
 ###################################### deploying subdivision (and decomposition)
@@ -125,4 +117,25 @@ myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 ################################################################################
 ####################################################################### API demo
 ################################################################################
+'''
+important note about nodes of networkx:
+MDG.nodes() is not neccessarily [0,1,2,...]
+it's important to remember that MDG.node is a dict, not a list
+MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
+'''
+
+# subdiv = mySubdivision
+# subdiv.subGraphs, subdiv.subDecompositions
+# subdiv.MDG, subdiv.decomposition
+
+# # access nodes of networkX graph and their attribute dict
+# for nodeIdx in subdiv.MDG.nodes():
+#     print nodeIdx, ': ', subdiv.MDG.node[nodeIdx]
+
+# # access edges of networkX graph:
+# for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
+#     (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
+#     print (s,e,k), ': ', subdiv.MDG[s][e][k]['obj']
+
+# # access main graph of subdivision:
 
