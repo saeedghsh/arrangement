@@ -86,18 +86,15 @@ def plot_edges(axis, subdiv,
         
         he_obj = subdiv.MDG[start][end][k]['obj']
         curve_obj = subdiv.curves[he_obj.cIdx].obj
+        
         cIdx = he_obj.cIdx
 
         thei =  he_obj.twinIdx
 
         sTVal = he_obj.sTVal
-        s1stDer = he_obj.s1stDer
-        s2ndDer = he_obj.s2ndDer
         eTVal = he_obj.eTVal
-        e1stDer = he_obj.e1stDer
-        e2ndDer = he_obj.e2ndDer
 
-        if isinstance(curve_obj, sym.Line):
+        if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
                 p1 = subdiv.intersectionsFlat[start] #subd.curves[cIdx].DPE(sTVal)
                 p2 = subdiv.intersectionsFlat[end] #subd.curves[cIdx].DPE(eTVal)
@@ -123,7 +120,7 @@ def plot_edges(axis, subdiv,
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                    fontdict={'color':col,  'size': 10})
 
-        elif isinstance(curve_obj , sym.Circle):
+        elif isinstance(curve_obj, sym.Circle):
             tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
             theta = np.linspace(np.float(sTVal), np.float(eTVal),
                                 tStep, endpoint=True)
@@ -157,6 +154,13 @@ def plot_edges(axis, subdiv,
                               yp - (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                fontdict={'color':col,  'size': 10})
+
+
+
+
+
+
+
 
 ################################### plotting nodes
 def plot_nodes (axis, subdiv, nodes=None,
@@ -365,35 +369,35 @@ def plot_new_halfEdge(axis):
     else:
         print 'something is wrong!'
 
-    ##########################################################################
-    ################################# drawing derivatives of the new haldfedge
-    if False:
-        p1 = subdiv.intersectionsFlat[start]
-        px, py = p1.x.evalf() , p1.y.evalf()
-        he_obj = subdiv.MDG[start][end][k]['obj']
+    # ##########################################################################
+    # ################################# drawing derivatives of the new haldfedge
+    # if False:
+    #     p1 = subdiv.intersectionsFlat[start]
+    #     px, py = p1.x.evalf() , p1.y.evalf()
+    #     he_obj = subdiv.MDG[start][end][k]['obj']
 
-        # Blue: 1st derivative - tangent to the curve
-        dx,dy = he_obj.s1stDer
-        axis.arrow(px,py, dx,dy,
-                   length_includes_head = True,
-                   head_width = 0.5, head_length = 1.,
-                   fc = 'b', ec = 'b') , 
+    #     # Blue: 1st derivative - tangent to the curve
+    #     dx,dy = he_obj.s1stDer
+    #     axis.arrow(px,py, dx,dy,
+    #                length_includes_head = True,
+    #                head_width = 0.5, head_length = 1.,
+    #                fc = 'b', ec = 'b') , 
 
-        # Green: normal to the 1st derivative
-        dx,dy = he_obj.s1stDer
-        dxn,dyn = np.array( [dy,-dx] ) if he_obj.side =='positive' else np.array( [-dy,dx] )
-        axis.arrow(px,py, dxn,dyn,
-                   length_includes_head = True,
-                   head_width = 0.5, head_length = 1.,
-                   fc = 'g', ec = 'g')
+    #     # Green: normal to the 1st derivative
+    #     dx,dy = he_obj.s1stDer
+    #     dxn,dyn = np.array( [dy,-dx] ) if he_obj.side =='positive' else np.array( [-dy,dx] )
+    #     axis.arrow(px,py, dxn,dyn,
+    #                length_includes_head = True,
+    #                head_width = 0.5, head_length = 1.,
+    #                fc = 'g', ec = 'g')
 
-        # Red: 2ns derivative
-        dx,dy = he_obj.s2ndDer
-        axis.arrow(px,py, dx,dy,
-                   length_includes_head = True,
-                   head_width = 0.5, head_length = 1.,
-                   fc = 'r', ec = 'r')
-    ##########################################################################
+    #     # Red: 2ns derivative
+    #     dx,dy = he_obj.s2ndDer
+    #     axis.arrow(px,py, dx,dy,
+    #                length_includes_head = True,
+    #                head_width = 0.5, head_length = 1.,
+    #                fc = 'r', ec = 'r')
+    # ##########################################################################
 
     # print index of the half-edge
     axis.text(-8, -7,
@@ -453,88 +457,6 @@ def animate_halfEdges(subdivision, timeInterval = .1*1000):
 ########################################################################### dump
 ################################################################################
 
-
-# #################### plotting derivatives verctors
-# def plot_derivatives (axis, subdiv,
-#                       plotDerivatives1st = True,
-#                       derivAlpha1st = 0.7, derivColor1st = 'r',
-#                       plotDerivatives2nd = True,
-#                       derivAlpha2nd = 0.7, derivColor2nd = 'b',
-#                       printLabels = False):
-
-#     for (start, end, k) in subdiv.allHalfEdgeIdx:
-#         ps = subdiv.intersectionsFlat[start]
-#         pe = subdiv.intersectionsFlat[end]
-
-#         # attr = subdiv.MDG[start][end][k]
-
-#         # cIdx = attr['cIdx']
-#         # sTVal = attr['sTVal']
-
-#         # thei =  attr['twinIdx']
-#         # assert thei[0]==end and thei[1]==start
-
-#         # s1stDer = attr['s1stDer']
-#         # s2ndDer = attr['s2ndDer']
-#         # eTVal = attr['eTVal']
-#         # e1stDer = attr['e1stDer']
-#         # e2ndDer = attr['e2ndDer']
-
-#         obj = subdiv.MDG[start][end][k]['obj']
-#         cIdx = obj.cIdx
-#         sTVal = obj.sTVal
-#         thei =  obj.twinIdx
-#         s1stDer = obj.s1stDer
-#         s2ndDer = obj.s2ndDer
-#         eTVal = obj.eTVal
-#         e1stDer = obj.e1stDer
-#         e2ndDer = obj.e2ndDer
-
-#         if plotDerivatives1st:
-#             # at starting point
-#             norm = np.sqrt(s1stDer.dot(s1stDer)) # np.linalg.norm(s1stDer,order=1)
-#             if norm > 0:
-#                 norm = 1.
-#                 axis.arrow( ps.x, ps.y,
-#                             s1stDer[0]/norm, s1stDer[1]/norm,
-#                             length_includes_head = True,# shape='right',
-#                             linewidth = 1, head_width = 0.1, head_length = 0.2,
-#                             fc = derivColor1st, ec = derivColor1st, alpha=derivAlpha1st )
-
-#                 if printLabels:
-#                     if ps.x != sym.oo and ps.x !=-sym.oo:
-#                         axis.text(ps.x + s1stDer[0]/norm,
-#                                   ps.y + s1stDer[1]/norm,
-#                                   'f#'+str(cIdx),
-#                                   fontdict={'color':derivColor1st, 'size': 16})
-
-#         if plotDerivatives2nd:
-#             # at starting point
-#             norm = np.sqrt(s2ndDer.dot(s2ndDer))
-#             if norm > 0:
-#                 norm = 1.
-#                 axis.arrow( ps.x, ps.y,
-#                             s2ndDer[0]/norm, s2ndDer[1]/norm,
-#                             length_includes_head = True,# shape='right',
-#                             linewidth = 1, head_width = 0.1, head_length = 0.2,
-#                             fc = derivColor2nd, ec = derivColor2nd, alpha=derivAlpha2nd)
-
-#                 if printLabels:
-#                     axis.text(ps.x + s2ndDer[0]/norm,
-#                               ps.y + s2ndDer[1]/norm,
-#                               'c#'+str(cIdx),
-#                               fontdict={'color':derivColor2nd, 'size': 16})
-
-#             else:
-#                 axis.plot( ps.x, ps.y,
-#                            derivColor2nd+'o', fillstyle='none',
-#                            linewidth=1, markersize=12, alpha=derivAlpha2nd)
-
-#                 if printLabels:
-#                     if ps.x != sym.oo and ps.x !=-sym.oo:
-#                         axis.text( ps.x, ps.y,
-#                                    'c#' + str(cIdx),
-#                                    fontdict={'color':derivColor2nd, 'size': 16})
 
 
 

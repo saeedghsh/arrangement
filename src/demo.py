@@ -49,8 +49,10 @@ test_cases_key = [
 ]
 
 ########################################
-testNumber = 16
+testNumber = 2
 timing = False
+
+
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = tcg.load_from_csv( file_name )
@@ -110,53 +112,10 @@ myplt.plot_decomposition(mySubdivision,
 ###################################################################### animating
 ################################################################################
 myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
-
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
 
 
 ################################################################################
 ####################################################################### API demo
 ################################################################################
-# Subdivision
-# Decomposition
-# Curve
-# Node
-# HalfEdge
-# Face
 
-
-
-
-# #### test node construction
-# # does mySubdivision.nodes correspond to mySubdivision.intersectionFlat?
-# num_of_intersections = len( mySubdivision.intersectionsFlat)
-# num_of_nodes = len( mySubdivision.nodes )
-# asser (num_of_intersections == num_of_nodes)
-
-# for (n, p) in zip (mySubdivision.nodes, mySubdivision.intersectionsFlat):
-#     n_point = mySubdivision.nodes[n_idx][1]['obj'].point
-#     assert(n_point.compare(p) == 0)
-
-# # are nodes assigned correctly to curves?
-# for c_idx, curve in enumerate(mySubdivision.curves):
-#     for n_idx, node in enumerate(mySubdivision.nodes):
-#         point = mySubdivision.nodes[n_idx][1]['obj'].point
-#         if curve.obj.contains(point):
-#             if not( c_idx in mySubdivision.ipsCurveIdx[n_idx] ):
-#                 print 'error'
-
-
-
-# #### test face construction
-# # could a pair of twins be in oen face simultaneously?
-
-
-# allHalfEdge = mySubdivision.get_all_HalfEdge_indices()
-
-# he = (2,8,0)
-
-# idx = mySubdivision.find_successor_HalfEdge(he)
-# he = allHalfEdge[idx]
-# print he
-
-# mySubdivision.find_successor_HalfEdge(he)

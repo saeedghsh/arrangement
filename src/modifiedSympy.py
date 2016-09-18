@@ -25,19 +25,7 @@ import sympy as sym
 ################################################# Modified Circle
 ################################################################################
 
-################################################################################
-#TODO:saesha
-class RayModified:
-    ####################################
-    def __init__ (self, args):
-        self.obj = sym.Ray( *args )
 
-################################################################################
-#TODO:saesha
-class SegmentModified:
-    ####################################
-    def __init__ (self, args):
-        self.obj = sym.Segment( *args )
 
 ################################################################################
 #TODO:saesha
@@ -51,9 +39,219 @@ class ArcModified:
         self.t2 = None
 
 
+################################################################################
+#TODO:saesha
+class RayModified:
+    ####################################
+    def __init__ (self, args):
+        self.obj = sym.Ray( *args )
+
+    ####################################
+    def DPE(self, t):
+        '''
+        TD: not sure when and how I did this, double-check
+
+        Direct Parametric Equation
+        (x,y) = df(t) = ( xl + a*t , yl + b*t )
+        
+        a**2 + b**2 = 1 --> b = sqrt(1-a**2)
+        sl = b/a --> b = a *sl
+        '''
+        if self.obj.slope == 0:
+            point = sym.Point(self.obj.p1.x + t, self.obj.p1.y)
+            
+        elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
+            point =  sym.Point(self.obj.p1.x, self.obj.p1.y + t)
+        else:
+            a = sym.sqrt(self.obj.slope**2 + 1) / (self.obj.slope**2 + 1)
+            b =  a * self.slope #TODO:saesha, shouldn't this be a * self.obj.slope
+            point =  sym.Point(self.obj.p1.x + a.evalf()*t,
+                               self.obj.p1.y + b.evalf()*t)
+        
+        return point if self.obj.contains(point) else False
+        
+    ####################################
+    def IPE(self, point):
+        '''
+        TD: not sure when and how I did this, double-check
+
+        Inverse Parametric Equation
+        t = df(x,y) = (x-xl)/a if a!=0 else (y-yl)/b
+        
+        a**2 + b**2 = 1 --> b = sqrt(1-a**2)
+        sl = b/a --> b = a *sl
+        '''
+        if self.obj.contains(point):
+            if self.obj.slope == 0:
+                return point.x
+            elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
+                return point.y
+            else:
+                a = sym.sqrt(self.obj.slope**2 + 1) / (self.obj.slope**2 + 1)
+                b = sym.sqrt(1 - a**2)
+                return (point.x-self.obj.p1.x)/a.evalf() if a != 0 else (point.y-self.obj.p1.y)/b.evalf()
+        else:
+            return False
+
+    ####################################
+    def firstDerivative (self, point=None, direction='positive'):
+        '''
+        generally:
+        dy/dx = lim_{ Delta_x -> 0 } Delta_y / Delta_x
+        
+        for a straight line:
+        dy/dx = Delta_y / Delta_x
+        
+        
+        1stDer = [dx,dy],
+        slope = tan(theta) -> theta = arctan(slope)
+        ( note that theta \in [-pi/2, pi/2] )
+        [dx, dy] = [cos(theta) , sin(theta)]
+        ( note that always dx>=0, because theta \in [-pi/2, pi/2])
+
+        note that slopeAngle is constant for the line
+        and that's why the second derivative is a null vector
+        '''
+        slopeAngle = np.arctan(np.float(self.obj.slope.evalf()))
+        res = np.array([np.cos(slopeAngle) , np.sin(slopeAngle)], float)
+        return res if direction == 'positive' else -1*res
 
 
+    ####################################
+    def secondDerivative(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the 2nd derivative of a line
+        '''
+        return np.array([0. ,0.], float)
 
+    ####################################
+    def tangentAngle(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        '''
+        (dx,dy) = self.firstDerivative(point, direction)
+        alpha = np.arctan2(dy,dx)
+        return np.mod(alpha + 2*np.pi , 2*np.pi)
+
+    ####################################
+    def curvature(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the curvature of a line
+        '''
+        return 0.
+
+
+################################################################################
+#TODO:saesha
+class SegmentModified:
+    ####################################
+    def __init__ (self, args):
+        self.obj = sym.Segment( *args )
+
+
+    ####################################
+    def DPE(self, t):
+        '''
+        TD: not sure when and how I did this, double-check
+
+        Direct Parametric Equation
+        (x,y) = df(t) = ( xl + a*t , yl + b*t )
+        
+        a**2 + b**2 = 1 --> b = sqrt(1-a**2)
+        sl = b/a --> b = a *sl
+        '''
+        if self.obj.slope == 0:
+            point = sym.Point(self.obj.p1.x + t, self.obj.p1.y)
+            
+        elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
+            point =  sym.Point(self.obj.p1.x, self.obj.p1.y + t)
+        else:
+            a = sym.sqrt(self.obj.slope**2 + 1) / (self.obj.slope**2 + 1)
+            b =  a * self.slope #TODO:saesha, shouldn't this be a * self.obj.slope
+            point =  sym.Point(self.obj.p1.x + a.evalf()*t,
+                               self.obj.p1.y + b.evalf()*t)
+        
+        return point if self.obj.contains(point) else False
+        
+    ####################################
+    def IPE(self, point):
+        '''
+        TD: not sure when and how I did this, double-check
+
+        Inverse Parametric Equation
+        t = df(x,y) = (x-xl)/a if a!=0 else (y-yl)/b
+        
+        a**2 + b**2 = 1 --> b = sqrt(1-a**2)
+        sl = b/a --> b = a *sl
+        '''
+        if self.obj.contains(point):
+            if self.obj.slope == 0:
+                return point.x
+            elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
+                return point.y
+            else:
+                a = sym.sqrt(self.obj.slope**2 + 1) / (self.obj.slope**2 + 1)
+                b = sym.sqrt(1 - a**2)
+                return (point.x-self.obj.p1.x)/a.evalf() if a != 0 else (point.y-self.obj.p1.y)/b.evalf()
+        else:
+            return False
+
+    ####################################
+    def firstDerivative (self, point=None, direction='positive'):
+        '''
+        generally:
+        dy/dx = lim_{ Delta_x -> 0 } Delta_y / Delta_x
+        
+        for a straight line:
+        dy/dx = Delta_y / Delta_x
+        
+        
+        1stDer = [dx,dy],
+        slope = tan(theta) -> theta = arctan(slope)
+        ( note that theta \in [-pi/2, pi/2] )
+        [dx, dy] = [cos(theta) , sin(theta)]
+        ( note that always dx>=0, because theta \in [-pi/2, pi/2])
+
+        note that slopeAngle is constant for the line
+        and that's why the second derivative is a null vector
+        '''
+        slopeAngle = np.arctan(np.float(self.obj.slope.evalf()))
+        res = np.array([np.cos(slopeAngle) , np.sin(slopeAngle)], float)
+        return res if direction == 'positive' else -1*res
+
+
+    ####################################
+    def secondDerivative(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the 2nd derivative of a line
+        '''
+        return np.array([0. ,0.], float)
+
+    ####################################
+    def tangentAngle(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        '''
+        (dx,dy) = self.firstDerivative(point, direction)
+        alpha = np.arctan2(dy,dx)
+        return np.mod(alpha + 2*np.pi , 2*np.pi)
+
+    ####################################
+    def curvature(self, point=None, direction='positive'):
+        '''
+        although it is independant of the location of the point
+        we include for consistency with a general form of curves
+        note: direction does not affect the curvature of a line
+        '''
+        return 0.
 
 ################################################################################
 class LineModified:

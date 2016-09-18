@@ -86,25 +86,65 @@ TODO:
 
       Developement
       ------------
-      [ ] find_neighbours(),
-      don't forget to include half-edges from holes.
-      for this actually we need to make sure there is no redundancy in holes!
 
+      [ ] API documentation
+	$ cd Dropbox/myGits/dev/subdivision/
+	$ pyreverse -o svg -p subdivision src/*.py
+
+	- what are the date structures?
+	  - a tree of data structures; e.g
+	    subdiv: (MDG, decomposition, [curves], ... )
+	    decomposition: (graph, [faces], ... )
+	    MDG: (nodes, edges)
+	  
+	- how to index each data structure and access their object?
+	  - nodes: subdivision.nodes[idx], where else are they accessible?
+	    edges: subdivision.edges[idx], where else are they accessible?
+	    faces: subdivision.decomposition.faces[idx]
+	    half-edges: subdivision.MDG[s][e][k]
+	    ...
+	  
+	- what is the relation between indices of different lists,
+	  e.g. nodes vs ips vs edges ...
+	  
       [ ] create test cases for the improved cases, i.e. ray, segment, arc
-      add line segments and rays
-      
+
+	add line segments and rays
+	  the challenge is in handling the Arc which is not native to sympy
+	  I have to use circle class for the internal object in aggregation
+	  for instance following methods of sympy would not work!
+	  - sym.intersection( obj1, obj2 )
+	    sym.are_similar( obj1, obj2 )
+
+	  class LineModified(sym.Line):
+	  __class__ = sym.Line
+
+	  look at these for potential (though long-term) solutions
+	  - http://docs.sympy.org/latest/modules/geometry/entities.html#sympy.geometry.entity.GeometryEntity
+	  - http://docs.sympy.org/latest/modules/geometry/curves.html
+
+	  procedure to modify the code:
+	  1) add segment type to where ever I use "isinstance"
+	     - intersection_star (problem: sym.intersection)
+	     - store_curves (problem: sym.are_similar) 
+	     - construct_nodes
+	       step 2: reject an intersection if it is not a point
+	       step 3: handling non-intersecting Curves
+	     - construct_edges
+	       step 4: half-edge construction
+	     - edgeList_2_mplPath
+	       fortunately path.arc() exists :) stupid sympy!
+
+	  2) when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
 
       [ ] testing unit
       use suite() so it runs all tests, even if one fails
 
       [ ] add parser's manual to the readMe file
+
       [ ] update report over
 	- comments from Adam and Slawomir
-	  sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
-      
-      [ ] check if the point is on any of the border functions
-      how does path.contains_point(p) work?
-      includes the path itself, or not?
+	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
 
       [ ] Multiple subdivision intersection (for agents tracking)
 
@@ -122,49 +162,70 @@ TODO:
 
       [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
+      [ ] 'save_to_image(fileName)'
+	it should be fast, both for debugging sessions' sake and final application
+
+      [ ] check if the point is on any of the border functions
+	how does path.contains_point(p) work? -> it checks contain, not enclose!
+	includes the path itself, or not?
+
       [ ] multi-level of abstraction, wrt functions's priority
-	      like the functions could be in 3 groups, [H]igh, [M]iddle, and [L]ow priority
-	      and the subdivision would be with 3 levels of abstraction
-	      subdivision.graphs['H'].mdg (based on functions from [H] priority list)
-	      subdivision.graphs['M'].mdg (based on functions from [H] and [M] priority lists)
-	      subdivision.graphs['L'].mdg (based on functions from [H] and [M] and [L] priority lists)
+	like the functions could be in 3 groups, [H]igh, [M]iddle, and [L]ow priority
+	and the subdivision would be with 3 levels of abstraction
+	subdivision.graphs['H'].mdg (based on functions from [H] priority list)
+	subdivision.graphs['M'].mdg (based on functions from [M] priority list)
+	subdivision.graphs['L'].mdg (based on functions from [L] priority list)
+	subdivision.graphs['A'].mdg (based on functions from [H,M,L] priority lists)
 
       [ ] what does "http://toblerity.org/shapely/manual.html" do?
 
-      [ ] should I switch from sympy to CGAL?
+      [ ] https://www.toptal.com/python/computational-geometry-in-python-from-theory-to-implementation
+
+      [v] Decomposition.find_neighbours(),
+	don't forget to include half-edges from holes.
+	for this actually we need to make sure there is no redundancy in holes!
 
       [v] intersect subgraphs
       [v] plot faces with patches
       [v] remove infinity points
 
       [v] detect the superFace of the subgraph:
-      find convex hull of all points in the subgraph - sym.convex_hull()
-      start from one of the points in the convex hull,
-      and follow the same procedure of face finding, with inverse sorting.
+	find convex hull of all points in the subgraph - sym.convex_hull()
+	start from one of the points in the convex hull,
+	and follow the same procedure of face finding, with inverse sorting.
       
       [v] should I use mpl.path?
-	  path.arc()                      # of a unit circle
-	  path.circle()                   # 
-	  path.intersects_bbox()          # 
-	  path.intersects_path()          # 
-	  path.contains_point()           # 
-	  path.contains_path()            # 
-	  path.contains_points()          # 
-
-
+	path.arc()                      # of a unit circle
+	path.circle()                   # 
+	path.intersects_bbox()          # 
+	path.intersects_path()          # 
+	path.contains_point()           # 
+	path.contains_path()            # 
+	path.contains_points()          # 
 
       clean-up, and speed-up
       ----------------------
+      [ ] nodes[idx] = (idx,nodeObject)
+	obviously the idx in the tuple is redundant
+	in test, we check  (idx in indexing nodes == idx the tuple)
+	TODO: 
+	- [] nodes[idx] = nodeObject
+	  [] subdiv.nodes[idx][1]['obj'] -> subdiv.nodes[idx]
+	- add selfIdx to node class?
+      
+
+      [ ] half edge attributes:
+	- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
+	- [v] 1stDer, 2ndDer removed.
+	- [] TVal  needed?
+
       [ ] remove derivatives
       since we use tangent and curvature for sorting, there is no longer a need for 
       the derivatives. remove all related values from subdivision class
       
-      [ ] 'save_to_image(fileName)'
-	it should be fast.
-	(both for debugging sessions' sake and final application)
-	its visualization would be extremely helpful for debugging.
-
       [ ] pycuda?
+
+      [ ] should I switch from sympy to CGAL?
 
       [ ] intersection is the bottle-neck - how to improve that?
       [ ] merge_collocated_intersectionPoints - too slow!

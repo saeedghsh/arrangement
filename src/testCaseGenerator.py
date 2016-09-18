@@ -51,7 +51,10 @@ def load_from_csv(fileName=None):
         curves += [ Circle( args=(Point(xc,yc), rc) )
                    for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
 
-    elif 'star' in fileName: # generate the star case
+
+    elif 'star' in fileName:
+        # generate the star case
+        # happens to be very tricky
         a1 = 36 * np.pi/180
         a2 = 72 * np.pi/180
         p1 = Point(-np.sqrt(1 - np.cos(a1)**2 ), np.cos(a1))
@@ -69,8 +72,7 @@ def load_from_csv(fileName=None):
         result.update( {'number_of_nodes': 25} )
         result.update( {'number_of_edges': 100} )
         result.update( {'number_of_faces': 26} )
-        result.update( {'number_of_subGraphs': 1} )
-       
+        result.update( {'number_of_subGraphs': 1} )       
 
     else: 
         stream = open(fileName, 'r')

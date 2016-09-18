@@ -28,7 +28,6 @@ import contextlib as ctx
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-
 import time
 ################################################################################
 ###################################################### parallelization functions
@@ -133,24 +132,7 @@ def distance_star(*args):
 ################################################################# HalfEdge
 ################################################################# Face
 ################################################################################
-class Curve:
-    def __init__(self, curve,
-                 itersectionPoints_Idx=(),
-                 at_intersections_tValue=(),
-                 at_intersections_derivative_1st=(),
-                 at_intersections_derivative_2nd=() ):
 
-        # the curve of the curve!
-        self.curve = curve
-        # indices of intersection point lying on the curve
-        self.ipsIdx = itersectionPointsIdx
-        self.ipsTVal = tValue_at_intersections
-        self.ipsDer1st = at_intersections_derivative_1st
-        self.ipsDer2nd = at_intersections_derivative_2nd
-
-        assert len(self.ipsIdx) == len(self.ipsTVal)
-        assert len(self.ipsIdx) == len(self.ipsDer1st)
-        assert len(self.ipsIdx) == len(self.ipsDer2nd)
 
 ################################################################################
 class Node:
@@ -167,35 +149,28 @@ class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
                   cIdx, side,
-                  sIdx, sTVal, s1stDer, s2ndDer,
-                  eIdx, eTVal, e1stDer, e2ndDer):
+                  sTVal, eTVal):
 
-        self.selfIdx = selfIdx   # (sIdx, eIdx, pIdx)
-        self.twinIdx = twinIdx   # twin half edge's index
+        self.selfIdx = selfIdx   # self-index (startNodeIdx, endNodeIdx, pathIdx)
+        self.twinIdx = twinIdx   # index to the twin half-edge
+        self.succIdx = None # index to the successor half-edge
 
         # half edge Curve's attributes:
         self.cIdx = cIdx         # Index of the curve creating the edge
         self.side = side         # defines the direction of t-value (in: t2>t1, out: t1>t2)
-        
-        # half edge attributes:
-        self.sIdx = sIdx         # starting node's index        
+
+
+        # TODO: I think I should remove all the following    
         self.sTVal = sTVal
-        self.s1stDer = s1stDer
-        self.s2ndDer = s2ndDer
-
-        self.eIdx = eIdx         # ending node's index
         self.eTVal = eTVal
-        self.e1stDer = e1stDer
-        self.e2ndDer = e2ndDer
-
 
 ################################################################################
 class Face:
     def __init__(self, halfEdgeList, path):
         ''' '''
-        self.halfEdges = halfEdgeList
-        self.path = path
-        self.holes = () # list of faces
+        self.halfEdges = halfEdgeList # a list of half-edges
+        self.path = path              # mpl.path
+        self.holes = ()               # list of faces
 
     def get_area(self, considerHoles=True):
         '''
@@ -254,7 +229,6 @@ class Face:
 
         # storing final list of holes after conversion to tuple
         self.holes = tuple(holes)
-            
 
     def get_punched_path(self):
         '''
@@ -277,7 +251,7 @@ class Face:
 ################################################################################
 class Decomposition:
     def __init__ (self, graph, faces, superFaceIdx=None):
-        
+        ''' '''
         self.graph = graph
 
         if superFaceIdx is not None:
@@ -289,15 +263,38 @@ class Decomposition:
             self.faces = faces
 
     def find_face(self, point):
+        ''' '''
         for idx,face in enumerate(self.faces):
             if face.is_point_inside(point):
                 return idx
         return None
 
     def find_neighbours(self, faceIdx):
-        return []
+        ''' '''
+        MDG = self.graph
+
+        # finding the indices to half-edges of the face
+        twinsIdx= [ MDG[s][e][k]['obj'].twinIdx
+                    for (s,e,k) in self.faces[faceIdx].halfEdges ]
+
+        # finding the indices to half-edges of the holes of the face
+        for hole in self.faces[faceIdx].holes:
+            twinsIdx += [ MDG[s][e][k]['obj'].twinIdx
+                          for (s,e,k) in hole.halfEdges ]
+        
+        # picking the face which have any of the twins as the boundary
+        neighbours = []
+        for fIdx,face in enumerate(self.faces):
+            if any([twin in face.halfEdges for twin in twinsIdx]):
+                neighbours.append(fIdx)
+                
+        # test
+        assert( not (faceIdx in neighbours) )
+    
+        return neighbours
         
     def get_extents(self):
+        ''' '''
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
            
@@ -459,6 +456,7 @@ class Subdivision:
             obj1 = curves[cIdx1].obj
             obj1IsLine = isinstance(obj1, sym.Line)
             obj1IsCirc = isinstance(obj1, sym.Circle)
+
             
             if obj1IsCirc and obj1.radius<=0:
                 # rejecting circles with (radius <= 0)
@@ -752,7 +750,7 @@ class Subdivision:
         for (cIdx,c) in enumerate(self.curves):
 
             # step a:
-            # for each curve, creat all edge (half-edges) located on it
+            # for each curve, create all edges (half-edges) located on it
             if isinstance(c.obj, sym.Line):
                 ipsIdx = self.curveIpsIdx[cIdx]
                 tvals = self.curveIpsTVal[cIdx]
@@ -782,6 +780,8 @@ class Subdivision:
 
             l = zip (startIdxList, startTValList, endIdxList, endTValList)
 
+
+            # create a half-edge for each pair of start-end point
             for ( sIdx,sTVal, eIdx,eTVal ) in l:
 
                 newPathKey1 = len(self.MDG[sIdx][eIdx]) if eIdx in self.MDG[sIdx].keys() else 0
@@ -800,8 +800,7 @@ class Subdivision:
 
                 # Halfedge(selfIdx, twinIdx,
                 #          cIdx, side,
-                #          sIdx, sTVal, s1stDer, s2ndDer,
-                #          eIdx, eTVal, e1stDer, e2ndDer)
+                #          sTVal, eTVal)
 
                 ps = self.intersectionsFlat[sIdx]
                 pe = self.intersectionsFlat[eIdx]
@@ -809,24 +808,14 @@ class Subdivision:
 
                 # first half-edge
                 direction = 'positive'                
-                s1stDer = c.firstDerivative(ps, direction)
-                s2ndDer = c.secondDerivative(ps, direction)
-                e1stDer = c.firstDerivative(pe, direction)
-                e2ndDer = c.secondDerivative(pe, direction)
                 he1 = HalfEdge(idx1, idx2, cIdx, direction,
-                               sIdx, sTVal, s1stDer, s2ndDer,
-                               eIdx, eTVal, e1stDer, e2ndDer)
+                               sTVal, eTVal)
                 e1 = ( sIdx, eIdx, {'obj':he1} )
 
                 # second half-edge
                 direction = 'negative'                
-                s1stDer = c.firstDerivative(ps, direction)
-                s2ndDer = c.secondDerivative(ps, direction)
-                e1stDer = c.firstDerivative(pe, direction)
-                e2ndDer = c.secondDerivative(pe, direction)
                 he2 = HalfEdge(idx2, idx1, cIdx, direction,
-                               eIdx, eTVal, e1stDer, e2ndDer,
-                               sIdx, sTVal, s1stDer, s2ndDer)
+                               eTVal, sTVal)
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.MDG.add_edges_from([e1, e2])
@@ -843,13 +832,19 @@ class Subdivision:
                           for eIdx in graph.nodes()
                           if eIdx in graph[sIdx].keys() # if not, subd[sIdx][eIdx] is invalid
                           for k in graph[sIdx][eIdx].keys()]
+
+        # TODO: isn't this better?
+        # allHalfEdgeIdx = [(sIdx, eIdx, k)
+        #                   for sIdx in graph.nodes()
+        #                   for eIdx in graph[sIdx].keys()
+        #                   for k in graph[sIdx][eIdx].keys()]
+
         return allHalfEdgeIdx
 
     ############################################################################
     def find_successor_HalfEdge(self, halfEdgeIdx, 
                               allHalfEdgeIdx=None,
                               direction='ccw_before'):
-
 
         # Note that in cases where there is a circle with one node on it,
         # the half-edge itself would be among candidates,
@@ -883,25 +878,22 @@ class Subdivision:
         (tStart, tEnd, tk) = twinIdx
         refObj = self.MDG[tStart][tEnd][tk]['obj']
 
-        # sorting values: reference
-        (dx,dy) = refObj.s1stDer
-        # 1stKey:
-        refAlpha = np.arctan2(dy,dx)
-        refAlpha = np.mod(refAlpha + 2*np.pi , 2*np.pi)
-        # 2ndkey:
-        refBeta = self.curves[refObj.cIdx].curvature(direction=refObj.side)
+        # sorting values of the reference (twin of the current half-edge)
+        # 1stKey: alpha - 2ndkey: beta
+        refObjCurve = self.curves[refObj.cIdx]
+        sPoint = self.nodes[tStart][1]['obj'].point
+        refAlpha = refObjCurve.tangentAngle(sPoint, refObj.side)
+        refBeta = refObjCurve.curvature(sPoint, refObj.side)
 
         # sorting values: candidates
         canAlpha = []
         canBeta = []
-
         for candidateIdx in candidateEdges:
             (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
             canObj = self.MDG[cStart][cEnd][ck]['obj']
-
-            (dx,dy) = canObj.s1stDer
-            canAlpha.append( np.mod( np.arctan2(dy, dx) + 2*np.pi , 2*np.pi) )
-            canBeta.append( self.curves[canObj.cIdx].curvature(direction=canObj.side) )
+            canObjCurve = self.curves[canObj.cIdx]
+            canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.side) )
+            canBeta.append( canObjCurve.curvature(sPoint, canObj.side) )
 
         # sorting
         fullList  = zip( canAlpha, canBeta, candidateEdges )

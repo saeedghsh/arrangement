@@ -25,6 +25,8 @@ Dependencies:
 Basic Use
 ---------
 ::
+   $ cd src/
+::
    import subdivision as sdv
    import sympy as sym
    import modifiedSympy as mSym
@@ -42,6 +44,12 @@ Basic Use
    myplt.animate_face_patches(mySubdivision)
 
 for details see the `demo <https://github.com/saeedghsh/subdivision/src/demo.py>`   
+
+API
+---
+
+
+
 
 
 Limitations and Bugs
