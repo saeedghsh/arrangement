@@ -84,29 +84,12 @@ TODO:
 	  it seems to be related to the ordering of the starting and ending point of the arc
 
 
+
+
+
       Developement
       ------------
 
-      [ ] API documentation
-	$ cd Dropbox/myGits/dev/subdivision/
-	$ pyreverse -o svg -p subdivision src/*.py
-
-	- what are the date structures?
-	  - a tree of data structures; e.g
-	    subdiv: (MDG, decomposition, [curves], ... )
-	    decomposition: (graph, [faces], ... )
-	    MDG: (nodes, edges)
-	  
-	- how to index each data structure and access their object?
-	  - nodes: subdivision.nodes[idx], where else are they accessible?
-	    edges: subdivision.edges[idx], where else are they accessible?
-	    faces: subdivision.decomposition.faces[idx]
-	    half-edges: subdivision.MDG[s][e][k]
-	    ...
-	  
-	- what is the relation between indices of different lists,
-	  e.g. nodes vs ips vs edges ...
-	  
       [ ] create test cases for the improved cases, i.e. ray, segment, arc
 
 	add line segments and rays
@@ -139,12 +122,6 @@ TODO:
 
       [ ] testing unit
       use suite() so it runs all tests, even if one fails
-
-      [ ] add parser's manual to the readMe file
-
-      [ ] update report over
-	- comments from Adam and Slawomir
-	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
 
       [ ] Multiple subdivision intersection (for agents tracking)
 
@@ -203,26 +180,76 @@ TODO:
 	path.contains_path()            # 
 	path.contains_points()          # 
 
+
+
+
+
+
+
+
       clean-up, and speed-up
       ----------------------
-      [ ] nodes[idx] = (idx,nodeObject)
-	obviously the idx in the tuple is redundant
-	in test, we check  (idx in indexing nodes == idx the tuple)
-	TODO: 
-	- [] nodes[idx] = nodeObject
-	  [] subdiv.nodes[idx][1]['obj'] -> subdiv.nodes[idx]
-	- add selfIdx to node class?
-      
-
       [ ] half edge attributes:
 	- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
 	- [v] 1stDer, 2ndDer removed.
-	- [] TVal  needed?
+	- [] TVal  needed? - something is wrong in visualization! I don't know what!
+	  -> I don't have to use IPE for eTVal and sTVal,
+	  -> just need to fetch them from the node!
+	  -> we have the node, and the current curve, easily find the corresponding tVal
 
-      [ ] remove derivatives
-      since we use tangent and curvature for sorting, there is no longer a need for 
-      the derivatives. remove all related values from subdivision class
-      
+      [ ] do we need the node class?
+	isn't the dictionary of the MDG.node[0]
+	to write:
+	point = subdiv.MDG.node[nodeIdx]['point']
+	instead of:
+	point = subdiv.MDG.node[nodeIdx]['obj'].point
+
+      [ ] API documentation
+	$ cd Dropbox/myGits/dev/subdivision/
+	$ pyreverse -o svg -p subdivision src/*.py
+
+
+	access nodes of networkX graph:
+	for nodeIdx in subdiv.MDG.nodes():
+	    print subdiv.MDG.node[nodeIdx]
+
+	access "node instances" of nodes:
+	for nodeIdx in subdiv.MDG.nodes():
+	    print subdiv.MDG.node[nodeIdx]['obj']
+
+	access edges of networkX graph:
+	for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
+	(s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
+	    print subdiv.MDG[s][e][k]
+
+	access "half-edges":
+	for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
+	    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
+	    print subdiv.MDG[s][e][k]['obj']
+
+
+	- what are the date structures?
+	  - a tree of data structures; e.g
+	    subdiv: (MDG, decomposition, [curves], ... )
+	    decomposition: (graph, [faces], ... )
+	    MDG: (nodes, edges)
+	  
+	- how to index each data structure and access their object?
+	  - nodes: subdivision.nodes[idx], where else are they accessible?
+	    edges: subdivision.edges[idx], where else are they accessible?
+	    faces: subdivision.decomposition.faces[idx]
+	    half-edges: subdivision.MDG[s][e][k]
+	    ...
+	  
+	- what is the relation between indices of different lists,
+	  e.g. nodes vs ips vs edges ...
+
+      [ ] add parser's manual to the readMe file
+
+      [ ] update report over
+	- comments from Adam and Slawomir
+	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
+
       [ ] pycuda?
 
       [ ] should I switch from sympy to CGAL?
@@ -237,6 +264,17 @@ TODO:
       [ ] index-dependant implementation is a recepie for disaster
       at least delet every temporarly varibale right after it's done its job
 
+      [v] nodes[idx] = (idx,nodeObject)
+	obviously the idx in the tuple is redundant
+	I had this format of tuple, because it was required by the networkX
+	TODO: 
+	- [v] remove self.nodes[idx]
+	  [v] subdiv.nodes[idx][1]['obj'] -> subdiv.MDG.node[idx]['obj']
+
+      [v] remove derivatives
+      since we use tangent and curvature for sorting, there is no longer a need for 
+      the derivatives. remove all related values from subdivision class
+      
       [v] inheritance VS. aggregation - Modified Geometry Instances
       [v] inheritance VS. aggregation - Subdivision
 

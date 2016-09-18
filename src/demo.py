@@ -49,10 +49,8 @@ test_cases_key = [
 ]
 
 ########################################
-testNumber = 2
+testNumber = 16
 timing = False
-
-
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = tcg.load_from_csv( file_name )
@@ -66,6 +64,7 @@ if 'number_of_nodes' in data.keys(): # len(data.keys()) > 1
     n_subGraphs = data['number_of_subGraphs']
 else:
     testing = False
+
 
 ################################################################################
 ###################################### deploying subdivision (and decomposition)

@@ -87,12 +87,17 @@ def plot_edges(axis, subdiv,
         he_obj = subdiv.MDG[start][end][k]['obj']
         curve_obj = subdiv.curves[he_obj.cIdx].obj
         
-        cIdx = he_obj.cIdx
-
         thei =  he_obj.twinIdx
 
         sTVal = he_obj.sTVal
         eTVal = he_obj.eTVal
+
+        # # TODO: eliminating sTVal and eTVal
+        # sPoint = subdiv.MDG.node[start]['obj'].point
+        # ePoint = subdiv.MDG.node[end]['obj'].point
+        # sTVal = subdiv.curves[he_obj.cIdx].IPE(sPoint)
+        # eTVal = subdiv.curves[he_obj.cIdx].IPE(ePoint)
+
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:

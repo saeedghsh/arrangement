@@ -524,7 +524,6 @@ class Subdivision:
         self.ipsCurveIdx = []         # ipsCurveIdx[i]: idx of curves on nodes[i]
         self.ipsCurveTVal = []        # t-value of each node at assigned curves
 
-        self.nodes = [] 
 
         ########################################
         # step 1: finding all intersections
@@ -697,7 +696,6 @@ class Subdivision:
                                        self.ipsCurveTVal[pIdx])} )
                   for pIdx in range(len(self.intersectionsFlat)) )
 
-        self.nodes = nodes
         self.MDG.add_nodes_from( nodes )
         assert len(self.MDG.nodes()) == len(self.intersectionsFlat)
 
@@ -881,7 +879,7 @@ class Subdivision:
         # sorting values of the reference (twin of the current half-edge)
         # 1stKey: alpha - 2ndkey: beta
         refObjCurve = self.curves[refObj.cIdx]
-        sPoint = self.nodes[tStart][1]['obj'].point
+        sPoint = self.MDG.node[tStart]['obj'].point
         refAlpha = refObjCurve.tangentAngle(sPoint, refObj.side)
         refBeta = refObjCurve.curvature(sPoint, refObj.side)
 
@@ -1068,6 +1066,13 @@ class Subdivision:
             cIdx = halfEdge_obj.cIdx
             sTVal = halfEdge_obj.sTVal
             eTVal = halfEdge_obj.eTVal
+
+            # # TODO: eliminating sTVal and eTVal
+            # sPoint = self.MDG.node[start]['obj'].point
+            # ePoint = self.MDG.node[end]['obj'].point
+            # sTVal = self.curves[cIdx].IPE(sPoint)
+            # eTVal = self.curves[cIdx].IPE(ePoint)
+
 
             if isinstance(self.curves[cIdx].obj, sym.Line):
                 p2 = self.intersectionsFlat[end]
