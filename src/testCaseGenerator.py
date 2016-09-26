@@ -29,7 +29,12 @@ reload(mSym)
 def load_from_csv(fileName=None):
 
     Line = mSym.LineModified
+    Ray = mSym.RayModified
+    Segment = mSym.SegmentModified
     Circle = mSym.CircleModified
+    Arc = mSym.ArcModified
+
+
     Point = sym.Point
 
     result = {}
@@ -81,7 +86,6 @@ def load_from_csv(fileName=None):
         if 'testValues' in data.keys():
             result.update( data['testValues'][0] )
 
-
         if 'lines' in data.keys():
             for l in data['lines']:
                 if len(l) == 4: #[x1,y1,x2,y2]
@@ -89,9 +93,22 @@ def load_from_csv(fileName=None):
                 elif len(l) == 3: #[x1,y1,slope]
                     curves += [ Line( args=(Point(l[0],l[1]), l[2])) ]
 
+        if 'segments' in data.keys():
+            for s in data['segments']:
+                curves += [ Segment( args=(Point(s[0],s[1]), Point(s[2],s[3]))) ]
+
+        if 'rays' in data.keys():
+            for r in data['rays']:
+                curves += [ Ray( args=(Point(r[0],r[1]), Point(r[2],r[3]))) ]
+
+
         if 'circles' in data.keys():
             for c in data['circles']:
                 curves += [ Circle( args=(Point(c[0],c[1]), c[2]) ) ]
+
+        if 'arcs' in data.keys():
+            for a in data['arcs']:
+                curves += [ Arc( args=( Point(a[0],a[1]), a[2], (a[3],a[4])) ) ]
 
     result.update( {'curves': curves} )
 

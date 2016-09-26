@@ -1,12 +1,14 @@
 TODO:
 -----
+
+
       Debugging:
       ----
-
       [ ] fix the  - test_cases_key[13]
       it happens to be genuinely a degenerate case, that is to say the peoblem 
       happens when the angles of tangent to two tangent half-edge differ after
       the 7th digit of the fractional part
+
 
       [v] fix the sorting bug
       - test_cases_key[2]
@@ -81,42 +83,16 @@ TODO:
 
       Developement
       ------------
-
-      [ ] create test cases for the improved cases, i.e. ray, segment, arc
-
-	add line segments and rays
-	  the challenge is in handling the Arc which is not native to sympy
-	  I have to use circle class for the internal object in aggregation
-	  for instance following methods of sympy would not work!
-	  - sym.intersection( obj1, obj2 )
-	    sym.are_similar( obj1, obj2 )
-
-	  class LineModified(sym.Line):
-	  __class__ = sym.Line
-
-	  look at these for potential (though long-term) solutions
-	  - http://docs.sympy.org/latest/modules/geometry/entities.html#sympy.geometry.entity.GeometryEntity
-	  - http://docs.sympy.org/latest/modules/geometry/curves.html
-
-	  procedure to modify the code:
-	  1) add segment type to where ever I use "isinstance"
-	     - intersection_star (problem: sym.intersection)
-	     - store_curves (problem: sym.are_similar) 
-	     - construct_nodes
-	       step 2: reject an intersection if it is not a point
-	       step 3: handling non-intersecting Curves
-	     - construct_edges
-	       step 4: half-edge construction
-	     - edgeList_2_mplPath
-	       fortunately path.arc() exists :) stupid sympy!
-
-	  2) when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
+      [ ] when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
 
       [ ] testing unit
-      use suite() so it runs all tests, even if one fails
-      bring all asserts from subdivision.py to test.py
+	create test cases for the improved cases, i.e. ray, segment, arc	
+	use suite() so it runs all tests, even if one fails
+	bring all asserts from subdivision.py to test.py
 
       [ ] Multiple subdivision intersection (for agents tracking)
+
+      [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
       [ ] Subdivision.transform(M(R,T,S))
 	- Essential for the dynamic subdivision
@@ -130,7 +106,6 @@ TODO:
 
       [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
 
-      [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
       [ ] 'save_to_image(fileName)'
 	it should be fast, both for debugging sessions' sake and final application
@@ -150,6 +125,42 @@ TODO:
       [ ] what does "http://toblerity.org/shapely/manual.html" do?
 
       [ ] https://www.toptal.com/python/computational-geometry-in-python-from-theory-to-implementation
+
+
+      [v] arc
+	  the challenge in handling the Arc is due to the fact that Arc is not
+	  native to sympy. I have to use circle class for the internal object
+	  in aggregation. for instance following methods of sympy would not work!
+	  - sym.intersection( obj1, obj2 )
+	    sym.are_similar( obj1, obj2 )
+
+	  short term solution:
+	    - class LineModified(sym.Line):	  __class__ = sym.Line
+
+	  long-term solutions:
+	    - http://docs.sympy.org/latest/modules/geometry/entities.html#sympy.geometry.entity.GeometryEntity
+	    - http://docs.sympy.org/latest/modules/geometry/curves.html
+
+	  procedure to modify the code:
+	  1) add segment type to where ever I use "isinstance"
+	     - [] intersection_star (problem: sym.intersection)
+	     - []store_curves (problem: sym.are_similar) 
+		- construct_nodes
+		  step 2: reject an intersection if it is not a point
+		  step 3: handling non-intersecting Curves
+	     - construct_edges
+	       step 3: half-edge construction
+	     - edgeList_2_mplPath
+	       fortunately path.arc() exists :) stupid sympy!
+
+      [v] add line segments and rays
+	  procedure to modify the code:
+	  add segment type to where ever I use "isinstance"
+	  - construct_edges
+	    step 3: half-edge construction
+	  - edgeList_2_mplPath
+	    fortunately path.arc() exists :) stupid sympy!
+
 
       [v] Decomposition.find_neighbours(),
 	don't forget to include half-edges from holes.
@@ -173,8 +184,15 @@ TODO:
 
       clean-up, and speed-up
       ----------------------
-      [ ] ask Slawomir:
-      shall I move those methods that are not useful after decomposition?
+      [ ] supposedly quick
+	I'm sure now that so many of the self.variables are removed from self.,
+	each method, such as construct_nodes() and construct_edges() could be
+	improved. they were horrible, very index dependant mostly because of 
+	these ipsCurveTVal, ipsCurveIdx, curveIpsTVal, curveIpsIdx.
+	Generate nodes and edges right after computing their values, instead of 
+	storing in a list
+
+      [ ] shall I move those methods that are not useful after decomposition?
 	- edgeList_to_mplPath
 	- store_curves
 	- find_successor_halfEdge
@@ -186,6 +204,16 @@ TODO:
 	construct_node(subdivision) and all self. -> subdivision.
 	construct_edge(subdivision) and all self. -> subdivision.
 	and so on, ...	  
+
+	- Slawomir: starting the name of a method with an underscore is a
+	  convention to mark them as internal.
+
+	  http://stackoverflow.com/questions/551038/private-implementation-class-in-python
+	  Use a single underscore prefix:
+	  This is the official Python convention for 'internal' symbols;
+	  "from module import * " does not import underscore-prefixed objects.
+
+      [ ] from sympy.geometry import Curve
 
       [ ] API documentation
 	$ cd Dropbox/myGits/dev/subdivision/
@@ -265,6 +293,7 @@ TODO:
 	[v] faces
       [v] multi-processing
 
+
 Documentation
 -------------
 [ ] Parametric Equations
@@ -277,6 +306,7 @@ Documentation
   http://www.sphinx-doc.org/en/stable/
 
 [ ] examples
+
 [ ] GUI?
 - Load file / interactive drawings / manual entering
   Support animation
@@ -290,6 +320,7 @@ Documentation
   
 [ ] subdivision.io
 https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
+
 
 other notes
 --------

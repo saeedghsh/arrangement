@@ -20,6 +20,7 @@ import operator
 
 import numpy as np
 import sympy as sym
+import modifiedSympy as mSym
 import networkx as nx
 
 import multiprocessing as mp
@@ -27,6 +28,8 @@ import contextlib as ctx
 
 import matplotlib.path as mpath
 import matplotlib.transforms
+
+
 
 import time
 ################################################################################
@@ -43,16 +46,8 @@ def intersection_star(*args):
     obj1 = curves[idx1].obj
     obj2 = curves[idx2].obj
 
-    obj1Line = isinstance(obj1, sym.Line)
-    obj1Circ = isinstance(obj1, sym.Circle)
-    # obj1Ray = isinstance(obj1, sym.Ray)
-
-    obj2Line = isinstance(obj2, sym.Line)
-    obj2Circ = isinstance(obj2, sym.Circle)
-    # obj2Ray = isinstance(obj1, sym.Ray)
-
     # Line-Line intersection - OK (speedwise)
-    if obj1Line and obj2Line: #(obj1Line or obj1Ray) and (obj2Line or obj2Ray):
+    if isinstance(obj1, sym.Line) and isinstance(obj2, sym.Line):
         P1, P2 = obj1.p1 , obj1.p2
         P3, P4 = obj2.p1 , obj2.p2
         denom = (P1.x-P2.x)*(P3.y-P4.y) - (P1.y-P2.y)*(P3.x-P4.x)
@@ -64,7 +59,16 @@ def intersection_star(*args):
             return []
 
     else:
-        return sym.intersection( obj1, obj2 )
+        # for arcs: check if intersections are in the interval
+        intersections = sym.intersection( obj1, obj2 )
+        for curve in [curves[idx1], curves[idx2]]:
+            if isinstance(curve, mSym.ArcModified):
+                for i in range(len(intersections)-1,-1,-1):
+                    tval = curve.IPE(intersections[i])
+                    if not(curve.t1 < tval < curve.t2):
+                        intersections.pop(i)
+
+        return intersections
 
 
 ################################################################################
@@ -348,33 +352,51 @@ class Subdivision:
         # first discard duplicate and invalid curves
         # invalid curves are:    circles(radius <= 0)
 
+        epsilon = np.spacing(10**10)
+
         for cIdx1 in range(len(curves)-1,-1,-1):
             obj1 = curves[cIdx1].obj
-            obj1IsLine = isinstance(obj1, sym.Line)
-            obj1IsCirc = isinstance(obj1, sym.Circle)
-
-            
-            if obj1IsCirc and obj1.radius<=0:
-                # rejecting circles with (radius <= 0)
+            obj1IsLine = isinstance(curves[cIdx1], (mSym.LineModified,
+                                                    mSym.RayModified,
+                                                    mSym.SegmentModified) )
+            obj1IsCirc = isinstance(curves[cIdx1], mSym.CircleModified)
+            obj1IsArc = isinstance(curves[cIdx1], mSym.ArcModified)
+           
+            if (obj1IsCirc or obj1IsArc) and curves[cIdx1].obj.radius<=0:
+                # rejecting circles and arcs with (radius <= 0)
                 curves.pop(cIdx1)
+
             else:
                 # rejecting duplicated curves
                 for cIdx2 in range(cIdx1):
                     obj2 = curves[cIdx2].obj
-                    obj2IsLine = isinstance(obj2, sym.Line)
-                    obj2IsCirc = isinstance(obj2, sym.Circle)
+                    obj2IsLine = isinstance(curves[cIdx2], (mSym.LineModified,
+                                                            mSym.RayModified,
+                                                            mSym.SegmentModified) )
+                    obj2IsCirc = isinstance(curves[cIdx2], mSym.CircleModified)
+                    obj2IsArc = isinstance(curves[cIdx2], mSym.ArcModified)
 
                     if (obj1IsLine and obj2IsLine):
-                        if sym.are_similar(obj1, obj2):
+                        if sym.are_similar(curves[cIdx1].obj, curves[cIdx2].obj):
                             curves.pop(cIdx1)
                             break
 
                     elif (obj1IsCirc and obj2IsCirc):
                         dis = obj1.center.distance(obj2.center)
                         ris = obj1.radius - obj2.radius
-                        if dis==0 and ris ==0:
+                        if dis < epsilon and ris < epsilon:
                             curves.pop(cIdx1)
                             break
+
+                    elif (obj1IsArc and obj2IsArc):
+                        dis = obj1.center.distance(obj2.center)
+                        ris = obj1.radius - obj2.radius
+                        p1dis = curves[cIdx1].p1.distance(curves[cIdx2].p1)
+                        p2dis = curves[cIdx1].p2.distance(curves[cIdx2].p2)
+                        if dis < epsilon and ris < epsilon and p1dis < epsilon and p2dis < epsilon:
+                            curves.pop(cIdx1)
+                            break
+
         self.curves = curves
 
 
@@ -506,10 +528,9 @@ class Subdivision:
 
         ########################################
         # step 7: merge collocated intersection points
-        '''
-        duplicate: resulted of same curves intersection
-        collocated: resulted of different curves intersection
-        '''
+        # duplicate: resulted of same curves intersection
+        # collocated: resulted of different curves intersection
+
         if self.multiProcessing:
             distances = [ [ 0
                             for col in range(len(intersectionsFlat)) ]
@@ -543,16 +564,18 @@ class Subdivision:
         else:
             for idx1 in range(len(intersectionsFlat)-1,-1,-1):
                 for idx2 in range(idx1):
-                    if intersectionsFlat[idx1].distance( intersectionsFlat[idx2] ) == 0:
+                    if intersectionsFlat[idx1].distance(intersectionsFlat[idx2]) < np.spacing(10**10): # == 0:
                         s1 = set(ipsCurveIdx[idx2])
                         s2 = set(ipsCurveIdx[idx1])
                         ipsCurveIdx[idx2] = list(s1.union(s2)) 
                         ipsCurveIdx.pop(idx1)
                         intersectionsFlat.pop(idx1)
                         break
+            # TODO: the distance_star is updated to reject invalid intersections
+            # resulting from arcs, if multi-processing is not used, this loop
+            # should be updated to reject those wrong intersections
 
         assert len(intersectionsFlat) == len(ipsCurveIdx)
-
 
         ########################################
         # step 8: find the t-value of each Curve at the intersection
@@ -580,13 +603,14 @@ class Subdivision:
     def construct_edges(self):
         '''
         |STAGE B| of Graph construction: edge construction
-        to create edges, we need to list all the intersection points
+        to create edges, we need to list all the nodes
         located on each Curve, along with the t-value of the Curve
-        at each intersection point
-
-        curveIpsIdx
-        curveIpsTVal
+        at each node to sort nodes over the curve and segment the
+        curve into edges according to the sorted nodes
         '''
+
+        # TODO: merge step 1 and 2 into step 3
+
         ########################################
         # step 1: find intersection points of curves
         # indeces of intersection points corresponding to each curves
@@ -608,14 +632,15 @@ class Subdivision:
             curveIpsTVal[cIdx].sort()
 
         # ########################################
-        # step 4: half-edge construction
-        for (cIdx,c) in enumerate(self.curves):
+        # step 3: half-edge construction
+        for (cIdx,curve) in enumerate(self.curves):
+
+            ipsIdx = curveIpsIdx[cIdx]
+            tvals = curveIpsTVal[cIdx]
 
             # step a:
             # for each curve, create all edges (half-edges) located on it
-            if isinstance(c.obj, sym.Line):
-                ipsIdx = curveIpsIdx[cIdx]
-                tvals = curveIpsTVal[cIdx]
+            if isinstance(curve.obj, ( sym.Line, sym.Segment, sym.Ray) ):
 
                 startIdxList = ipsIdx[:-1]
                 startTValList = tvals[:-1]
@@ -623,10 +648,25 @@ class Subdivision:
                 endIdxList = ipsIdx[1:]
                 endTValList = tvals[1:]
 
-            elif isinstance(c.obj, sym.Circle):
+
+            elif isinstance(curve, mSym.ArcModified): # and isinstance(curve.obj, sym.Circ)
+
+                # Important note: The order of elif matters...
+                # isinstance(circle, mSym.ArcModified) - > False
+                # isinstance(circle, mSym.CircleModified) - > True
+                # isinstance(arc, mSym.ArcModified) - > True
+                # isinstance(arc, mSym.CircleModified) - > True
+                # this is why I first check the arc and then circle
+
+                #TODO:  double-check
+                startIdxList = ipsIdx[:-1]
+                startTValList = tvals[:-1]
+
+                endIdxList = ipsIdx[1:]
+                endTValList = tvals[1:]
+                
+            elif isinstance(curve, mSym.CircleModified): # and isinstance(curve.obj, sym.Circle)
                 # this case duplicaties the first point at the end of list
-                ipsIdx = curveIpsIdx[cIdx]
-                tvals = curveIpsTVal[cIdx]
 
                 startIdxList = ipsIdx
                 startTValList = tvals
@@ -640,8 +680,8 @@ class Subdivision:
                 # idx = [idx for idx,n in enumerate(np.diff(endTValList)) if n<0]
                 endTValList[-1] += 2*np.pi
 
-            l = zip (startIdxList, startTValList, endIdxList, endTValList)
 
+            l = zip (startIdxList, startTValList, endIdxList, endTValList)
 
             # create a half-edge for each pair of start-end point
             for ( sIdx,sTVal, eIdx,eTVal ) in l:
@@ -651,32 +691,23 @@ class Subdivision:
 
                 # in cases where sIdx==eIdx, twins will share the same key ==0
                 # this will happen if there is only one node on a circle
-                # ( also a non-intersecting circles with one dummy node)
+                # also a non-intersecting circles with one dummy node
                 # next line will take care of that only
                 if sIdx==eIdx: newPathKey2 += 1
-
                 
                 idx1 = (sIdx, eIdx, newPathKey1)
                 idx2 = (eIdx, sIdx, newPathKey2)
 
-                # Halfedge(selfIdx, twinIdx,
-                #          cIdx, side,
-                #          sTVal, eTVal)
-
-                ps = self.MDG.node[sIdx]['point']
-                pe = self.MDG.node[eIdx]['point']
-                c = self.curves[cIdx]
+                # Halfedge(selfIdx, twinIdx, cIdx, side, sTVal, eTVal)
 
                 # first half-edge
                 direction = 'positive'                
-                he1 = HalfEdge(idx1, idx2, cIdx, direction,
-                               sTVal, eTVal)
+                he1 = HalfEdge(idx1, idx2, cIdx, direction, sTVal, eTVal)
                 e1 = ( sIdx, eIdx, {'obj':he1} )
 
                 # second half-edge
                 direction = 'negative'                
-                he2 = HalfEdge(idx2, idx1, cIdx, direction,
-                               eTVal, sTVal)
+                he2 = HalfEdge(idx2, idx1, cIdx, direction, eTVal, sTVal)
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.MDG.add_edges_from([e1, e2])
@@ -712,7 +743,7 @@ class Subdivision:
         
         if allHalfEdgeIdx == None:
             allHalfEdgeIdx = self.get_all_HalfEdge_indices(self.MDG)
-            
+
         (start, end, k) = halfEdgeIdx
 
         # "candidateEdges" are those edges starting from the "end" node
@@ -904,7 +935,7 @@ class Subdivision:
             # eTVal = self.curves[cIdx].IPE(ePoint)
 
 
-            if isinstance(self.curves[cIdx].obj, sym.Line):
+            if isinstance(self.curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
                 p2 = self.MDG.node[end]['point']
                 x, y = p2.x.evalf(), p2.y.evalf()
                 verts.append( (x,y) )

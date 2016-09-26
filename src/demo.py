@@ -25,6 +25,10 @@ reload(tcg)
 
 import time
 
+import numpy as np
+import modifiedSympy as mSym
+reload(mSym)
+
 ################################################################################
 ################################################################# initialization
 ################################################################################
@@ -47,10 +51,11 @@ test_cases_key = [
     'example_01',                   # 15: 2 circles and a line
     'specialCase_09',               # 16: 
     'specialCase_10',               # 17: 
+    'example_02',                   # 18: +arc +segment +ray
 ]
 
 ########################################
-testNumber = 9
+testNumber = 18
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
@@ -112,7 +117,6 @@ myplt.plot_decomposition(mySubdivision,
 ################################################################################
 myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
-
 
 ################################################################################
 ####################################################################### API demo
