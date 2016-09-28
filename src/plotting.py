@@ -116,11 +116,11 @@ def plot_edges(axis, subdiv,
                     axis.plot ([x,x+dx], [y,y+dy], col, alpha=alp)
 
                 if printLabels:
-                    if he_obj.side == 'positive':
+                    if he_obj.direction == 'positive':
                         axis.text( x+(dx/2), y+(dy/2),# + np.sqrt(dx**2 + dy**2)/1.0, 
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                    fontdict={'color':col,  'size': 10})
-                    elif he_obj.side == 'negative':
+                    elif he_obj.direction == 'negative':
                         axis.text( x+(dx/2), y+(dy/2),# - np.sqrt(dx**2 + dy**2)/1.0,
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                    fontdict={'color':col,  'size': 10})
@@ -147,14 +147,14 @@ def plot_edges(axis, subdiv,
             if printLabels:
                 xp = x[len(x)/2]
                 yp = y[len(x)/2]
-                if he_obj.side == 'positive':
+                if he_obj.direction == 'positive':
 
                     axis.text(xp + (xc-xp)/10. ,
                               yp + (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                fontdict={'color':col,  'size': 10})
                     
-                elif he_obj.side == 'negative':
+                elif he_obj.direction == 'negative':
                     axis.text(xp - (xc-xp)/10. ,
                               yp - (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
@@ -350,13 +350,13 @@ def plot_new_halfEdge(axis):
     plot_edges (axis, subdiv, alp=0.1)
 
     # drawing new haldfedge
-    halfEdge_side = subdiv.MDG[start][end][k]['obj'].side
-    if halfEdge_side == 'positive':
+    halfEdge_direction = subdiv.MDG[start][end][k]['obj'].direction
+    if halfEdge_direction == 'positive':
         plot_edges(axis, subdiv,
                    halfEdgeIdx= [(start,end,k)],
                    alp=0.9, col='g',
                    withArrow=True)
-    elif halfEdge_side == 'negative':
+    elif halfEdge_direction == 'negative':
         plot_edges(axis, subdiv,
                    halfEdgeIdx= [(start,end,k)],
                    alp=0.9, col='r',
@@ -380,7 +380,7 @@ def plot_new_halfEdge(axis):
 
     #     # Green: normal to the 1st derivative
     #     dx,dy = he_obj.s1stDer
-    #     dxn,dyn = np.array( [dy,-dx] ) if he_obj.side =='positive' else np.array( [-dy,dx] )
+    #     dxn,dyn = np.array( [dy,-dx] ) if he_obj.direction =='positive' else np.array( [-dy,dx] )
     #     axis.arrow(px,py, dxn,dyn,
     #                length_includes_head = True,
     #                head_width = 0.5, head_length = 1.,

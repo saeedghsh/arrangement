@@ -114,6 +114,8 @@ class LineModified:
         '''
         although it is independant of the location of the point
         we include for consistency with a general form of curves
+
+        theta \in [0,2pi]
         '''
         (dx,dy) = self.firstDerivative(point, direction)
         alpha = np.arctan2(dy,dx)
@@ -309,6 +311,8 @@ class CircleModified:
         '''
         although it is independant of the location of the point
         we include for consistency with a general form of curves
+
+        theta \in [0,2pi]
         '''
         (dx,dy) = self.firstDerivative(point, direction)
         alpha = np.arctan2(dy,dx)

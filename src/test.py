@@ -16,59 +16,48 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+import os
 import unittest
+
 import subdivision as sdv
-import testCaseGenerator as tcg
 reload(sdv)
-reload(tcg)
+
+from loadFromYaml import load_data_from_yaml
+
+################################################################################
+################################################################## testing class
+################################################################################
 
 class SubdivisionTests(unittest.TestCase):    
-    '''
-    '''
-
+    '''  '''
     def test_twinAssignment(self, subdiv):
         # checking the correctness of twin assignment in half-edge construction
         
-        res = True
-        for idx in subdiv.get_all_HalfEdge_indices():
-            (s,e,k) = idx
+        res = []
+        for selfIdx in subdiv.get_all_HalfEdge_indices():
+            (s,e,k) = selfIdx
             
-            tidx = subdiv.MDG[s][e][k]['obj'].twinIdx
-            (ts,te,tk) = tidx
-            
-            ttidx = subdiv.MDG[ts][te][tk]['obj'].twinIdx
-            
-            res = res and (idx == ttidx)
+            twinIdx = subdiv.MDG[s][e][k]['obj'].twinIdx
+            (ts,te,tk) = twinIdx
 
-        return res
+            twinOfTwinIdx = subdiv.MDG[ts][te][tk]['obj'].twinIdx            
 
+            res += [ selfIdx == twinOfTwinIdx ]
+
+        return all(res)
 
     def runTest(self):
-        test_cases_key = [
-            'default',                      # 0: 
-            'default_small',                # 1: 
-            'specialCase_01',               # 2: 4 tangent circles and a line
-            'specialCase_02',               # 3: non-interrsecting circle
-            'specialCase_03',               # 4: singel circle 4 intersections
-            'specialCase_04',               # 5: 2 lines - one circle
-            'specialCase_05',               # 6: a square - a circle
-            'specialCase_06',               # 7: concentric circles
-            'specialCase_07',               # 8: disjoint
-            # 'intensive',                  # 9: 
-            # 'intensive_x2',               # 10:
-            # 'intensive_lineOnly',         # 11:
-            # 'random',                     # 12:
-            'star'                          # 13: 
-        ]
 
-        for key in test_cases_key:
+        fileList = [ fileName
+                     for fileName in os.listdir(address)
+                     if (len(fileName)>5 and fileName[-5:]=='.yaml') ]
+
+        for fileName in fileList:
             
-            print 'testing case: '+key
-            file_name = 'testCases/'+key+'.yaml'
-            data = tcg.load_from_csv( file_name )
-            curves = data['curves']
+            data = load_data_from_yaml( address+fileName )
+            print 'testing case: ' + data['dataset']
+            curves = data['curves']            
             subdiv = sdv.Subdivision(curves, multiProcessing=4)
-
 
             ########## testing twin assignment
             self.assertEqual( self.test_twinAssignment(subdiv), True,
@@ -100,7 +89,7 @@ class SubdivisionTests(unittest.TestCase):
             ########## testing number of subGraphs
             if 'number_of_subGraphs' in data.keys():
                 n_subGraphs = data['number_of_subGraphs']
-                self.assertEqual( len(subdiv.subGraphs), n_subGraphs,
+                self.assertEqual( len(subdiv.subDecompositions), n_subGraphs,
                                   'incorrect number of subGraphs')
             else:
                 print 'number of subGraphs is not available for ' + key, '...'
@@ -108,12 +97,15 @@ class SubdivisionTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    global address
+    address = os.getcwd()+'/testCases/'
+
     unittest.main()
 
 
 
-
-# #### test node construction
+# ########################################
+# # test node construction
 # # does mySubdivision.nodes correspond to mySubdivision.intersectionFlat?
 # num_of_intersections = len( mySubdivision.intersectionsFlat)
 # num_of_nodes = len( mySubdivision.nodes )
@@ -130,34 +122,27 @@ if __name__ == '__main__':
 #         if curve.obj.contains(point):
 #             if not( c_idx in mySubdivision.ipsCurveIdx[n_idx] ):
 #                 print 'error'
-
+# ########################################
 
 
 # ########################################
 # # half edge attributes:
-# # TODO:
-# # sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
-# assert (sIdx == selfIdx[0])
-# assert (eIdx == selfIdx[1])
-
+# TODO:
 # assert (twinIdx[1] == selfIdx[0])
 # assert (twinIdx[1] == selfIdx[0])
-
-# # assert (succIdx[0] == selfIdx[1])
+# assert (succIdx[0] == selfIdx[1])
 # ########################################        
 
 
 
-
-# #### test face construction
-# # could a pair of twins be in oen face simultaneously?
+# ########################################
+# # test face construction
+# # could a pair of twins be in oen face simultaneously? YES! They could!
 
 # allHalfEdge = mySubdivision.get_all_HalfEdge_indices()
-
 # he = (2,8,0)
-
 # idx = mySubdivision.find_successor_HalfEdge(he)
 # he = allHalfEdge[idx]
 # print he
-
 # mySubdivision.find_successor_HalfEdge(he)
+# ########################################

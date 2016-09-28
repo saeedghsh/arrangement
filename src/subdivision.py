@@ -90,7 +90,7 @@ def distance_star(*args):
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
-                  cIdx, side,
+                  cIdx, direction,
                   sTVal, eTVal):
 
         self.selfIdx = selfIdx   # self-index (startNodeIdx, endNodeIdx, pathIdx)
@@ -98,19 +98,24 @@ class HalfEdge:
         self.succIdx = None # index to the successor half-edge
 
         # half edge Curve's attributes:
-        self.cIdx = cIdx         # Index of the curve creating the edge
-        self.side = side         # defines the direction of t-value (in: t2>t1, out: t1>t2)
-
+        self.cIdx = cIdx           # Index of the curve creating the edge
+        self.direction = direction # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
         # TODO: I think I should remove all the following    
         self.sTVal = sTVal
         self.eTVal = eTVal
 
+        if self.sTVal < self.eTVal:
+            assert (self.direction=='positive')
+        elif self.sTVal > self.eTVal:
+            assert (self.direction=='negative')            
+
+
 ################################################################################
 class Face:
     def __init__(self, halfEdgeList, path):
         ''' '''
-        self.halfEdges = halfEdgeList # a list of half-edges
+        self.halfEdges = halfEdgeList # a list of half-edges [(s,e,k), ...]
         self.path = path              # mpl.path
         self.holes = ()               # list of faces
 
@@ -284,23 +289,22 @@ class Subdivision:
 
         #### STAGE C: split the base graph into connected subgraphs
         tic = time.time()
-        subgraphs = list(nx.connected_component_subgraphs(self.MDG.to_undirected()))
-        self.subGraphs = [sg.to_directed() for sg in subgraphs]
-        del subgraphs
+        subGraphs = list(nx.connected_component_subgraphs(self.MDG.to_undirected()))
+        subGraphs = [sg.to_directed() for sg in subGraphs]
         if timing: print 'connected components:', time.time() - tic
 
         ########## decomposition
         #### STAGE A: decomposition of each subgraph and merging
         tic = time.time()
         subDecompositions = []
-        for sg in self.subGraphs:
+        for iii, sg in enumerate( subGraphs ):
             faces = self.decompose_graph(sg)
             if len(faces) == 0:
                 # we need to check if self.decompose_graph(sg) returns anything
                 # for instance, if two line intersect only with each other,
                 # there will be a subgraph of one node, with no edge or face
                 # therefore, no decomposition shall be stored
-                subDecompositions.append( None )
+                superFaceIdx = None
 
             else:
                 # find the superFace of the decomposition                
@@ -308,14 +312,60 @@ class Subdivision:
                     # if only there are two faces, they will have the same area size
                     # so we look into the side attribute of half-edges of each face
                     # the one with negative side is selected as superFace
-                    (s,e,k) = faces[0].halfEdges[0]
-                    side = self.MDG[s][e][k]['obj'].side
-                    superFaceIdx = 0 if side=='negative' else 1
+
+                    if len(faces[0].halfEdges) == 1:
+                        # this is the case of a single circle
+                        (s,e,k) = faces[0].halfEdges[0]
+                        direction = self.MDG[s][e][k]['obj'].direction
+                        superFaceIdx = 0 if direction=='negative' else 1
+
+                    else:
+                        # TODO: I have no idea whether this is correct! check!
+                        # hypothesis:
+                        # when a subdivision returns only two face, of which one is superFace
+                        # the sum of the internal angles of superFace is always bigger than 
+                        # the corresponding value of the inner face.
+                        angleSum = [0,0]
+                        for fIdx, face in enumerate(faces):
+                            for (s,e,k) in face.halfEdges:                            
+                                # ta: twin's departure angle
+                                (ts,te,tk) = self.MDG[s][e][k]['obj'].twinIdx
+                                twin = self.MDG[ts][te][tk]['obj']
+                                curve = self.curves[twin.cIdx]
+                                ta = curve.tangentAngle( self.MDG.node[ts]['point'],
+                                                         twin.direction)
+                                
+                                # sa: successor's departure angle
+                                (ss,se,sk) = self.MDG[s][e][k]['obj'].succIdx
+                                succ = self.MDG[ss][se][sk]['obj']
+                                curve = self.curves[succ.cIdx]
+                                sa = curve.tangentAngle( self.MDG.node[ss]['point'],
+                                                         succ.direction)
+                                
+                                # sa, ta in [0,2pi]
+                                # and we want sth to be from ta to sa in ccw direction
+                                sth = ta - sa if ta>sa else (ta+2*np.pi) - sa
+                                angleSum[fIdx] += sth
+                                
+                        superFaceIdx = angleSum.index(max(angleSum))
+                    
+
+                    ########################################
+
+
+                    # # TODO:
+                    # # if it is desired not to allow a non-cyclic graph
+                    # # be identified as a face, uncomment the follwing
+                    # if faces[0].get_area() == 0:
+                    #     superFaceIdx = None
+                    #     faces = []
+
+
                 else:
                     facesArea = [face.get_area() for face in faces]
                     superFaceIdx = facesArea.index(max(facesArea))
                     
-                subDecompositions.append( Decomposition(sg, faces, superFaceIdx) )
+            subDecompositions.append( Decomposition(sg, faces, superFaceIdx) )
 
         if timing: print 'decomposition:', time.time() - tic
 
@@ -326,15 +376,18 @@ class Subdivision:
                 if idx1 != idx2:
                     sd1 = subDecompositions[idx1]
                     sd2 = subDecompositions[idx2]
-                    if sd1 and sd2: # sd1 or sd2 could be "None"
+
+                    # sd1 or sd2 could be empty 
+                    if len(sd1.faces)>0 and len(sd2.faces)>0:
+
                         sampleNodeIdx = sd2.graph.nodes()[0]
-                        # samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point # here
-                        samplePoint = sd2.graph.node[sampleNodeIdx]['point'] # here
+                        samplePoint = sd2.graph.node[sampleNodeIdx]['point']
 
                         fIdx = sd1.find_face ( samplePoint )
                         if fIdx != None :
                             superFace = subDecompositions[idx2].superFace
                             subDecompositions[idx1].faces[fIdx].punch_hole ( superFace )
+
         self.subDecompositions = subDecompositions
         del subDecompositions
         if timing: print 'intersect graphs', time.time() - tic
@@ -764,54 +817,64 @@ class Subdivision:
         2nd - Beta  = curvature of the edge, considering the direction of it
         '''
 
-        # reference: the 1st and 2nd derivatives of the twin half-edge
-        (tStart, tEnd, tk) = twinIdx
-        refObj = self.MDG[tStart][tEnd][tk]['obj']
+        if len(candidateEdges) == 0:
+            # if a followed path ends at an end point of a branch (not a cycle)
+            # we have to let the pass return by the twin
+            
+            # TODO:
+            # this unforunately will result in a having faces with null area
+            # if a subgraph contains no cycle (i.e. a tree)
 
-        # sorting values of the reference (twin of the current half-edge)
-        # 1stKey: alpha - 2ndkey: beta
-        refObjCurve = self.curves[refObj.cIdx]
-        sPoint = self.MDG.node[tStart]['point']
-        refAlpha = refObjCurve.tangentAngle(sPoint, refObj.side)
-        refBeta = refObjCurve.curvature(sPoint, refObj.side)
+            return allHalfEdgeIdx.index(twinIdx)
 
-        # sorting values: candidates
-        canAlpha = []
-        canBeta = []
-        for candidateIdx in candidateEdges:
-            (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
-            canObj = self.MDG[cStart][cEnd][ck]['obj']
-            canObjCurve = self.curves[canObj.cIdx]
-            canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.side) )
-            canBeta.append( canObjCurve.curvature(sPoint, canObj.side) )
+        else:
+            # reference: the 1st and 2nd derivatives of the twin half-edge
+            (tStart, tEnd, tk) = twinIdx
+            refObj = self.MDG[tStart][tEnd][tk]['obj']
 
-        # sorting
-        fullList  = zip( canAlpha, canBeta, candidateEdges )
-        fullList += [(refAlpha,refBeta,'ref')]
-        sortList  = sorted( fullList, key=operator.itemgetter(0, 1) )
+            # sorting values of the reference (twin of the current half-edge)
+            # 1stKey: alpha - 2ndkey: beta
+            refObjCurve = self.curves[refObj.cIdx]
+            sPoint = self.MDG.node[tStart]['point']
+            refAlpha = refObjCurve.tangentAngle(sPoint, refObj.direction)
+            refBeta = refObjCurve.curvature(sPoint, refObj.direction)
 
-        # picking the successor
-        for i, (alpha,beta, idx) in enumerate(sortList):
-            if idx == 'ref':
-                if direction=='ccw_before':
-                    (a,c,successorIdx) = sortList[i-1]
-                elif direction=='ccw_after':
-                    (a,c,successorIdx) = sortList[i+1]
-                break
+            # sorting values: candidates
+            canAlpha = []
+            canBeta = []
+            for candidateIdx in candidateEdges:
+                (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
+                canObj = self.MDG[cStart][cEnd][ck]['obj']
+                canObjCurve = self.curves[canObj.cIdx]
+                canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.direction) )
+                canBeta.append( canObjCurve.curvature(sPoint, canObj.direction) )
 
-        # # TODO: debugging - remove
-        # ##############################
-        # print '\n\tcurrent   half-edge:', halfEdgeIdx
-        # for (alpha,beta, idx) in sortList:
-        #     if idx == 'ref':
-        #         print twinIdx, (alpha, beta), 'reference-twin'
-        #     else:
-        #         (s_, e_, k_) = allHalfEdgeIdx[idx]
-        #         print (s_, e_, k_), (alpha, beta)
-        # print '\tsuccessor   half-edge:', allHalfEdgeIdx[successorIdx]
-        # ##############################
+            # sorting
+            fullList  = zip( canAlpha, canBeta, candidateEdges )
+            fullList += [(refAlpha,refBeta,'ref')]
+            sortList  = sorted( fullList, key=operator.itemgetter(0, 1) )
 
-        return successorIdx
+            # picking the successor
+            for i, (alpha,beta, idx) in enumerate(sortList):
+                if idx == 'ref':
+                    if direction=='ccw_before':
+                        (a,c,successorIdx) = sortList[i-1]
+                    elif direction=='ccw_after':
+                        (a,c,successorIdx) = sortList[i+1]
+                    break
+
+            # # TODO: debugging - remove
+            # ##############################
+            # print '\n\tcurrent   half-edge:', halfEdgeIdx
+            # for (alpha,beta, idx) in sortList:
+            #     if idx == 'ref':
+            #         print twinIdx, (alpha, beta), 'reference-twin'
+            #     else:
+            #         (s_, e_, k_) = allHalfEdgeIdx[idx]
+            #         print (s_, e_, k_), (alpha, beta)
+            # print '\tsuccessor   half-edge:', allHalfEdgeIdx[successorIdx]
+            # ##############################
+            return successorIdx
 
 
     ############################################################################
@@ -830,7 +893,6 @@ class Subdivision:
         # this requires moving the sorting procedure from find_successor_halfEdge
         # to a seperate method that caches all the successors in advance.
         
-
         faces = []
         allHalfEdgeIdx = self.get_all_HalfEdge_indices(graph)
         openList = [ 1 for heIdx in allHalfEdgeIdx]
@@ -843,7 +905,6 @@ class Subdivision:
 
             # find the next item in the openList that is not closed (=0)
             openListIdx = next((i for i,v in enumerate(openList) if v != 0), None)
-
 
             if openList[openListIdx]: # not sure this is necessary!
 
@@ -886,7 +947,6 @@ class Subdivision:
                         # >> for now: ignore the face_tmp value,
                         # because it is the face that contains infinity!
                         # and the openList is updated properly so far
-                        
 
                 # print face_tmp
                 if sNodeIdx == eNodeIdx:
@@ -903,9 +963,20 @@ class Subdivision:
                 else:
                     pass
 
-                          
-        return tuple( Face( edgeList, self.edgeList_2_mplPath(edgeList) )
-                 for edgeList in faces )
+        ####### assign successor halfEdge Idx to each halfEdge:
+        for edgeList in faces:
+            for idx in range(len(edgeList)-1):
+                (cs,ce,ck) = edgeList[idx] # current halfEdgeIdx
+                (ss,se,sk) = edgeList[idx+1] # successor halfEdgeIdx
+                self.MDG[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
+            (cs,ce,ck) = edgeList[-1] # current halfEdgeIdx
+            (ss,se,sk) = edgeList[0] # successor halfEdgeIdx
+            self.MDG[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
+
+
+        return tuple( Face( edgeList,
+                            self.edgeList_2_mplPath(edgeList) )
+                      for edgeList in faces )
 
 
     ################################### converting face to mpl.path
@@ -949,7 +1020,7 @@ class Subdivision:
                 t1 = np.float(sTVal) *(180 /np.pi)
                 t2 = np.float(eTVal) *(180 /np.pi)
 
-                if halfEdge_obj.side == 'negative':
+                if halfEdge_obj.direction == 'negative':
                     # TODO(saesha): which one?
                     arc = mpath.Path.arc( t2,t1 )
                     # arc = mpath.Path.arc( np.min([t1,t2]), np.max([t1,t2]) )
@@ -973,7 +1044,7 @@ class Subdivision:
                 cs[0] = mpath.Path.LINETO
 
                 # reversing the order of vertices, if the halfEdge has negative direction
-                if halfEdge_obj.side == 'negative': vs.reverse()
+                if halfEdge_obj.direction == 'negative': vs.reverse()
 
                 verts.extend( vs )
                 codes.extend( cs )

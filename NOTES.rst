@@ -4,11 +4,54 @@ TODO:
 
       Debugging:
       ----
-      [ ] fix the  - test_cases_key[13]
+      [ ] test_cases_key[20] and [24] [23]
+      rays (and segments), eventhough different, they are rejected as similar
+      because they are based on the same underlying line entity
+
+      [later] fix the  - test_cases_key[13]
       it happens to be genuinely a degenerate case, that is to say the peoblem 
       happens when the angles of tangent to two tangent half-edge differ after
       the 7th digit of the fractional part
 
+      [vx] if a bunch of curves intersect in a way that there are more than one nodes, it will result in at least one half-edge. consequently the face identification will initiate, but if there is no face, it will become problematic.
+
+      TODO: Of each subgraph construct a graph, only of positive half edges, start face identification only if there is a close path in it.
+
+      what I have done:
+      add the following to the find_successor_...
+      if len(candidateEdges) == 0: return allHalfEdgeIdx.index(twinIdx)
+      this unforunately will result in a having faces with null area
+      for instance, if a subgraph contains no cycle (i.e. a tree)
+
+      [v] test_cases_key[23]
+      the superFace is not identified correctly!
+      hypothesis:
+      when a subdivision returns only two face, of which one is superFace
+      the sum of the internal angles of superFace is always bigger than 
+      the corresponding value of the inner face.
+
+      [v] test_cases_key[23]
+      what I define as the side of the half-edge, is actually the direction of
+      the half-edge with respect to the theta value of the underlying curve
+      Using it as side, casued a big trouble in finding the superFace,
+
+      in Half-edge class: change the attribute side to direction
+
+      for sd in mySubdivision.subDecompositions:
+          print '-----------'
+          print 'the face:', [ mySubdivision.MDG[s][e][k]['obj'].side
+                               for (s,e,k) in sd.faces[0].halfEdges ]
+          print 'the superFace:', [ mySubdivision.MDG[s][e][k]['obj'].side
+                               for (s,e,k) in sd.superFace.halfEdges ]
+
+      the face: ['positive', 'positive', 'negative', 'negative']
+      the superFace: ['positive', 'positive', 'negative', 'negative']
+      -----------
+      the face: ['positive', 'positive', 'negative', 'negative']
+      the superFace: ['positive', 'positive', 'negative', 'negative']
+      -----------
+      the face: ['positive', 'positive', 'positive', 'negative']
+      the superFace: ['positive', 'negative', 'negative', 'negative']
 
       [v] fix the sorting bug
       - test_cases_key[2]
@@ -83,16 +126,18 @@ TODO:
 
       Developement
       ------------
-      [ ] when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
-
       [ ] testing unit
 	create test cases for the improved cases, i.e. ray, segment, arc	
 	use suite() so it runs all tests, even if one fails
-	bring all asserts from subdivision.py to test.py
+	bring all "asserts" from subdivision.py to test.py
 
-      [ ] Multiple subdivision intersection (for agents tracking)
+      [ ] decomposition.do_intersection() (for agents tracking)
+	just check their superface, to see whether they intersect or not!
 
       [ ] also look into the "constructive geometry", merging and splitting faces locally.
+
+      [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
+
 
       [ ] Subdivision.transform(M(R,T,S))
 	- Essential for the dynamic subdivision
@@ -104,8 +149,9 @@ TODO:
 	    - requires local map merging from different agents (subdivision matching)
 	    - maybe using signal amplifiers to enable agents' communication
 
-      [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
+      [ ] should I have used  "geometric_graph"?
 
+      [ ] when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
 
       [ ] 'save_to_image(fileName)'
 	it should be fast, both for debugging sessions' sake and final application
@@ -126,6 +172,7 @@ TODO:
 
       [ ] https://www.toptal.com/python/computational-geometry-in-python-from-theory-to-implementation
 
+      [v] visualize the test cases without deploying subdivision
 
       [v] arc
 	  the challenge in handling the Arc is due to the fact that Arc is not
@@ -296,7 +343,7 @@ TODO:
 
 Documentation
 -------------
-[ ] Parametric Equations
+https://readthedocs.org/
 
 [ ] doc-tool:
 - https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
@@ -310,6 +357,10 @@ Documentation
 [ ] GUI?
 - Load file / interactive drawings / manual entering
   Support animation
+
+[ ] subdivision.io
+https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
+
   
 [v] animation
 - https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
@@ -318,8 +369,6 @@ Documentation
 [gif] convert -delay 10 -loop 0 *.png animation.gif
 [mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
   
-[ ] subdivision.io
-https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
 
 
 other notes

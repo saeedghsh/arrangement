@@ -16,18 +16,17 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+import time
+import numpy as np
+
 import subdivision as sdv
 import plotting as myplt
-import testCaseGenerator as tcg
+import modifiedSympy as mSym
 reload(sdv)
 reload(myplt)
-reload(tcg)
-
-import time
-
-import numpy as np
-import modifiedSympy as mSym
 reload(mSym)
+
+from loadFromYaml import load_data_from_yaml
 
 ################################################################################
 ################################################################# initialization
@@ -52,17 +51,26 @@ test_cases_key = [
     'specialCase_09',               # 16: 
     'specialCase_10',               # 17: 
     'example_02',                   # 18: +arc +segment +ray
+    'example_03',                   # 19: only segment
+    'example_04',                   # 20: pizza: circle + 8 rays
+    'example_05',                   # 21: capsule: 2xArcs + 2xSements
+    'example_06',                   # 22: vertically stacked arcs and rays
+    'example_07',                   # 23: door
+    'example_08',                   # 24: 
+    'example_09',                   # 25: 3x segment-> 2xNode-1xEdge-0xFace
+    'example_10',                   # 26: a square with a loost branch
+    'example_11',                   # 27: 3 circle holes in one square
 ]
 
 ########################################
-testNumber = 18
+testNumber = 27
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
-data = tcg.load_from_csv( file_name )
+data = load_data_from_yaml( file_name )
 curves = data['curves']
 
-if 'number_of_nodes' in data.keys(): # len(data.keys()) > 1
+if 'number_of_nodes' in data.keys():
     testing = True
     n_nodes = data['number_of_nodes']
     n_edges = data['number_of_edges']
@@ -85,19 +93,19 @@ if testing:
     cond += [ len(mySubdivision.MDG.nodes()) == n_nodes ]
     cond += [ len(mySubdivision.MDG.edges()) == n_edges ]
     cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
-    cond += [ len(mySubdivision.subGraphs) == n_subGraphs ]
+    cond += [ len(mySubdivision.subDecompositions) == n_subGraphs ]
     print 'success' if all(cond) else 'fail'
 
     print 'nodes:\t\t', len(mySubdivision.MDG.nodes()), '\t expected:', n_nodes
     print 'edges:\t\t', len(mySubdivision.MDG.edges()), '\t expected:', n_edges
     print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
-    print 'subGraphs:\t', len(mySubdivision.subGraphs), '\t expected:', n_subGraphs
+    print 'subGraphs:\t', len(mySubdivision.subDecompositions), '\t expected:', n_subGraphs
 
 elif not(testing):
     print 'nodes:\t\t', len(mySubdivision.MDG.nodes())
     print 'edges:\t\t', len(mySubdivision.MDG.edges())
     print 'faces:\t\t', len(mySubdivision.decomposition.faces)
-    print 'subGraphs:\t', len(mySubdivision.subGraphs)
+    print 'subGraphs:\t', len(mySubdivision.subDecompositions)
 
 ################################################################################
 ####################################################################### plotting
@@ -142,4 +150,49 @@ MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 #     print (s,e,k), ': ', subdiv.MDG[s][e][k]['obj']
 
 # # access main graph of subdivision:
+
+
+
+
+############################# find cycles?
+# import networkx as ns
+# MDG = mySubdivision.MDG
+# MG = MDG.copy()
+# allHalfEdgeIdx = [(sIdx, eIdx, k)
+#                   for sIdx in MDG.nodes()
+#                   for eIdx in MDG.nodes()
+#                   if eIdx in MDG[sIdx].keys() # if not, subd[sIdx][eIdx] is invalid
+#                   for k in MDG[sIdx][eIdx].keys()]
+# twins = []
+# for hei in allHalfEdgeIdx:
+#     (s,e,k) = hei
+#     twin = MG[s][e][k]['obj'].twinIdx
+#     if not( hei in twins) :
+#         twins.append(twin)
+# MG.remove_edges_from(twins)
+# MG = MG.to_undirected()
+# for cycle in nx.cycles.simple_cycles(MG):
+#     print cycle
+# for cycle in nx.cycles.cycle_basis(MG):
+#     print cycle
+
+
+
+# ### testing the successor/twin assigment
+# for face in mySubdivision.decomposition.faces:
+#     for idx in range(len(face.halfEdges)-1):
+#         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
+#         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
+#         assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+        
+#         (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#         assert (ts == ss)
+
+#     (cs,ce,ck) = face.halfEdges[-1] # current halfEdgeIdx
+#     (ss,se,sk) = face.halfEdges[0] # successor halfEdgeIdx
+#     assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+
+#     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#     assert (ts == ss)
+
 

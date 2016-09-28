@@ -2,10 +2,10 @@
 dataset: specialCase_09
 
 testValues:
-    - number_of_nodes: 15
-      number_of_edges: 44
-      number_of_faces: 12
-      number_of_subGraphs: 5
+    - number_of_nodes: 11
+      number_of_edges: 36
+      number_of_faces: 8
+      number_of_subGraphs: 1
 
 lines:
     - [-2, -4, 2, -4]

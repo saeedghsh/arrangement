@@ -26,21 +26,22 @@ reload(mSym)
 ################################################################################
 ################################################################################
 ################################################################################
-def load_from_csv(fileName=None):
+def load_data_from_yaml(fileName=None):
 
+    Point = sym.Point
     Line = mSym.LineModified
     Ray = mSym.RayModified
     Segment = mSym.SegmentModified
     Circle = mSym.CircleModified
     Arc = mSym.ArcModified
 
-
-    Point = sym.Point
-
     result = {}
     curves = []
 
     if 'random' in fileName: # generate an almost random case 
+
+        result.update( {'dataset': 'random'} )
+
         nl = 4
         X1 = np.random.random(nl)
         Y1 = np.random.random(nl)
@@ -57,7 +58,11 @@ def load_from_csv(fileName=None):
                    for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
 
 
+
     elif 'star' in fileName:
+
+        result.update( {'dataset': 'star'} )
+
         # generate the star case
         # happens to be very tricky
         a1 = 36 * np.pi/180
@@ -80,8 +85,11 @@ def load_from_csv(fileName=None):
         result.update( {'number_of_subGraphs': 1} )       
 
     else: 
+
         stream = open(fileName, 'r')
         data = yaml.load(stream)
+
+        result.update( {'dataset': data['dataset']} )
 
         if 'testValues' in data.keys():
             result.update( data['testValues'][0] )

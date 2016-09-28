@@ -1,0 +1,32 @@
+---
+dataset: example_11
+
+testValues:
+    - number_of_nodes: 7
+      number_of_edges: 14
+      number_of_faces: 4
+      number_of_subGraphs: 4
+
+lines:
+    - [0, 0, 8, 0]
+    - [8, 0, 8, 8]
+    - [8, 8, 0, 8]
+    - [0, 0, 0, 8]
+
+circles:
+    - [2, 2, 1]
+    - [4, 4, 1]
+    - [6, 6, 1]
+
+################################################################################
+# lines [x1,y1,x2,y2] or [x1,y1,slope]
+# rays [x1,y1,x2,y2]
+# segments [x1,y1,x2,y2]
+# circles [x,y,r]
+# arcs [x,y,r,t1,t2]
+
+    # if name == 'example1':
+    #     curves = []
+    #     curves += [ Line( args=( Point(-1,-1), Point(1,1)) ) ]
+    #     curves += [ Circle( args=(Point(2,0), 3) ) ]
+    #     curves += [ Circle( args=(Point(-2,0), 3) ) ]
