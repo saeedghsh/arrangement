@@ -29,22 +29,22 @@ from loadFromYaml import load_data_from_yaml
 ################################################################################
 
 class SubdivisionTests(unittest.TestCase):    
-    '''  '''
-    def test_twinAssignment(self, subdiv):
-        # checking the correctness of twin assignment in half-edge construction
+    # '''  '''
+    # def test_twinAssignment(self, subdiv):
+    #     # checking the correctness of twin assignment in half-edge construction
         
-        res = []
-        for selfIdx in subdiv.get_all_HalfEdge_indices():
-            (s,e,k) = selfIdx
+    #     res = []
+    #     for selfIdx in subdiv.get_all_HalfEdge_indices():
+    #         (s,e,k) = selfIdx
             
-            twinIdx = subdiv.MDG[s][e][k]['obj'].twinIdx
-            (ts,te,tk) = twinIdx
+    #         twinIdx = subdiv.MDG[s][e][k]['obj'].twinIdx
+    #         (ts,te,tk) = twinIdx
 
-            twinOfTwinIdx = subdiv.MDG[ts][te][tk]['obj'].twinIdx            
+    #         twinOfTwinIdx = subdiv.MDG[ts][te][tk]['obj'].twinIdx            
 
-            res += [ selfIdx == twinOfTwinIdx ]
+    #         res += [ selfIdx == twinOfTwinIdx ]
 
-        return all(res)
+    #     return all(res)
 
     def runTest(self):
 
@@ -59,9 +59,9 @@ class SubdivisionTests(unittest.TestCase):
             curves = data['curves']            
             subdiv = sdv.Subdivision(curves, multiProcessing=4)
 
-            ########## testing twin assignment
-            self.assertEqual( self.test_twinAssignment(subdiv), True,
-                              'incorrect twin assignment')
+            # ########## testing twin assignment
+            # self.assertEqual( self.test_twinAssignment(subdiv), True,
+            #                   'incorrect twin assignment')
 
             ########## testing number of nodes
             if 'number_of_nodes' in data.keys():

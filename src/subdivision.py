@@ -82,6 +82,33 @@ def distance_star(*args):
     x2, y2 = p2.x, p2.y
     return sym.sqrt( (x1-x2)**2 + (y1-y2)**2 )
 
+
+################################################################################
+###################################################### some other functions
+################################################################################
+# def are_similar_modified(curve1, curve2):
+
+#     epsilon = np.spacing(10**10)
+
+#     c1Ray = isinstance(curve1, mSym.RayModified)
+#     c1Seg = isinstance(curve1, mSym.SegmentModified)
+#     c1Lin = isinstance(curve1, mSym.LineModified)
+#     c1Lin = c1Lin and not(c1Seg) and not(c1Ray)
+#     c1Arc = isinstance(curve1, mSym.ArcModified)
+#     c1Cir = isinstance(curve1, mSym.CircleModified)
+#     c2Cir = c2Cir and not(c2Arc)
+
+#     c2Ray = isinstance(curve2, mSym.RayModified)
+#     c2Seg = isinstance(curve2, mSym.SegmentModified)
+#     c2Lin = isinstance(curve2, mSym.LineModified)
+#     c2Lin = c2Lin and not(c2Seg) and not(c2Ray)
+#     c2Arc = isinstance(curve2, mSym.ArcModified)
+#     c2Cir = isinstance(curve2, mSym.CircleModified)
+#     c2Cir = c2Cir and not(c2Arc)
+
+
+    
+
 ################################################################################
 ################################################################# object classes
 ################################################################# HalfEdge
@@ -402,51 +429,41 @@ class Subdivision:
 
     ############################################################################
     def store_curves(self, curves):
-        # first discard duplicate and invalid curves
-        # invalid curves are:    circles(radius <= 0)
+        '''
+        discard overlapping and invalid curves
 
+        note that if two curves are ovelapping, the one with 
+        higher index in the list "curves" will be rejected
+
+        invalid curves are:    circles/arcs, where radius <= 0
+        '''
         epsilon = np.spacing(10**10)
 
         for cIdx1 in range(len(curves)-1,-1,-1):
             obj1 = curves[cIdx1].obj
-            obj1IsLine = isinstance(curves[cIdx1], (mSym.LineModified,
-                                                    mSym.RayModified,
-                                                    mSym.SegmentModified) )
             obj1IsCirc = isinstance(curves[cIdx1], mSym.CircleModified)
             obj1IsArc = isinstance(curves[cIdx1], mSym.ArcModified)
+            # note that a an arc both obj1IsCirc and obj1IsArc are True
            
-            if (obj1IsCirc or obj1IsArc) and curves[cIdx1].obj.radius<=0:
-                # rejecting circles and arcs with (radius <= 0)
+            if obj1IsCirc and curves[cIdx1].obj.radius<=0:
+                # rejecting circles (and arcs) with (radius <= 0)
                 curves.pop(cIdx1)
 
             else:
-                # rejecting duplicated curves
+                # rejecting overlapping curves
                 for cIdx2 in range(cIdx1):
                     obj2 = curves[cIdx2].obj
-                    obj2IsLine = isinstance(curves[cIdx2], (mSym.LineModified,
-                                                            mSym.RayModified,
-                                                            mSym.SegmentModified) )
-                    obj2IsCirc = isinstance(curves[cIdx2], mSym.CircleModified)
                     obj2IsArc = isinstance(curves[cIdx2], mSym.ArcModified)
-
-                    if (obj1IsLine and obj2IsLine):
-                        if sym.are_similar(curves[cIdx1].obj, curves[cIdx2].obj):
-                            curves.pop(cIdx1)
-                            break
-
-                    elif (obj1IsCirc and obj2IsCirc):
-                        dis = obj1.center.distance(obj2.center)
-                        ris = obj1.radius - obj2.radius
-                        if dis < epsilon and ris < epsilon:
-                            curves.pop(cIdx1)
-                            break
-
-                    elif (obj1IsArc and obj2IsArc):
-                        dis = obj1.center.distance(obj2.center)
-                        ris = obj1.radius - obj2.radius
-                        p1dis = curves[cIdx1].p1.distance(curves[cIdx2].p1)
-                        p2dis = curves[cIdx1].p2.distance(curves[cIdx2].p2)
-                        if dis < epsilon and ris < epsilon and p1dis < epsilon and p2dis < epsilon:
+                    
+                    if obj1.contains(obj2) or obj2.contains(obj1):
+                        if obj1IsArc and obj2IsArc:
+                            # TODO: here here check containment
+                            p1dis = curves[cIdx1].p1.distance(curves[cIdx2].p1)
+                            p2dis = curves[cIdx1].p2.distance(curves[cIdx2].p2)
+                            if p1dis < epsilon and p2dis < epsilon:
+                                curves.pop(cIdx1)
+                                break
+                        else:
                             curves.pop(cIdx1)
                             break
 

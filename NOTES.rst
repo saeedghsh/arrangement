@@ -134,6 +134,8 @@ TODO:
       [ ] decomposition.do_intersection() (for agents tracking)
 	just check their superface, to see whether they intersect or not!
 
+      [ ] svg_to_yaml_parser()
+
       [ ] also look into the "constructive geometry", merging and splitting faces locally.
 
       [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])

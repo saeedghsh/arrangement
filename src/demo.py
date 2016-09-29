@@ -18,6 +18,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 
 import time
 import numpy as np
+import sympy as sym
 
 import subdivision as sdv
 import plotting as myplt
@@ -114,17 +115,18 @@ elif not(testing):
 # myplt.plot_decomposition_colored(mySubdivision,
 #                                  printNodeLabels=False,
 #                                  printEdgeLabels=False)
-myplt.plot_decomposition(mySubdivision,
-                         interactive_onClick=False,
-                         interactive_onMove=False,
-                         plotNodes=True, printNodeLabels=True,
-                         plotEdges=True, printEdgeLabels=True)
+
+# myplt.plot_decomposition(mySubdivision,
+#                          interactive_onClick=False,
+#                          interactive_onMove=False,
+#                          plotNodes=True, printNodeLabels=True,
+#                          plotEdges=True, printEdgeLabels=True)
 
 ################################################################################
 ###################################################################### animating
 ################################################################################
-myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
+# myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 
 ################################################################################
 ####################################################################### API demo
@@ -194,5 +196,4 @@ MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 
 #     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
-
 

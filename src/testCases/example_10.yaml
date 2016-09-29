@@ -3,7 +3,7 @@ dataset: example_10
 
 testValues:
     - number_of_nodes: 6
-      number_of_edges: 14
+      number_of_edges: 12
       number_of_faces: 1
       number_of_subGraphs: 1
 
