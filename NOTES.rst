@@ -1,24 +1,22 @@
-TODO:
------
-
-
-      Debugging:
-      ----
-      [ ] test_cases_key[20] and [24] [23]
-      rays (and segments), eventhough different, they are rejected as similar
-      because they are based on the same underlying line entity
+--------------------------------------------------------------------------------
+Debugging:
+----------
+      [ ] how to detect the overlap of two arcs
 
       [later] fix the  - test_cases_key[13]
       it happens to be genuinely a degenerate case, that is to say the peoblem 
       happens when the angles of tangent to two tangent half-edge differ after
       the 7th digit of the fractional part
 
+      [vx] the angle restriction in arc description
+
+      [vx] test_cases_key[20] and [24] [23]
+      rays (and segments), eventhough different, they are rejected as similar
+      because they are based on the same underlying line entity
+
       [vx] if a bunch of curves intersect in a way that there are more than one nodes, it will result in at least one half-edge. consequently the face identification will initiate, but if there is no face, it will become problematic.
-
       TODO: Of each subgraph construct a graph, only of positive half edges, start face identification only if there is a close path in it.
-
-      what I have done:
-      add the following to the find_successor_...
+      What I Have Done: added the following to the find_successor_...
       if len(candidateEdges) == 0: return allHalfEdgeIdx.index(twinIdx)
       this unforunately will result in a having faces with null area
       for instance, if a subgraph contains no cycle (i.e. a tree)
@@ -123,9 +121,9 @@ TODO:
       [v] plotting: the problem of pathes-pathces
 	  it seems to be related to the ordering of the starting and ending point of the arc
 
-
-      Developement
-      ------------
+--------------------------------------------------------------------------------
+Developement
+------------
       [ ] testing unit
 	create test cases for the improved cases, i.e. ray, segment, arc	
 	use suite() so it runs all tests, even if one fails
@@ -134,12 +132,12 @@ TODO:
       [ ] decomposition.do_intersection() (for agents tracking)
 	just check their superface, to see whether they intersect or not!
 
-      [ ] svg_to_yaml_parser()
+      [ ] merging and splitting faces locally.
 
-      [ ] also look into the "constructive geometry", merging and splitting faces locally.
+      [ ] include the boundary points of segments, rays and arcs as nodes
+	so that a segment/ray/arc is full included in the graph
 
       [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
-
 
       [ ] Subdivision.transform(M(R,T,S))
 	- Essential for the dynamic subdivision
@@ -150,6 +148,8 @@ TODO:
 	  [2] extended perception field via *local* communication between agents
 	    - requires local map merging from different agents (subdivision matching)
 	    - maybe using signal amplifiers to enable agents' communication
+
+      [ ] svg_to_yaml_parser()
 
       [ ] should I have used  "geometric_graph"?
 
@@ -231,8 +231,10 @@ TODO:
 	path.contains_path()            # 
 	path.contains_points()          # 
 
-      clean-up, and speed-up
-      ----------------------
+
+--------------------------------------------------------------------------------
+clean-up, and speed-up
+----------------------
       [ ] supposedly quick
 	I'm sure now that so many of the self.variables are removed from self.,
 	each method, such as construct_nodes() and construct_edges() could be
@@ -343,6 +345,7 @@ TODO:
       [v] multi-processing
 
 
+--------------------------------------------------------------------------------
 Documentation
 -------------
 https://readthedocs.org/

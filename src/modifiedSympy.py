@@ -336,9 +336,13 @@ class ArcModified(CircleModified):
     ####################################
     def __init__ (self, args):
         '''
-        TODO: 
         theta \in [-pi/2, pi/2])
+        TODO: 
         so how to define an arc where (t1,t2)=(pi/2, 3pi/2)
+
+        well, best is to allow any interval ([-pi, pi] or [0, 2pi])
+        and always check the tvalues +2pi and -2pi to see if whether they are
+        in the range
 
         pc, rc, interval =  (0,0), 1, (0,numpy.pi)
         arc =  mSym.ArcModified( args=( pc, rc, interval )  )
@@ -346,5 +350,10 @@ class ArcModified(CircleModified):
         
         self.obj = sym.Circle( *args[:2] )
 
+        # the radial distance of t1 to t2 can not be more than 2pi
+        assert max(args[2])-min(args[2]) < 2*np.pi
+
         # make sure t1 and t2 are sorted CCW (t1<t2)
-        self.t1, self.t2 = args[2]
+        self.t1 = min(args[2])
+        self.t2 = max(args[2])
+

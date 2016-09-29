@@ -52,10 +52,10 @@ class SubdivisionTests(unittest.TestCase):
                      for fileName in os.listdir(address)
                      if (len(fileName)>5 and fileName[-5:]=='.yaml') ]
 
-        for fileName in fileList:
+        for fileIdx, fileName in enumerate(sorted(fileList)):
             
             data = load_data_from_yaml( address+fileName )
-            print 'testing case: ' + data['dataset']
+            print 'testing case: ' + data['dataset'] , '-\t', fileIdx+1, '/', len(fileList)
             curves = data['curves']            
             subdiv = sdv.Subdivision(curves, multiProcessing=4)
 

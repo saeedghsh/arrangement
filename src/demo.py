@@ -61,15 +61,19 @@ test_cases_key = [
     'example_09',                   # 25: 3x segment-> 2xNode-1xEdge-0xFace
     'example_10',                   # 26: a square with a loost branch
     'example_11',                   # 27: 3 circle holes in one square
+    'caisr',                        # 28: 
+    'specialCase_11',               # 29: 
 ]
 
 ########################################
-testNumber = 27
+testNumber = 28
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = load_data_from_yaml( file_name )
 curves = data['curves']
+curves += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
+
 
 if 'number_of_nodes' in data.keys():
     testing = True
@@ -116,17 +120,17 @@ elif not(testing):
 #                                  printNodeLabels=False,
 #                                  printEdgeLabels=False)
 
-# myplt.plot_decomposition(mySubdivision,
-#                          interactive_onClick=False,
-#                          interactive_onMove=False,
-#                          plotNodes=True, printNodeLabels=True,
-#                          plotEdges=True, printEdgeLabels=True)
+myplt.plot_decomposition(mySubdivision,
+                         interactive_onClick=False,
+                         interactive_onMove=False,
+                         plotNodes=True, printNodeLabels=True,
+                         plotEdges=True, printEdgeLabels=True)
 
 ################################################################################
 ###################################################################### animating
 ################################################################################
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
-# myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
+myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 
 ################################################################################
 ####################################################################### API demo
@@ -196,4 +200,3 @@ MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 
 #     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
-

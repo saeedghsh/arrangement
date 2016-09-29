@@ -65,7 +65,13 @@ def intersection_star(*args):
             if isinstance(curve, mSym.ArcModified):
                 for i in range(len(intersections)-1,-1,-1):
                     tval = curve.IPE(intersections[i])
-                    if not(curve.t1 < tval < curve.t2):
+                    conditions = [ curve.t1 < tval < curve.t2 ,
+                                   curve.t1 < tval+2*np.pi < curve.t2, 
+                                   curve.t1 < tval-2*np.pi < curve.t2 ]
+                    # if (curve.t1 < tval < curve.t2):
+                    if any(conditions):
+                        pass
+                    else:
                         intersections.pop(i)
 
         return intersections
@@ -86,27 +92,6 @@ def distance_star(*args):
 ################################################################################
 ###################################################### some other functions
 ################################################################################
-# def are_similar_modified(curve1, curve2):
-
-#     epsilon = np.spacing(10**10)
-
-#     c1Ray = isinstance(curve1, mSym.RayModified)
-#     c1Seg = isinstance(curve1, mSym.SegmentModified)
-#     c1Lin = isinstance(curve1, mSym.LineModified)
-#     c1Lin = c1Lin and not(c1Seg) and not(c1Ray)
-#     c1Arc = isinstance(curve1, mSym.ArcModified)
-#     c1Cir = isinstance(curve1, mSym.CircleModified)
-#     c2Cir = c2Cir and not(c2Arc)
-
-#     c2Ray = isinstance(curve2, mSym.RayModified)
-#     c2Seg = isinstance(curve2, mSym.SegmentModified)
-#     c2Lin = isinstance(curve2, mSym.LineModified)
-#     c2Lin = c2Lin and not(c2Seg) and not(c2Ray)
-#     c2Arc = isinstance(curve2, mSym.ArcModified)
-#     c2Cir = isinstance(curve2, mSym.CircleModified)
-#     c2Cir = c2Cir and not(c2Arc)
-
-
     
 
 ################################################################################
@@ -458,12 +443,17 @@ class Subdivision:
                     if obj1.contains(obj2) or obj2.contains(obj1):
                         if obj1IsArc and obj2IsArc:
                             # TODO: here here check containment
-                            p1dis = curves[cIdx1].p1.distance(curves[cIdx2].p1)
-                            p2dis = curves[cIdx1].p2.distance(curves[cIdx2].p2)
-                            if p1dis < epsilon and p2dis < epsilon:
-                                curves.pop(cIdx1)
-                                break
+                            # assuming all the angles are in [-pi,2pi]                            
+                            # arc1t1 = curves[cIdx1].t1
+                            # arc1t2 = curves[cIdx1].t2
+                            # arc2t1 = curves[cIdx2].t1
+                            # arc2t2 = curves[cIdx2].t2
+                            # if t1dis < epsilon and t2dis < epsilon:
+                            #     curves.pop(cIdx1)
+                            #     break
+                            pass
                         else:
+                            # circles, lines, segments and rays are handled here
                             curves.pop(cIdx1)
                             break
 
@@ -575,7 +565,9 @@ class Subdivision:
 
         t = sym.Symbol('t')
         for row in range(len(self.curves)):
-            if isinstance(self.curves[row].obj, sym.Circle):
+            curveIsCircle = isinstance(self.curves[row], mSym.CircleModified)
+            curveIsCircle = curveIsCircle and not(isinstance(self.curves[row], mSym.ArcModified))
+            if curveIsCircle:
                 ips_n = np.sum( [ len(intersections[row][col])
                                   for col in range(len(self.curves)) ] )
                 if ips_n==0:
@@ -660,14 +652,36 @@ class Subdivision:
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        nodes = tuple( ( pIdx,
-                         {'point': intersectionsFlat[pIdx],
-                          'curveIdx': ipsCurveIdx[pIdx],
-                          'curveTval':ipsCurveTVal[pIdx]} )
-                       for pIdx in range(len(intersectionsFlat)) )
+        nodes = [ [ pIdx,
+                    {'point': intersectionsFlat[pIdx],
+                     'curveIdx': ipsCurveIdx[pIdx],
+                     'curveTval':ipsCurveTVal[pIdx]} ]
+                  for pIdx in range(len(intersectionsFlat)) ]
 
+        ########################################
+        # step x: fixing arcs' tval,
+        # in intersection function, we already check if the intersection is
+        # withing the interval of the arc or not, but we check with +2pi and -2pi
+        # to make sure they are in range, we modify the tval of the node and do not
+        # restrict the to any interval ([-pi, pi] or [0, 2pi])
+        for nIdx in range(len(nodes)):
+            # nodeDic = nodes[nIdx][1]
+            for idx, cIdx in enumerate(nodes[nIdx][1]['curveIdx']):
+                if isinstance(self.curves[cIdx], mSym.ArcModified):
+                    t1 = self.curves[cIdx].t1
+                    t2 = self.curves[cIdx].t2
+                    if t1 < nodes[nIdx][1]['curveTval'][idx] < t2:
+                        pass
+                    elif t1 < nodes[nIdx][1]['curveTval'][idx] +2*np.pi < t2:
+                        nodes[nIdx][1]['curveTval'][idx] += 2*np.pi
+                    elif t1 < nodes[nIdx][1]['curveTval'][idx] -2*np.pi < t2:
+                        nodes[nIdx][1]['curveTval'][idx] -= 2*np.pi
+
+        ########################################
+        # adding nodes to the graph
         self.MDG.add_nodes_from( nodes )
         assert len(self.MDG.nodes()) == len(intersectionsFlat)
+
 
     ############################################################################
     def construct_edges(self):
