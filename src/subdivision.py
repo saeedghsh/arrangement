@@ -29,17 +29,10 @@ import contextlib as ctx
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-
-
 import time
 ################################################################################
 ###################################################### parallelization functions
 ################################################################################
-def intersection_star_(*args):
-    global curves
-    idx1, idx2 = args[0][0], args[0][1]
-    return sym.intersection( curves[idx1].obj, curves[idx2].obj )
-
 def intersection_star(*args):
     global curves
     idx1, idx2 = args[0][0], args[0][1]
@@ -76,7 +69,6 @@ def intersection_star(*args):
 
         return intersections
 
-
 ################################################################################
 def distance_star(*args):
     global intersectionPoints
@@ -88,11 +80,100 @@ def distance_star(*args):
     x2, y2 = p2.x, p2.y
     return sym.sqrt( (x1-x2)**2 + (y1-y2)**2 )
 
-
 ################################################################################
 ###################################################### some other functions
 ################################################################################
+################################### converting face to mpl.path
+def edgeList_2_mplPath (edgeList, graph, curves):
+    '''
+    important note:
+    this works only if the edgeList is sorted
+    and the sequence of edges shall represent a simple closed curve (path)
+    '''
     
+    # step1: initialization - openning the path
+    (start, end, k) = edgeList[0]
+    p = graph.node[start]['point']
+    x, y = p.x.evalf(), p.y.evalf()
+    
+    verts = [ (x,y) ]
+    codes = [ mpath.Path.MOVETO ]
+
+    # step2: construction - by following the trajectory of edges in edgeList
+    for halfEdge in edgeList:
+
+        (start, end, k) = halfEdge
+        halfEdge_obj = graph[start][end][k]['obj']
+        cIdx = halfEdge_obj.cIdx
+        sTVal = halfEdge_obj.sTVal
+        eTVal = halfEdge_obj.eTVal
+
+        # # TODO: eliminating sTVal and eTVal
+        # for some reason it fails
+        # sPoint = self.MDG.node[start]['point']
+        # ePoint = self.MDG.node[end]['point']
+        # sTVal = self.curves[cIdx].IPE(sPoint)
+        # eTVal = self.curves[cIdx].IPE(ePoint)
+
+
+        if isinstance(curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
+            p2 = graph.node[end]['point']
+            x, y = p2.x.evalf(), p2.y.evalf()
+            verts.append( (x,y) )
+            codes.append( mpath.Path.LINETO )
+
+        elif isinstance(curves[cIdx].obj, sym.Circle):
+            circ = curves[cIdx].obj
+            xc, yc, rc = circ.center.x , circ.center.y , circ.radius
+            
+            # create an arc 
+            t1 = np.float(sTVal) *(180 /np.pi)
+            t2 = np.float(eTVal) *(180 /np.pi)
+
+            if halfEdge_obj.direction == 'negative':
+                # TODO(saesha): which one?
+                arc = mpath.Path.arc( t2,t1 )
+                # arc = mpath.Path.arc( np.min([t1,t2]), np.max([t1,t2]) )
+            else:
+                arc = mpath.Path.arc( t1,t2 )
+
+            # transform arc
+            transMat = matplotlib.transforms.Affine2D( )
+            ## Note that the order of adding rot_scale_translate matters
+            transMat.rotate(0) # rotate_around(x, y, theta)
+            transMat.scale( rc ) # scale(sx, sy=None)
+            transMat.translate(xc, yc) 
+            arc = arc.transformed(transMat)
+            
+            vs = list( arc.vertices.copy() )
+            cs = list( arc.codes.copy() )
+            # TODO(saesha): which one?
+            # cs[0] = mpath.Path.MOVETO or mpath.Path.LINETO
+            # Lineto, because, otherwise, decompsong the face into polygones
+            # for area approximation, it will result in disjoint segments
+            cs[0] = mpath.Path.LINETO
+            
+            # reversing the order of vertices, if the halfEdge has negative direction
+            if halfEdge_obj.direction == 'negative': vs.reverse()
+
+            verts.extend( vs )
+            codes.extend( cs )
+
+    assert len(verts) == len(codes)
+
+    # step3: finialize - closing the path
+    # making sure that the last point of the path is not a control point of an arc
+    if codes[-1] == 4:
+        (start, end, k) = edgeList[0]
+        p = graph.node[start]['point']
+        x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
+        verts.append( (x,y) )
+        codes.append( mpath.Path.CLOSEPOLY )
+    else:
+        codes[-1] = mpath.Path.CLOSEPOLY 
+        
+    return mpath.Path(verts, codes)
+
 
 ################################################################################
 ################################################################# object classes
@@ -105,6 +186,7 @@ class HalfEdge:
                   cIdx, direction,
                   sTVal, eTVal):
 
+        self.attributes = {}
         self.selfIdx = selfIdx   # self-index (startNodeIdx, endNodeIdx, pathIdx)
         self.twinIdx = twinIdx   # index to the twin half-edge
         self.succIdx = None # index to the successor half-edge
@@ -129,7 +211,8 @@ class Face:
         ''' '''
         self.halfEdges = halfEdgeList # a list of half-edges [(s,e,k), ...]
         self.path = path              # mpl.path
-        self.holes = ()               # list of faces
+        self.holes = ()               # tuple of faces
+        self.attributes = {}
 
     def get_area(self, considerHoles=True):
         '''
@@ -176,6 +259,9 @@ class Face:
         holeFace.holes = () # hole of hole is irrelevant
         holes.append(holeFace)
 
+        # TODO: here here
+        # add the list of halfEdges of the hole to the face?        
+
         # withholding nested holes
         redundant = []
         for idx1, h1 in enumerate(holes):
@@ -209,9 +295,10 @@ class Face:
         
 ################################################################################
 class Decomposition:
-    def __init__ (self, graph, faces, superFaceIdx=None):
+    def __init__ (self, graph, curves, faces, superFaceIdx=None):
         ''' '''
         self.graph = graph
+        self.curves = curves
 
         if superFaceIdx is not None:
             f = list(faces)
@@ -230,25 +317,31 @@ class Decomposition:
 
     def find_neighbours(self, faceIdx):
         ''' '''
-        MDG = self.graph
 
         # finding the indices to half-edges of the face
-        twinsIdx= [ MDG[s][e][k]['obj'].twinIdx
-                    for (s,e,k) in self.faces[faceIdx].halfEdges ]
+        twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
+                     for (s,e,k) in self.faces[faceIdx].halfEdges ]
 
         # finding the indices to half-edges of the holes of the face
-        for hole in self.faces[faceIdx].holes:
-            twinsIdx += [ MDG[s][e][k]['obj'].twinIdx
-                          for (s,e,k) in hole.halfEdges ]
+        twinsIdx += [ self.graph[s][e][k]['obj'].twinIdx
+                      for hole in self.faces[faceIdx].holes
+                      for (s,e,k) in hole.halfEdges ]
         
-        # picking the face which have any of the twins as the boundary
+        # picking the face which have any of the twins as their boundary
+        # or the baoundary of their holes
         neighbours = []
         for fIdx,face in enumerate(self.faces):
-            if any([twin in face.halfEdges for twin in twinsIdx]):
+            boundary = face.halfEdges
+            boundary += [heIdx
+                         for hole in face.holes
+                         for heIdx in hole.halfEdges]
+
+            if any([ twin in boundary  for twin in twinsIdx]):
                 neighbours.append(fIdx)
-                
-        # test
-        assert( not (faceIdx in neighbours) )
+
+        # rejecting the face itself if it is included in the neighbours
+        if faceIdx in neighbours:
+            neighbours.pop( neighbours.index(faceIdx) )
     
         return neighbours
         
@@ -256,9 +349,144 @@ class Decomposition:
         ''' '''
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
-           
+
+    def does_intersect(self, other):
+        assert self.superFace and other.superFace
+        return self.superFace.path.intersects_path(other.superFace.path,filled=False) 
+
+    def does_overlap(self, other):
+        assert self.superFace and other.superFace
+        return self.superFace.path.intersects_path(other.superFace.path,filled=True) 
+
+    def does_enclose(self, other):
+        assert self.superFace and other.superFace
+        if self.does_overlap(other) and not(self.does_intersect(other)):
+            sampleNodeIdx = other.graph.nodes()[0]
+            samplePoint = other.graph.node[sampleNodeIdx]['point']
+            fIdx = self.find_face ( samplePoint )
+            if fIdx != None:
+                return True
+        return False
+
+    def merge_faces(self, faceIndices):
+        ''' '''
+        # problem 1: mpath.Path.make_compound_path doesn't work
+
+        # problem 2: this is a blind merge,
+        # it would be nice to have a class method for merging two neighbouring faces.
+
+        # TODO: don't forget to update halfEdge.successors
+        # those twins that are removed, won't have successor
+        
+        f1Idx, f2Idx = faceIndices
+        twinsIdx = []
+        if not(f1Idx in self.find_neighbours(f2Idx)) :
+            print 'do not merge if the faces are not neighbours'
+            return None
+        else:
+            # finding the indices to half-edges of the face
+            twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
+                         for (s,e,k) in self.faces[f1Idx].halfEdges ]
+
+            # finding the indices to half-edges of the holes of the face
+            twinsIdx += [ self.graph[s][e][k]['obj'].twinIdx
+                          for hole in self.faces[f1Idx].holes
+                          for (s,e,k) in hole.halfEdges ]
+
+        for idx in range(len(twinsIdx)-1,-1,-1):
+            if not(twinsIdx[idx] in self.faces[f2Idx].halfEdges):
+                twinsIdx.pop(idx)
+
+        f2Mutuals = twinsIdx
+        f1Mutuals = [ self.graph[s][e][k]['obj'].twinIdx
+                      for (s,e,k) in twinsIdx ]
+
+        # tsesting:
+        assert len(f1Mutuals) == len(f2Mutuals)
+        assert all([ self.graph[s][e][k]['obj'].twinIdx in f2Mutuals
+                     for (s,e,k) in f1Mutuals ] )
+        assert all([ self.graph[s][e][k]['obj'].twinIdx in f1Mutuals
+                     for (s,e,k) in f2Mutuals ] )
 
 
+        ### creating the halfEdge list for the new face
+        f1Unshared = [ heIdx
+                        for heIdx in self.faces[f1Idx].halfEdges
+                        if not( heIdx in f1Mutuals) ]
+        f2Unshared = [ heIdx
+                        for heIdx in self.faces[f1Idx].halfEdges
+                        if not( heIdx in f1Mutuals) ]
+
+        if len(f1Unshared) > 0: 
+            start = f1Unshared[0]
+            print 'starting from the the first face'
+        elif len(f2Unshared) > 0: 
+            start = f2Unshared[0]
+        else:
+            print 'error, how can two faces not have unshared half-edges?'
+
+        newEdgeList = []
+        newEdgeList.append(start)
+
+        (s,e,k) = newEdgeList[0]
+        succIdx = self.graph[s][e][k]['obj'].succIdx
+        if succIdx in f1Mutuals+f2Mutuals:
+            (ss,se,sk) = succIdx
+            (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
+            succIdx = self.graph[ts][te][tk]['obj'].succIdx
+
+        idx = 1
+        while succIdx!=newEdgeList[0]:
+
+            # adding the latest found successor to the list
+            newEdgeList.append(succIdx)
+
+            # finding the successor to the last item of the list
+            (s,e,k) = newEdgeList[-1]            
+            succIdx = self.graph[s][e][k]['obj'].succIdx
+            if succIdx in f1Mutuals+f2Mutuals:
+                # if the successor is in the mutual list, then it is invalide
+                # and the correct successor is the successor to the twin of the 
+                # currently invalide successor.
+                (ss,se,sk) = succIdx
+                (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
+                succIdx = self.graph[ts][te][tk]['obj'].succIdx
+                
+
+            # checking if the while loop is stuck
+            idx += 1            
+            if idx > len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges):
+                
+                print idx, len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges)
+                print 'staying too long in the successor loop, break'
+                break
+        
+        # updating the successor of the last halfEdge
+        for idx in range(len(newEdgeList)-1):
+            (s,e,k) = newEdgeList[idx]
+            self.graph[s][e][k]['obj'].succIdx = newEdgeList[idx+1]
+        (s,e,k) = newEdgeList[-1]
+        self.graph[s][e][k]['obj'].succIdx = newEdgeList[-1]
+
+
+        ### converting the edgelist to matplotlib path
+        newPath = edgeList_2_mplPath(newEdgeList, self.graph, self.curves)
+
+        ### putting all holes together
+        # there is no need to process holes, they should just be copied
+        newHoles = self.faces[f1Idx].holes + self.faces[f2Idx].holes
+
+        newFace = Face( newEdgeList, newPath)
+        for hole in newHoles:
+            newFace.punch_hole( hole )
+
+        newFaces = tuple ( [ self.faces[fIdx]
+                             for fIdx in range(len(self.faces))
+                             if not(fIdx in [f1Idx, f2Idx]) ] )
+        print 'faces merged'
+        self.faces = newFaces + (newFace,)
+            
+        
 ################################################################################
 ############################################################## Subdivision class
 ####################################################### aggregates from networkx
@@ -361,10 +589,7 @@ class Subdivision:
                                 
                         superFaceIdx = angleSum.index(max(angleSum))
                     
-
                     ########################################
-
-
                     # # TODO:
                     # # if it is desired not to allow a non-cyclic graph
                     # # be identified as a face, uncomment the follwing
@@ -377,7 +602,8 @@ class Subdivision:
                     facesArea = [face.get_area() for face in faces]
                     superFaceIdx = facesArea.index(max(facesArea))
                     
-            subDecompositions.append( Decomposition(sg, faces, superFaceIdx) )
+            subDecompositions.append( Decomposition(sg, self.curves,
+                                                    faces, superFaceIdx) )
 
         if timing: print 'decomposition:', time.time() - tic
 
@@ -389,28 +615,41 @@ class Subdivision:
                     sd1 = subDecompositions[idx1]
                     sd2 = subDecompositions[idx2]
 
-                    # sd1 or sd2 could be empty 
+                    # sd1 or sd2 could be empty; faces =[] and superFace=None
                     if len(sd1.faces)>0 and len(sd2.faces)>0:
-
-                        sampleNodeIdx = sd2.graph.nodes()[0]
-                        samplePoint = sd2.graph.node[sampleNodeIdx]['point']
-
-                        fIdx = sd1.find_face ( samplePoint )
-                        if fIdx != None :
-                            superFace = subDecompositions[idx2].superFace
+                        
+                        # sampleNodeIdx = sd2.graph.nodes()[0]
+                        # samplePoint = sd2.graph.node[sampleNodeIdx]['point']
+                        # fIdx = sd1.find_face ( samplePoint )
+                        # if fIdx != None :
+                        if sd1.does_enclose(sd2):
+                            sampleNodeIdx = sd2.graph.nodes()[0]
+                            samplePoint = sd2.graph.node[sampleNodeIdx]['point']
+                            fIdx = sd1.find_face ( samplePoint )
+                            superFace = sd2.superFace
                             subDecompositions[idx1].faces[fIdx].punch_hole ( superFace )
 
         self.subDecompositions = subDecompositions
         del subDecompositions
         if timing: print 'intersect graphs', time.time() - tic
 
-        #### STAGE C: decomposition <- all together
+        #### STAGE C:
+        # decomposition <- all faces and superFaces together
         allFaces = ()
+        superfaces = []
         for sd in self.subDecompositions:
-            if sd:  # sd could be "None"
+            if len(sd.faces)>0:  # sd could be empty
                 allFaces += sd.faces
-        self.decomposition = Decomposition(self.MDG, allFaces, superFaceIdx=None)
-                       
+                superfaces += [sd.superFace]
+                # todo:
+                # a) reject superfaces inside bigger superfaces
+                # b) should superfaces be a list of all superFaces, or should we combine them?
+                # classmethod make_compound_path(*args) Make a compound path from a list of Path objects.
+
+
+        self.decomposition = Decomposition(self.MDG, self.curves,
+                                           allFaces, superFaceIdx=None)
+
 
     ############################################################################
     def store_curves(self, curves):
@@ -1006,94 +1245,100 @@ class Subdivision:
 
 
         return tuple( Face( edgeList,
-                            self.edgeList_2_mplPath(edgeList) )
+                            edgeList_2_mplPath(edgeList, self.MDG, self.curves ) )
                       for edgeList in faces )
 
 
-    ################################### converting face to mpl.path
-    def edgeList_2_mplPath (self, edgeList):
+    # ################################### converting face to mpl.path
+    # def edgeList_2_mplPath (self, edgeList):
+    #     '''
+    #     important note:
+    #     this works only if the edgeList is sorted
+    #     and the sequence of edges shall represent a simple closed curve (path)
+    #     '''
 
-        # step1: initialization - openning the path
-        (start, end, k) = edgeList[0]
-        p = self.MDG.node[start]['point']
-        x, y = p.x.evalf(), p.y.evalf()
+    #     # step1: initialization - openning the path
+    #     (start, end, k) = edgeList[0]
+    #     p = self.MDG.node[start]['point']
+    #     x, y = p.x.evalf(), p.y.evalf()
 
-        verts = [ (x,y) ]
-        codes = [ mpath.Path.MOVETO ]
+    #     verts = [ (x,y) ]
+    #     codes = [ mpath.Path.MOVETO ]
 
-        # step2: construction - by following the trajectory of edges in edgeList
-        for halfEdge in edgeList:
+    #     # step2: construction - by following the trajectory of edges in edgeList
+    #     for halfEdge in edgeList:
 
-            (start, end, k) = halfEdge
-            halfEdge_obj = self.MDG[start][end][k]['obj']
-            cIdx = halfEdge_obj.cIdx
-            sTVal = halfEdge_obj.sTVal
-            eTVal = halfEdge_obj.eTVal
+    #         (start, end, k) = halfEdge
+    #         halfEdge_obj = self.MDG[start][end][k]['obj']
+    #         cIdx = halfEdge_obj.cIdx
+    #         sTVal = halfEdge_obj.sTVal
+    #         eTVal = halfEdge_obj.eTVal
 
-            # # TODO: eliminating sTVal and eTVal
-            # sPoint = self.MDG.node[start]['point']
-            # ePoint = self.MDG.node[end]['point']
-            # sTVal = self.curves[cIdx].IPE(sPoint)
-            # eTVal = self.curves[cIdx].IPE(ePoint)
+    #         # # TODO: eliminating sTVal and eTVal
+    #         # for some reason it fails
+    #         # sPoint = self.MDG.node[start]['point']
+    #         # ePoint = self.MDG.node[end]['point']
+    #         # sTVal = self.curves[cIdx].IPE(sPoint)
+    #         # eTVal = self.curves[cIdx].IPE(ePoint)
 
 
-            if isinstance(self.curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
-                p2 = self.MDG.node[end]['point']
-                x, y = p2.x.evalf(), p2.y.evalf()
-                verts.append( (x,y) )
-                codes.append( mpath.Path.LINETO )
+    #         if isinstance(self.curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
+    #             p2 = self.MDG.node[end]['point']
+    #             x, y = p2.x.evalf(), p2.y.evalf()
+    #             verts.append( (x,y) )
+    #             codes.append( mpath.Path.LINETO )
 
-            elif isinstance(self.curves[cIdx].obj, sym.Circle):
-                circ = self.curves[cIdx].obj
-                xc, yc, rc = circ.center.x , circ.center.y , circ.radius
+    #         elif isinstance(self.curves[cIdx].obj, sym.Circle):
+    #             circ = self.curves[cIdx].obj
+    #             xc, yc, rc = circ.center.x , circ.center.y , circ.radius
 
-                # create an arc 
-                t1 = np.float(sTVal) *(180 /np.pi)
-                t2 = np.float(eTVal) *(180 /np.pi)
+    #             # create an arc 
+    #             t1 = np.float(sTVal) *(180 /np.pi)
+    #             t2 = np.float(eTVal) *(180 /np.pi)
 
-                if halfEdge_obj.direction == 'negative':
-                    # TODO(saesha): which one?
-                    arc = mpath.Path.arc( t2,t1 )
-                    # arc = mpath.Path.arc( np.min([t1,t2]), np.max([t1,t2]) )
-                else:
-                    arc = mpath.Path.arc( t1,t2 )
+    #             if halfEdge_obj.direction == 'negative':
+    #                 # TODO(saesha): which one?
+    #                 arc = mpath.Path.arc( t2,t1 )
+    #                 # arc = mpath.Path.arc( np.min([t1,t2]), np.max([t1,t2]) )
+    #             else:
+    #                 arc = mpath.Path.arc( t1,t2 )
 
-                # transform arc
-                transMat = matplotlib.transforms.Affine2D( )
-                ## Note that the order of adding rot_scale_translate matters
-                transMat.rotate(0) # rotate_around(x, y, theta)
-                transMat.scale( rc ) # scale(sx, sy=None)
-                transMat.translate(xc, yc) 
-                arc = arc.transformed(transMat)
+    #             # transform arc
+    #             transMat = matplotlib.transforms.Affine2D( )
+    #             ## Note that the order of adding rot_scale_translate matters
+    #             transMat.rotate(0) # rotate_around(x, y, theta)
+    #             transMat.scale( rc ) # scale(sx, sy=None)
+    #             transMat.translate(xc, yc) 
+    #             arc = arc.transformed(transMat)
 
-                vs = list( arc.vertices.copy() )
-                cs = list( arc.codes.copy() )
-                # TODO(saesha): which one?
-                # cs[0] = mpath.Path.MOVETO
-                # Lineto, because, otherwise, decompsong the face into polygones
-                # for area approximation, it will result in disjoint segments
-                cs[0] = mpath.Path.LINETO
+    #             vs = list( arc.vertices.copy() )
+    #             cs = list( arc.codes.copy() )
+    #             # TODO(saesha): which one?
+    #             # cs[0] = mpath.Path.MOVETO or mpath.Path.LINETO
+    #             # Lineto, because, otherwise, decompsong the face into polygones
+    #             # for area approximation, it will result in disjoint segments
+    #             cs[0] = mpath.Path.LINETO
 
-                # reversing the order of vertices, if the halfEdge has negative direction
-                if halfEdge_obj.direction == 'negative': vs.reverse()
+    #             # reversing the order of vertices, if the halfEdge has negative direction
+    #             if halfEdge_obj.direction == 'negative': vs.reverse()
 
-                verts.extend( vs )
-                codes.extend( cs )
+    #             verts.extend( vs )
+    #             codes.extend( cs )
 
-        assert len(verts) == len(codes)
+    #     assert len(verts) == len(codes)
 
-        # step3: finialize - closing the path
-        # making sure that the last point of the path is not a control point of an arc
-        if codes[-1] == 4:
-            (start, end, k) = edgeList[0]
-            p = self.MDG.node[start]['point']
-            x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
-            verts.append( (x,y) )
-            codes.append( mpath.Path.CLOSEPOLY )
-        else:
-            codes[-1] = mpath.Path.CLOSEPOLY 
+    #     # step3: finialize - closing the path
+    #     # making sure that the last point of the path is not a control point of an arc
+    #     if codes[-1] == 4:
+    #         (start, end, k) = edgeList[0]
+    #         p = self.MDG.node[start]['point']
+    #         x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
+    #         verts.append( (x,y) )
+    #         codes.append( mpath.Path.CLOSEPOLY )
+    #     else:
+    #         codes[-1] = mpath.Path.CLOSEPOLY 
 
-        return mpath.Path(verts, codes)
+    #     return mpath.Path(verts, codes)
 
     ############################################################################
     def save_to_image(self,  fileName, resolution=10.):
@@ -1104,3 +1349,56 @@ class Subdivision:
     def update_with_new_functions(self, newFunctions=[]):
         ''' '''
         pass #TODO(saesha)
+
+    ############################################################################
+    def transform(self, Translate, Rorate, Scale, subDecomposition=True):
+        # TODO: here here
+        # TODO: what should be the order of applying Translate, Rorate, and Scale
+
+        # Important note;
+        # nodes and half-edges are internal to the graph class
+        # and faces are internal to the decomposition class
+        # the transformation must be seperately applied to:
+        # curves, decompositions (later graphs will be only in here)
+        # and if one 
+        
+        # tranforming all the curves
+        for cIdx in self.curves:
+            # TODO, does these method modify the object
+            # or do they return a new object with transformation
+            self.curves.obj.rotate(Rotate)
+            self.curves.obj.scale(Scale)
+            self.curves.obj.translate(Translate)
+
+
+        # transforming nodes of the main decomposition
+        for nIdx in self.decomposition.graph.nodes():
+            # TODO, does these method modify the object
+            # or do they return a new object with transformation
+            newPoint = self.decomposition.graph.node[nIdx]['point']
+            newPoint.rotate(Rotate)
+            newPoint.scale(Scale)
+            newPoint.translate(Translate)
+            curveTvals = [ self.curves[cIdx].IPE(newPoint)
+                           for cIdx in self.decomposition.graph.node[nIdx]['curveIdx'] ]
+
+            self.decomposition.graph.node[nIdx]['curveTval'] = curveTvals
+            self.decomposition.graph.node[nIdx]['point'] = newPoint
+
+        # transforming faces of the main decomposition
+        for fIdx in range(len(self.decomposition.faces)):
+            self.decomposition.faces[fIdx].path.transform()
+
+            # transforming holes of each face
+            for hIdx in range(len(self.decomposition.faces[fIdx].holes)):
+                self.decomposition.faces[fIdx].holes[hIdx].transform()
+
+        # transforming the superFace of the main decomposition            
+        self.decomposition.superFace.path.transform()
+            
+
+        if subDecomposition==True:
+            pass
+            # transforming nodes of the subDecompositions
+            # transforming faces of the subDecompositions
+            # transforming superFace of the subDecompositions

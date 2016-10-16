@@ -63,16 +63,18 @@ test_cases_key = [
     'example_11',                   # 27: 3 circle holes in one square
     'caisr',                        # 28: 
     'specialCase_11',               # 29: 
+    'example_12',                   # 30: 3 circle holes in one square, + 1xArc
+
 ]
 
 ########################################
-testNumber = 28
+testNumber = 15
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = load_data_from_yaml( file_name )
 curves = data['curves']
-curves += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
+# curves += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
 
 
 if 'number_of_nodes' in data.keys():
@@ -181,22 +183,3 @@ MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 #     print cycle
 # for cycle in nx.cycles.cycle_basis(MG):
 #     print cycle
-
-
-
-# ### testing the successor/twin assigment
-# for face in mySubdivision.decomposition.faces:
-#     for idx in range(len(face.halfEdges)-1):
-#         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
-#         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
-#         assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
-        
-#         (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
-#         assert (ts == ss)
-
-#     (cs,ce,ck) = face.halfEdges[-1] # current halfEdgeIdx
-#     (ss,se,sk) = face.halfEdges[0] # successor halfEdgeIdx
-#     assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
-
-#     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
-#     assert (ts == ss)

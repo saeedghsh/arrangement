@@ -45,7 +45,7 @@ The next member of the boundary list of the face, is a successor half-edge that 
 The potential candidates for the successor are those half-edges that start from the node to which the last half-edge of the boundary list arrives.
 The correct successor is identified among the candidates by measuring their angles to the last half-edge.
 The one with widest Counter Clock-Wise (CCW) angle with respect to the last half-edge is identified as the new member of the face's boundary list.
-As we will see later, this conventional method for following the boundary of a face would fail in the presence of circles, for which we another appraoch based on the first and second derivatives of the curves.
+As we will see later, this conventional method for following the boundary of a face would fail in the presence of circles, for which we another approach based on the first and second derivatives of the curves.
 
 \begin{figure}%[!ht]
   \centering
@@ -124,7 +124,7 @@ Such information is essential for the next step of the Algorithm~\ref{alg:subdiv
 This step of the algorithm requires the ability to sort nodes over each curve.
 As mentioned earlier, in the case of only straight lines, the sorting process is performed by looking at the $x$ (or $y$) values of the nodes.
 This would fail in the presence of circles, because a circle might contain two points for a given $x$ value.
-In another word, the points on a circle are ordered in a polar coordinate, not Cartisian.
+In another word, the points on a circle are ordered in a polar coordinate, not Cartesian.
 To this end, we employ an alternative representation of the level-curves (denoted by $\dot{f}$) as a function of a single variable $\theta$ that traverses the level-curve of the multivariate function\footnote{The equations are presented in Appendix~\ref{app:alternativeRep}.}.
 Given the alternative representation of a level-curve as a function of a single variable $\theta$, we use its inverse (denoted by $\dot{f}^{-1}$) to sort nodes over the curve ($\theta = \dot{f}^{-1}(x,y)$).
 Provided that it is possible to sort nodes over the curves, we can proceed with the Algorithm~\ref{alg:halfedgeConstruction} that describes the construction of half-edges.
@@ -342,7 +342,7 @@ As a consequence, those insider curves are not accounted for in the encompassing
   \end{subfigure}%
   \caption[xxx]
           {The restricted Algorithm~\ref{alg:subdivisionRestricted} fails when some curves are enclosed inside other faces without intersecting with each other.
-          Blue areas show the enclosing faces in each case, and the regions that should be substracted from those faces are marked red (what we call super-faces) .}
+          Blue areas show the enclosing faces in each case, and the regions that should be subtracted from those faces are marked red (what we call super-faces) .}
   \label{fig:subd_restrictedFail}
 \end{figure}
 
@@ -377,7 +377,7 @@ However it does not imply that they are geometrically disjoint.
 If there are multiple disconnected sub-graphs, one can be certain that they are either:
 \begin{inparaenum}[\itshape i\upshape)]
   \item geometrically disjoint and non-overlapping; or
-  \item one sub-graph is completely contained in only \emph{one} face of the other subgraph(s).
+  \item one sub-graph is completely contained in only \emph{one} face of the other sub-graph(s).
 \end{inparaenum}
 Relying on this, we resolve this problem by partitioning each sub-graph of the $\mathit{MDG}$ independently,
 and perform a check afterward to evaluate the relative position of the sub-graphs with respect to each other.
@@ -455,13 +455,13 @@ We identify the superface by the size of its surface: it is the biggest face in 
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Neighbourhood and membership functions} \label{subsec:memberNeighbour}
+\subsection{Neighborhood and membership functions} \label{subsec:memberNeighbour}
 
-The neighbourhood function of a face is based on the twin concept of half-edges, as described in \cite{de2000computational}.
+The neighborhood function of a face is based on the twin concept of half-edges, as described in \cite{de2000computational}.
 Namely, two faces are neighbors if they each have one half-edge with a twin belonging to the other face.
 
 \[
-neighbour\left(face_i\right) = \lbrace  face_j \mid \exists e_i, e_i \in face_i, \mathit{twin}(e_i) \in face_j \rbrace
+neighbor\left(face_i\right) = \lbrace  face_j \mid \exists e_i, e_i \in face_i, \mathit{twin}(e_i) \in face_j \rbrace
 \]
 
 For cases consisting of only straight lines, the membership function could be implemented through a set of tests that rely on cross products, as described in \cite{de2000computational}.
@@ -480,9 +480,9 @@ member\left(face,p\right) =
 \]
 
 Another important note regarding the membership function is that the holes are represented with the same data structure as faces.
-It is impotant to ignore nested holes, when checking the second condition of the membership function $\left(point \notin hole_i \mid hole_i \in face\right)$.
+It is important to ignore nested holes, when checking the second condition of the membership function $\left(point \notin hole_i \mid hole_i \in face\right)$.
 That is to say checking the $point \notin hole_i$ is itself another evaluation of the membership function for the $hole_i$, in which any nested holes inside $hole_i$ should be discarded.
-Figure~\ref{fig:disc_specialCase2} demonstrates an example where missing this point might result ina wrong membership estimation for the outer face.
+Figure~\ref{fig:disc_specialCase2} demonstrates an example where missing this point might result in a wrong membership estimation for the outer face.
 %% \[
 %% \begin{array}{l}
 %%   face_1: (circle_1 , hole:\emptyset)\\

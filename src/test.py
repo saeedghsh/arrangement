@@ -146,3 +146,26 @@ if __name__ == '__main__':
 # print he
 # mySubdivision.find_successor_HalfEdge(he)
 # ########################################
+
+
+
+
+
+# ########################################
+# # testing the successor/twin assigment
+# for face in mySubdivision.decomposition.faces:
+#     for idx in range(len(face.halfEdges)-1):
+#         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
+#         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
+#         assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+        
+#         (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#         assert (ts == ss)
+
+#     (cs,ce,ck) = face.halfEdges[-1] # current halfEdgeIdx
+#     (ss,se,sk) = face.halfEdges[0] # successor halfEdgeIdx
+#     assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+
+#     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#     assert (ts == ss)
+# ########################################

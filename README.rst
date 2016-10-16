@@ -2,9 +2,14 @@ Subdivision
 ===========
 This repository provides a python package for decomposition of a 2D plane over a set of curves.
 Currently straight lines and circles are the supported classes of curves.
-please note that effiecency and optimallity have not been the objective of the implementation.
+
+
+IMPORTANT: This project is currently under development,
+please note that efficiency and optimallity have not been the objective of the implementation.
 As a consequence, the code at your disposal is not in its best shape.
 The objective of this implementation has been to show the concept and prototyping it.
+
+
 
 .. image:: animation.gif
 
@@ -47,15 +52,11 @@ for details see the `demo <https://github.com/saeedghsh/subdivision/src/demo.py>
 
 API
 ---
-
-
-
-
+TODO
 
 Limitations and Bugs
 --------------------
 TODO
-
 
 License
 -------

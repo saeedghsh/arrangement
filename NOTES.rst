@@ -1,6 +1,40 @@
+
+
 --------------------------------------------------------------------------------
+[ ] decomposition.transform
+[ ] decomposition.intersect(other):
+    return self.superface.path.intersection(other.superFace.path, fill=True)
+
+
+[] decomposition.merge_faces
+it would fail if one of the faces belongs to a hole of the other face
+if one face is a part of the hole, the superface of the hole must be updated
+then the corresponding hole must be updated accordingly!!!
+Shit!
+
+
+
+
+[ ] remove self.MDG and self.subGraphs
+[ ] do I need the subdivision class?
+
+
+
+
+
+
+
 Debugging:
 ----------
+[ ] graphs are stored in the decomposistion class
+do we need to store them separately?
+remove: self.MDG ( is included in self.decomposition )
+remove: self.subGraphs ( are included in self.subDecomposition )
+
+
+
+
+
       [ ] how to detect the overlap of two arcs
 
       [later] fix the  - test_cases_key[13]
@@ -20,6 +54,9 @@ Debugging:
       if len(candidateEdges) == 0: return allHalfEdgeIdx.index(twinIdx)
       this unforunately will result in a having faces with null area
       for instance, if a subgraph contains no cycle (i.e. a tree)
+
+      [v] decomposition.find_neighbours()
+      does not check the holes in both direction
 
       [v] test_cases_key[23]
       the superFace is not identified correctly!

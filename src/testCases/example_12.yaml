@@ -1,19 +1,25 @@
 ---
-dataset: example_10
+dataset: example_12
 
 testValues:
-    - number_of_nodes: 6
-      number_of_edges: 12
-      number_of_faces: 1
-      number_of_subGraphs: 1
+    - number_of_nodes: 9
+      number_of_edges: 24
+      number_of_faces: 6
+      number_of_subGraphs: 3
 
-segments:
+lines:
     - [0, 0, 8, 0]
     - [8, 0, 8, 8]
     - [8, 8, 0, 8]
     - [0, 0, 0, 8]
-    - [4, 4, 4, 8]
-    - [4, 4, 6, 4]
+
+circles:
+    - [2, 2, 1]
+    - [4, 4, 1]
+    - [6, 6, 1]
+
+arcs:
+    - [4, 4, 3, 0.31416, 5.97]
 
 ################################################################################
 # lines [x1,y1,x2,y2] or [x1,y1,slope]
