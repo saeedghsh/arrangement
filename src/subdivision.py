@@ -93,7 +93,7 @@ def edgeList_2_mplPath (edgeList, graph, curves):
     
     # step1: initialization - openning the path
     (start, end, k) = edgeList[0]
-    p = graph.node[start]['point']
+    p = graph.node[start]['obj'].point
     x, y = p.x.evalf(), p.y.evalf()
     
     verts = [ (x,y) ]
@@ -110,14 +110,14 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 
         # # TODO: eliminating sTVal and eTVal
         # for some reason it fails
-        # sPoint = graph.node[start]['point']
-        # ePoint = graph.node[end]['point']
+        # sPoint = graph.node[start]['obj'].point
+        # ePoint = graph.node[end]['obj'].point
         # sTVal = self.curves[cIdx].IPE(sPoint)
         # eTVal = self.curves[cIdx].IPE(ePoint)
 
 
         if isinstance(curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
-            p2 = graph.node[end]['point']
+            p2 = graph.node[end]['obj'].point
             x, y = p2.x.evalf(), p2.y.evalf()
             verts.append( (x,y) )
             codes.append( mpath.Path.LINETO )
@@ -165,7 +165,7 @@ def edgeList_2_mplPath (edgeList, graph, curves):
     # making sure that the last point of the path is not a control point of an arc
     if codes[-1] == 4:
         (start, end, k) = edgeList[0]
-        p = graph.node[start]['point']
+        p = graph.node[start]['obj'].point
         x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
         verts.append( (x,y) )
         codes.append( mpath.Path.CLOSEPOLY )
@@ -180,11 +180,33 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 ################################################################# HalfEdge
 ################################################################# Face
 ################################################################################
+class Node:
+    def __init__ (self, selfIdx, point, curveIdx, curveTval ):
+        '''
+        Node class
+        '''
+
+        self.attributes = {}
+        self.selfIdx = selfIdx   # self-index
+        self.point = point
+        self.curveIdx = curveIdx
+        self.curveTval = curveTval
+
+    def transform(self, matrix):
+        '''
+        Node class
+        '''
+        pass
+
+
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
                   cIdx, direction,
                   sTVal, eTVal):
+        '''
+        HalfEdge class
+        '''
 
         self.attributes = {}
         self.selfIdx = selfIdx   # self-index (startNodeIdx, endNodeIdx, pathIdx)
@@ -202,7 +224,13 @@ class HalfEdge:
         if self.sTVal < self.eTVal:
             assert (self.direction=='positive')
         elif self.sTVal > self.eTVal:
-            assert (self.direction=='negative')            
+            assert (self.direction=='negative')
+
+    def transform(self, matrix):
+        '''
+        HalfEdge class
+        '''
+        pass
 
 
 ################################################################################
@@ -302,6 +330,14 @@ class Face:
 
         return mpath.Path(verts, codes)
 
+    def transform(self, matrix):
+        '''
+        Face class
+        '''
+        # update self.path and self.holes[i].path
+        pass
+
+
         
 ################################################################################
 class Decomposition:
@@ -389,7 +425,7 @@ class Decomposition:
         assert self.superFace and other.superFace
         if self.does_overlap(other) and not(self.does_intersect(other)):
             sampleNodeIdx = other.graph.nodes()[0]
-            samplePoint = other.graph.node[sampleNodeIdx]['point']
+            samplePoint = other.graph.node[sampleNodeIdx]['obj'].point
             fIdx = self.find_face ( samplePoint )
             if fIdx != None:
                 return True
@@ -514,6 +550,14 @@ class Decomposition:
                              if not(fIdx in [f1Idx, f2Idx]) ] )
         print 'faces merged'
         self.faces = newFaces + (newFace,)
+
+
+    def transform(self, matrix):
+        '''
+        Decomposition class
+        '''
+        # update self.path and self.holes[i].path
+        pass
             
         
 ################################################################################
@@ -550,11 +594,13 @@ class Subdivision:
 
         #### STAGE A: construct nodes
         tic = time.time()
+        self.nodes = {}
         self.construct_nodes()
         if timing: print 'nodes:', time.time() - tic
 
         #### STAGE B: construct edges
         tic = time.time()
+        self.edges = {}
         self.construct_edges()
         if timing: print 'edges:', time.time() - tic
 
@@ -603,14 +649,14 @@ class Subdivision:
                                 (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
                                 twin = self.graph[ts][te][tk]['obj']
                                 curve = self.curves[twin.cIdx]
-                                ta = curve.tangentAngle( self.graph.node[ts]['point'],
+                                ta = curve.tangentAngle( self.graph.node[ts]['obj'].point,
                                                          twin.direction)
                                 
                                 # sa: successor's departure angle
                                 (ss,se,sk) = self.graph[s][e][k]['obj'].succIdx
                                 succ = self.graph[ss][se][sk]['obj']
                                 curve = self.curves[succ.cIdx]
-                                sa = curve.tangentAngle( self.graph.node[ss]['point'],
+                                sa = curve.tangentAngle( self.graph.node[ss]['obj'].point,
                                                          succ.direction)
                                 
                                 # sa, ta in [0,2pi]
@@ -650,12 +696,12 @@ class Subdivision:
                     if len(sd1.faces)>0 and len(sd2.faces)>0:
                         
                         # sampleNodeIdx = sd2.graph.nodes()[0]
-                        # samplePoint = sd2.graph.node[sampleNodeIdx]['point']
+                        # samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
                         # fIdx = sd1.find_face ( samplePoint )
                         # if fIdx != None :
                         if sd1.does_enclose(sd2):
                             sampleNodeIdx = sd2.graph.nodes()[0]
-                            samplePoint = sd2.graph.node[sampleNodeIdx]['point']
+                            samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
                             fIdx = sd1.find_face ( samplePoint )
                             superFace = sd2.superFace
                             subDecompositions[idx1].faces[fIdx].punch_hole ( superFace )
@@ -927,12 +973,16 @@ class Subdivision:
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        nodes = [ [ pIdx,
-                    {'point': intersectionsFlat[pIdx],
-                     'curveIdx': ipsCurveIdx[pIdx],
-                     'curveTval':ipsCurveTVal[pIdx]} ]
-                  for pIdx in range(len(intersectionsFlat)) ]
+        # here here
+        # nodes = [ [ pIdx,
+        #             {'point': intersectionsFlat[pIdx],
+        #              'curveIdx': ipsCurveIdx[pIdx],
+        #              'curveTval':ipsCurveTVal[pIdx]} ]
+        #           for pIdx in range(len(intersectionsFlat)) ]
 
+        nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx],  ipsCurveIdx[pIdx], ipsCurveTVal[pIdx])} ]
+                  for pIdx in range(len(intersectionsFlat)) ]
+        
         ########################################
         # step x: fixing arcs' tval,
         # in intersection function, we already check if the intersection is
@@ -940,22 +990,35 @@ class Subdivision:
         # to make sure they are in range, we modify the tval of the node and do not
         # restrict the to any interval ([-pi, pi] or [0, 2pi])
         for nIdx in range(len(nodes)):
-            # nodeDic = nodes[nIdx][1]
-            for idx, cIdx in enumerate(nodes[nIdx][1]['curveIdx']):
+
+            # for idx, cIdx in enumerate(nodes[nIdx][1].curveIdx):
+            for idx, cIdx in enumerate(nodes[nIdx][1]['obj'].curveIdx):
+
                 if isinstance(self.curves[cIdx], mSym.ArcModified):
                     t1 = self.curves[cIdx].t1
                     t2 = self.curves[cIdx].t2
-                    if t1 < nodes[nIdx][1]['curveTval'][idx] < t2:
+
+                    # if t1 < nodes[nIdx][1].curveTval[idx] < t2:
+                    #     pass
+                    # elif t1 < nodes[nIdx][1].curveTval[idx] +2*np.pi < t2:
+                    #     nodes[nIdx][1].curveTval[idx] += 2*np.pi
+                    # elif t1 < nodes[nIdx][1].curveTval[idx] -2*np.pi < t2:
+                    #     nodes[nIdx][1].curveTval[idx] -= 2*np.pi
+
+                    if t1 < nodes[nIdx][1]['obj'].curveTval[idx] < t2:
                         pass
-                    elif t1 < nodes[nIdx][1]['curveTval'][idx] +2*np.pi < t2:
-                        nodes[nIdx][1]['curveTval'][idx] += 2*np.pi
-                    elif t1 < nodes[nIdx][1]['curveTval'][idx] -2*np.pi < t2:
-                        nodes[nIdx][1]['curveTval'][idx] -= 2*np.pi
+                    elif t1 < nodes[nIdx][1]['obj'].curveTval[idx] +2*np.pi < t2:
+                        nodes[nIdx][1]['obj'].curveTval[idx] += 2*np.pi
+                    elif t1 < nodes[nIdx][1]['obj'].curveTval[idx] -2*np.pi < t2:
+                        nodes[nIdx][1]['obj'].curveTval[idx] -= 2*np.pi
+
 
         ########################################
         # adding nodes to the graph
         self.graph.add_nodes_from( nodes )
-        assert len(self.graph.nodes()) == len(intersectionsFlat)
+        self.nodes = self.graph.node
+
+        # assert len(self.graph.nodes()) == len(intersectionsFlat)
 
 
     ############################################################################
@@ -980,8 +1043,8 @@ class Subdivision:
         curveIpsTVal = [[] for i in range(len(self.curves))]
 
         for nodeIdx in self.graph.nodes():
-            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['curveTval'],
-                                   self.graph.node[nodeIdx]['curveIdx']) :
+            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['obj'].curveTval,
+                                   self.graph.node[nodeIdx]['obj'].curveIdx) :
                 curveIpsIdx[cIdx].append(nodeIdx)
                 curveIpsTVal[cIdx].append(tVal)
 
@@ -1073,6 +1136,10 @@ class Subdivision:
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.graph.add_edges_from([e1, e2])
+
+                # here here
+                self.edges[idx1] = {'idx': idx1, 'obj': he1}
+                self.edges[idx2] = {'idx': idx2, 'obj': he2}
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
@@ -1150,7 +1217,7 @@ class Subdivision:
             # sorting values of the reference (twin of the current half-edge)
             # 1stKey: alpha - 2ndkey: beta
             refObjCurve = self.curves[refObj.cIdx]
-            sPoint = self.graph.node[tStart]['point']
+            sPoint = self.graph.node[tStart]['obj'].point
             refAlpha = refObjCurve.tangentAngle(sPoint, refObj.direction)
             refBeta = refObjCurve.curvature(sPoint, refObj.direction)
 
@@ -1308,7 +1375,7 @@ class Subdivision:
 
     #     # step1: initialization - openning the path
     #     (start, end, k) = edgeList[0]
-    #     p = self.graph.node[start]['point']
+    #     p = self.graph.node[start].point
     #     x, y = p.x.evalf(), p.y.evalf()
 
     #     verts = [ (x,y) ]
@@ -1325,14 +1392,14 @@ class Subdivision:
 
     #         # # TODO: eliminating sTVal and eTVal
     #         # for some reason it fails
-    #         # sPoint = self.graph.node[start]['point']
-    #         # ePoint = self.graph.node[end]['point']
+    #         # sPoint = self.graph.node[start].point
+    #         # ePoint = self.graph.node[end].point
     #         # sTVal = self.curves[cIdx].IPE(sPoint)
     #         # eTVal = self.curves[cIdx].IPE(ePoint)
 
 
     #         if isinstance(self.curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
-    #             p2 = self.graph.node[end]['point']
+    #             p2 = self.graph.node[end].point
     #             x, y = p2.x.evalf(), p2.y.evalf()
     #             verts.append( (x,y) )
     #             codes.append( mpath.Path.LINETO )
@@ -1380,7 +1447,7 @@ class Subdivision:
     #     # making sure that the last point of the path is not a control point of an arc
     #     if codes[-1] == 4:
     #         (start, end, k) = edgeList[0]
-    #         p = self.graph.node[start]['point']
+    #         p = self.graph.node[start].point
     #         x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
     #         verts.append( (x,y) )
     #         codes.append( mpath.Path.CLOSEPOLY )
@@ -1409,6 +1476,10 @@ class Subdivision:
         '''
         Subdivision class
         '''
+        #     # update curves, nodes, edges
+        #     # update decompositions' curves, nodes, edges
+        #     # update decompositions' faces' path
+
         # TODO: here here
         # TODO: what should be the order of applying Translate, Rorate, and Scale
 
@@ -1432,15 +1503,15 @@ class Subdivision:
         for nIdx in self.decomposition.graph.nodes():
             # TODO, does these method modify the object
             # or do they return a new object with transformation
-            newPoint = self.decomposition.graph.node[nIdx]['point']
+            newPoint = self.decomposition.graph.node[nIdx]['obj'].point
             newPoint.rotate(Rotate)
             newPoint.scale(Scale)
             newPoint.translate(Translate)
             curveTvals = [ self.curves[cIdx].IPE(newPoint)
-                           for cIdx in self.decomposition.graph.node[nIdx]['curveIdx'] ]
+                           for cIdx in self.decomposition.graph.node[nIdx]['obj'].curveIdx ]
 
-            self.decomposition.graph.node[nIdx]['curveTval'] = curveTvals
-            self.decomposition.graph.node[nIdx]['point'] = newPoint
+            self.decomposition.graph.node[nIdx]['obj'].curveTval = curveTvals
+            self.decomposition.graph.node[nIdx]['obj'].point = newPoint
 
         # transforming faces of the main decomposition
         for fIdx in range(len(self.decomposition.faces)):

@@ -183,3 +183,13 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 #     print cycle
 # for cycle in nx.cycles.cycle_basis(MG):
 #     print cycle
+
+
+
+ 
+# assert len(mySubdivision.edges) == len(mySubdivision.graph.edges())
+# for s,e,k in mySubdivision.edges:
+#     # print mySubdivision.edges[(s,e,k)]
+#     # print mySubdivision.graph.edge[s][e][k]
+#     assert mySubdivision.edges[(s,e,k)]['obj'] == mySubdivision.graph.edge[s][e][k]['obj']
+# self.graph.add_edges_from([e, e2])

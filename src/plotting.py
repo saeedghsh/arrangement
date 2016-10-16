@@ -93,16 +93,16 @@ def plot_edges(axis, subdiv,
         eTVal = he_obj.eTVal
 
         # # TODO: eliminating sTVal and eTVal
-        # sPoint = subdiv.graph.node[start]['point']
-        # ePoint = subdiv.graph.node[end]['point']
+        # sPoint = subdiv.graph.node[start]['obj'].point
+        # ePoint = subdiv.graph.node[end]['obj'].point
         # sTVal = subdiv.curves[he_obj.cIdx].IPE(sPoint)
         # eTVal = subdiv.curves[he_obj.cIdx].IPE(ePoint)
 
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
-                p1 = subdiv.graph.node[start]['point']
-                p2 = subdiv.graph.node[end]['point']
+                p1 = subdiv.graph.node[start]['obj'].point
+                p2 = subdiv.graph.node[end]['obj'].point
                 x, y = p1.x.evalf() , p1.y.evalf()
                 dx, dy = p2.x.evalf()-x, p2.y.evalf()-y
 
@@ -167,7 +167,7 @@ def plot_nodes (axis, subdiv, nodes=None,
                printLabels = False):
 
     if nodes==None:  nodes = subdiv.graph.nodes()
-    points = [subdiv.graph.node[idx]['point'] for idx in nodes]
+    points = [subdiv.graph.node[idx]['obj'].point for idx in nodes]
         
     nx = [p.x for p in points]
     ny = [p.y for p in points]
@@ -176,8 +176,8 @@ def plot_nodes (axis, subdiv, nodes=None,
     if printLabels:
         font = {'color':col, 'size': 10}
         for idx in subdiv.graph.nodes():            
-            axis.text(subdiv.graph.node[idx]['point'].x,
-                      subdiv.graph.node[idx]['point'].y,
+            axis.text(subdiv.graph.node[idx]['obj'].point.x,
+                      subdiv.graph.node[idx]['obj'].point.y,
                       'n#'+str(idx))
 
 
@@ -367,7 +367,7 @@ def plot_new_halfEdge(axis):
     # ##########################################################################
     # ################################# drawing derivatives of the new haldfedge
     # if False:
-    #     p1 = subdiv.graph.node[start]['point']
+    #     p1 = subdiv.graph.node[start]['obj'].point
     #     px, py = p1.x.evalf() , p1.y.evalf()
     #     he_obj = subdiv.graph[start][end][k]['obj']
 
