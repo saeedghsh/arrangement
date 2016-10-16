@@ -97,27 +97,27 @@ if timing: print 'Subdivision time:', time.time() - tic
 
 if testing:
     cond =[]
-    cond += [ len(mySubdivision.MDG.nodes()) == n_nodes ]
-    cond += [ len(mySubdivision.MDG.edges()) == n_edges ]
+    cond += [ len(mySubdivision.graph.nodes()) == n_nodes ]
+    cond += [ len(mySubdivision.graph.edges()) == n_edges ]
     cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
     cond += [ len(mySubdivision.subDecompositions) == n_subGraphs ]
     print 'success' if all(cond) else 'fail'
 
-    print 'nodes:\t\t', len(mySubdivision.MDG.nodes()), '\t expected:', n_nodes
-    print 'edges:\t\t', len(mySubdivision.MDG.edges()), '\t expected:', n_edges
+    print 'nodes:\t\t', len(mySubdivision.graph.nodes()), '\t expected:', n_nodes
+    print 'edges:\t\t', len(mySubdivision.graph.edges()), '\t expected:', n_edges
     print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
     print 'subGraphs:\t', len(mySubdivision.subDecompositions), '\t expected:', n_subGraphs
 
 elif not(testing):
-    print 'nodes:\t\t', len(mySubdivision.MDG.nodes())
-    print 'edges:\t\t', len(mySubdivision.MDG.edges())
+    print 'nodes:\t\t', len(mySubdivision.graph.nodes())
+    print 'edges:\t\t', len(mySubdivision.graph.edges())
     print 'faces:\t\t', len(mySubdivision.decomposition.faces)
     print 'subGraphs:\t', len(mySubdivision.subDecompositions)
 
 ################################################################################
 ####################################################################### plotting
 ################################################################################
-# myplt.plot_graph(mySubdivision.MDG)
+# myplt.plot_graph(mySubdivision.graph)
 # myplt.plot_decomposition_colored(mySubdivision,
 #                                  printNodeLabels=False,
 #                                  printEdgeLabels=False)
@@ -139,23 +139,23 @@ myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 ################################################################################
 '''
 important note about nodes of networkx:
-MDG.nodes() is not neccessarily [0,1,2,...]
-it's important to remember that MDG.node is a dict, not a list
-MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
+graph.nodes() is not neccessarily [0,1,2,...]
+it's important to remember that graph.node is a dict, not a list
+graph.node[idx] is not actually indexing the graph.node, but fetching from a dict
 '''
 
 # subdiv = mySubdivision
 # subdiv.subGraphs, subdiv.subDecompositions
-# subdiv.MDG, subdiv.decomposition
+# subdiv.graph, subdiv.decomposition
 
 # # access nodes of networkX graph and their attribute dict
-# for nodeIdx in subdiv.MDG.nodes():
-#     print nodeIdx, ': ', subdiv.MDG.node[nodeIdx]
+# for nodeIdx in subdiv.graph.nodes():
+#     print nodeIdx, ': ', subdiv.graph.node[nodeIdx]
 
 # # access edges of networkX graph:
 # for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
 #     (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-#     print (s,e,k), ': ', subdiv.MDG[s][e][k]['obj']
+#     print (s,e,k), ': ', subdiv.graph[s][e][k]['obj']
 
 # # access main graph of subdivision:
 
@@ -164,13 +164,13 @@ MDG.node[idx] is not actually indexing the MDG.node, but fetching from a dict
 
 ############################# find cycles?
 # import networkx as ns
-# MDG = mySubdivision.MDG
-# MG = MDG.copy()
+# graph = mySubdivision.graph
+# MG = graph.copy()
 # allHalfEdgeIdx = [(sIdx, eIdx, k)
-#                   for sIdx in MDG.nodes()
-#                   for eIdx in MDG.nodes()
-#                   if eIdx in MDG[sIdx].keys() # if not, subd[sIdx][eIdx] is invalid
-#                   for k in MDG[sIdx][eIdx].keys()]
+#                   for sIdx in graph.nodes()
+#                   for eIdx in graph.nodes()
+#                   if eIdx in graph[sIdx].keys() # if not, subd[sIdx][eIdx] is invalid
+#                   for k in graph[sIdx][eIdx].keys()]
 # twins = []
 # for hei in allHalfEdgeIdx:
 #     (s,e,k) = hei

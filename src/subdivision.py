@@ -110,8 +110,8 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 
         # # TODO: eliminating sTVal and eTVal
         # for some reason it fails
-        # sPoint = self.MDG.node[start]['point']
-        # ePoint = self.MDG.node[end]['point']
+        # sPoint = graph.node[start]['point']
+        # ePoint = graph.node[end]['point']
         # sTVal = self.curves[cIdx].IPE(sPoint)
         # eTVal = self.curves[cIdx].IPE(ePoint)
 
@@ -208,7 +208,9 @@ class HalfEdge:
 ################################################################################
 class Face:
     def __init__(self, halfEdgeList, path):
-        ''' '''
+        '''
+        Face class
+        '''
         self.halfEdges = halfEdgeList # a list of half-edges [(s,e,k), ...]
         self.path = path              # mpl.path
         self.holes = ()               # tuple of faces
@@ -216,6 +218,8 @@ class Face:
 
     def get_area(self, considerHoles=True):
         '''
+        Face class
+
         Be aware that path.to_polygons() is an approximation of the face,
         if it contains curves, consequently the area would be approximated
 
@@ -239,7 +243,9 @@ class Face:
         return PolyArea - holesArea
 
     def is_point_inside(self, point):
-        ''' '''
+        '''
+        Face class
+        '''
         if self.path.contains_point( (point.x,point.y) ):
             for hole in self.holes:
                 if hole.path.contains_point( (point.x,point.y) ):
@@ -249,6 +255,8 @@ class Face:
 
     def punch_hole(self, holeFace):
         '''
+        Face class
+
         although the path of the hole is suffiecent to detect inclusion of points,
         yet, holes are stored as faces, because the face instance of the hole is 
         required to able to traverse the boundary (half-edges) of the punched face.
@@ -277,6 +285,8 @@ class Face:
 
     def get_punched_path(self):
         '''
+        Face class
+
         this is only useful for plotting
         the "path.contain_point()" doesn't work with holePunched pathes anyway
 
@@ -296,7 +306,9 @@ class Face:
 ################################################################################
 class Decomposition:
     def __init__ (self, graph, curves, faces, superFaceIdx=None):
-        ''' '''
+        '''
+        Decomposition class
+        '''
         self.graph = graph
         self.curves = curves
 
@@ -309,14 +321,18 @@ class Decomposition:
             self.faces = faces
 
     def find_face(self, point):
-        ''' '''
+        '''
+        Decomposition class
+        '''
         for idx,face in enumerate(self.faces):
             if face.is_point_inside(point):
                 return idx
         return None
 
     def find_neighbours(self, faceIdx):
-        ''' '''
+        '''
+        Decomposition class
+        '''
 
         # finding the indices to half-edges of the face
         twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
@@ -346,19 +362,30 @@ class Decomposition:
         return neighbours
         
     def get_extents(self):
-        ''' '''
+        '''
+        Decomposition class
+        '''
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
 
     def does_intersect(self, other):
+        '''
+        Decomposition class
+        '''
         assert self.superFace and other.superFace
         return self.superFace.path.intersects_path(other.superFace.path,filled=False) 
 
     def does_overlap(self, other):
+        '''
+        Decomposition class
+        '''
         assert self.superFace and other.superFace
         return self.superFace.path.intersects_path(other.superFace.path,filled=True) 
 
     def does_enclose(self, other):
+        '''
+        Decomposition class
+        '''
         assert self.superFace and other.superFace
         if self.does_overlap(other) and not(self.does_intersect(other)):
             sampleNodeIdx = other.graph.nodes()[0]
@@ -369,7 +396,9 @@ class Decomposition:
         return False
 
     def merge_faces(self, faceIndices):
-        ''' '''
+        '''
+        Decomposition class
+        '''
         # problem 1: mpath.Path.make_compound_path doesn't work
 
         # problem 2: this is a blind merge,
@@ -499,6 +528,8 @@ class Subdivision:
     ############################################################################
     def __init__ (self,curves , multiProcessing=0):
         '''
+        Subdivision class
+
         curves are aggregated instances of sympy's geometric module
         (e.g. LineModified, CircleModified, ...)
 
@@ -514,7 +545,7 @@ class Subdivision:
 
         ########## construct the base graph and subGraphs
         tic = time.time()
-        self.MDG = nx.MultiDiGraph()
+        self.graph = nx.MultiDiGraph()
         if timing: print 'Graphs:', time.time() - tic
 
         #### STAGE A: construct nodes
@@ -529,7 +560,7 @@ class Subdivision:
 
         #### STAGE C: split the base graph into connected subgraphs
         tic = time.time()
-        subGraphs = list(nx.connected_component_subgraphs(self.MDG.to_undirected()))
+        subGraphs = list(nx.connected_component_subgraphs(self.graph.to_undirected()))
         subGraphs = [sg.to_directed() for sg in subGraphs]
         if timing: print 'connected components:', time.time() - tic
 
@@ -556,7 +587,7 @@ class Subdivision:
                     if len(faces[0].halfEdges) == 1:
                         # this is the case of a single circle
                         (s,e,k) = faces[0].halfEdges[0]
-                        direction = self.MDG[s][e][k]['obj'].direction
+                        direction = self.graph[s][e][k]['obj'].direction
                         superFaceIdx = 0 if direction=='negative' else 1
 
                     else:
@@ -569,17 +600,17 @@ class Subdivision:
                         for fIdx, face in enumerate(faces):
                             for (s,e,k) in face.halfEdges:                            
                                 # ta: twin's departure angle
-                                (ts,te,tk) = self.MDG[s][e][k]['obj'].twinIdx
-                                twin = self.MDG[ts][te][tk]['obj']
+                                (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
+                                twin = self.graph[ts][te][tk]['obj']
                                 curve = self.curves[twin.cIdx]
-                                ta = curve.tangentAngle( self.MDG.node[ts]['point'],
+                                ta = curve.tangentAngle( self.graph.node[ts]['point'],
                                                          twin.direction)
                                 
                                 # sa: successor's departure angle
-                                (ss,se,sk) = self.MDG[s][e][k]['obj'].succIdx
-                                succ = self.MDG[ss][se][sk]['obj']
+                                (ss,se,sk) = self.graph[s][e][k]['obj'].succIdx
+                                succ = self.graph[ss][se][sk]['obj']
                                 curve = self.curves[succ.cIdx]
-                                sa = curve.tangentAngle( self.MDG.node[ss]['point'],
+                                sa = curve.tangentAngle( self.graph.node[ss]['point'],
                                                          succ.direction)
                                 
                                 # sa, ta in [0,2pi]
@@ -647,13 +678,16 @@ class Subdivision:
                 # classmethod make_compound_path(*args) Make a compound path from a list of Path objects.
 
 
-        self.decomposition = Decomposition(self.MDG, self.curves,
+        self.decomposition = Decomposition(self.graph, self.curves,
                                            allFaces, superFaceIdx=None)
+        # del self.graph
 
 
     ############################################################################
     def store_curves(self, curves):
         '''
+        Subdivision class
+
         discard overlapping and invalid curves
 
         note that if two curves are ovelapping, the one with 
@@ -702,6 +736,8 @@ class Subdivision:
     ############################################################################
     def construct_nodes(self):
         '''
+        Subdivision class
+
         |STAGE A| of Graph construction: node construction
         first we need a list of all intersections,
         while we can retrieve informations about each intersection point,
@@ -918,13 +954,16 @@ class Subdivision:
 
         ########################################
         # adding nodes to the graph
-        self.MDG.add_nodes_from( nodes )
-        assert len(self.MDG.nodes()) == len(intersectionsFlat)
+        self.graph.add_nodes_from( nodes )
+        assert len(self.graph.nodes()) == len(intersectionsFlat)
 
 
     ############################################################################
     def construct_edges(self):
         '''
+        Subdivision class
+
+
         |STAGE B| of Graph construction: edge construction
         to create edges, we need to list all the nodes
         located on each Curve, along with the t-value of the Curve
@@ -940,9 +979,9 @@ class Subdivision:
         curveIpsIdx = [[] for i in range(len(self.curves))]
         curveIpsTVal = [[] for i in range(len(self.curves))]
 
-        for nodeIdx in self.MDG.nodes():
-            for (tVal,cIdx) in zip(self.MDG.node[nodeIdx]['curveTval'],
-                                   self.MDG.node[nodeIdx]['curveIdx']) :
+        for nodeIdx in self.graph.nodes():
+            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['curveTval'],
+                                   self.graph.node[nodeIdx]['curveIdx']) :
                 curveIpsIdx[cIdx].append(nodeIdx)
                 curveIpsTVal[cIdx].append(tVal)
 
@@ -1009,8 +1048,8 @@ class Subdivision:
             # create a half-edge for each pair of start-end point
             for ( sIdx,sTVal, eIdx,eTVal ) in l:
 
-                newPathKey1 = len(self.MDG[sIdx][eIdx]) if eIdx in self.MDG[sIdx].keys() else 0
-                newPathKey2 = len(self.MDG[eIdx][sIdx]) if sIdx in self.MDG[eIdx].keys() else 0
+                newPathKey1 = len(self.graph[sIdx][eIdx]) if eIdx in self.graph[sIdx].keys() else 0
+                newPathKey2 = len(self.graph[eIdx][sIdx]) if sIdx in self.graph[eIdx].keys() else 0
 
                 # in cases where sIdx==eIdx, twins will share the same key ==0
                 # this will happen if there is only one node on a circle
@@ -1033,12 +1072,15 @@ class Subdivision:
                 he2 = HalfEdge(idx2, idx1, cIdx, direction, eTVal, sTVal)
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
-                self.MDG.add_edges_from([e1, e2])
+                self.graph.add_edges_from([e1, e2])
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
+        '''
+        Subdivision class
+        '''
 
-        if graph==None: graph = self.MDG
+        if graph==None: graph = self.graph
 
         allHalfEdgeIdx = [(sIdx, eIdx, k)
                           for sIdx in graph.nodes()
@@ -1058,6 +1100,9 @@ class Subdivision:
     def find_successor_HalfEdge(self, halfEdgeIdx, 
                               allHalfEdgeIdx=None,
                               direction='ccw_before'):
+        '''
+        Subdivision class
+        '''
 
         # Note that in cases where there is a circle with one node on it,
         # the half-edge itself would be among candidates,
@@ -1065,7 +1110,7 @@ class Subdivision:
         # otherwise the loop for find the face will never terminate!
         
         if allHalfEdgeIdx == None:
-            allHalfEdgeIdx = self.get_all_HalfEdge_indices(self.MDG)
+            allHalfEdgeIdx = self.get_all_HalfEdge_indices(self.graph)
 
         (start, end, k) = halfEdgeIdx
 
@@ -1075,7 +1120,7 @@ class Subdivision:
                           if (heIdx[0] == end)]# and openList[idx] ]
 
         # reject the twin half-edge of the current half-edge from the "candidateEdges"
-        twinIdx = self.MDG[start][end][k]['obj'].twinIdx
+        twinIdx = self.graph[start][end][k]['obj'].twinIdx
         for idx in range(len(candidateEdges)-1,-1,-1):
             if allHalfEdgeIdx[candidateEdges[idx]] == twinIdx:
                 candidateEdges.pop(idx)
@@ -1100,12 +1145,12 @@ class Subdivision:
         else:
             # reference: the 1st and 2nd derivatives of the twin half-edge
             (tStart, tEnd, tk) = twinIdx
-            refObj = self.MDG[tStart][tEnd][tk]['obj']
+            refObj = self.graph[tStart][tEnd][tk]['obj']
 
             # sorting values of the reference (twin of the current half-edge)
             # 1stKey: alpha - 2ndkey: beta
             refObjCurve = self.curves[refObj.cIdx]
-            sPoint = self.MDG.node[tStart]['point']
+            sPoint = self.graph.node[tStart]['point']
             refAlpha = refObjCurve.tangentAngle(sPoint, refObj.direction)
             refBeta = refObjCurve.curvature(sPoint, refObj.direction)
 
@@ -1114,7 +1159,7 @@ class Subdivision:
             canBeta = []
             for candidateIdx in candidateEdges:
                 (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
-                canObj = self.MDG[cStart][cEnd][ck]['obj']
+                canObj = self.graph[cStart][cEnd][ck]['obj']
                 canObjCurve = self.curves[canObj.cIdx]
                 canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.direction) )
                 canBeta.append( canObjCurve.curvature(sPoint, canObj.direction) )
@@ -1150,6 +1195,8 @@ class Subdivision:
     ############################################################################
     def decompose_graph(self, graph):
         '''
+        Subdivision class
+
         >>> face detection and identification procedure!
         '''
 
@@ -1238,20 +1285,22 @@ class Subdivision:
             for idx in range(len(edgeList)-1):
                 (cs,ce,ck) = edgeList[idx] # current halfEdgeIdx
                 (ss,se,sk) = edgeList[idx+1] # successor halfEdgeIdx
-                self.MDG[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
+                self.graph[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
             (cs,ce,ck) = edgeList[-1] # current halfEdgeIdx
             (ss,se,sk) = edgeList[0] # successor halfEdgeIdx
-            self.MDG[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
+            self.graph[cs][ce][ck]['obj'].succIdx = (ss,se,sk)
 
 
         return tuple( Face( edgeList,
-                            edgeList_2_mplPath(edgeList, self.MDG, self.curves ) )
+                            edgeList_2_mplPath(edgeList, self.graph, self.curves ) )
                       for edgeList in faces )
 
 
     # ################################### converting face to mpl.path
     # def edgeList_2_mplPath (self, edgeList):
     #     '''
+    #     Subdivision class
+
     #     important note:
     #     this works only if the edgeList is sorted
     #     and the sequence of edges shall represent a simple closed curve (path)
@@ -1259,7 +1308,7 @@ class Subdivision:
 
     #     # step1: initialization - openning the path
     #     (start, end, k) = edgeList[0]
-    #     p = self.MDG.node[start]['point']
+    #     p = self.graph.node[start]['point']
     #     x, y = p.x.evalf(), p.y.evalf()
 
     #     verts = [ (x,y) ]
@@ -1269,21 +1318,21 @@ class Subdivision:
     #     for halfEdge in edgeList:
 
     #         (start, end, k) = halfEdge
-    #         halfEdge_obj = self.MDG[start][end][k]['obj']
+    #         halfEdge_obj = self.graph[start][end][k]['obj']
     #         cIdx = halfEdge_obj.cIdx
     #         sTVal = halfEdge_obj.sTVal
     #         eTVal = halfEdge_obj.eTVal
 
     #         # # TODO: eliminating sTVal and eTVal
     #         # for some reason it fails
-    #         # sPoint = self.MDG.node[start]['point']
-    #         # ePoint = self.MDG.node[end]['point']
+    #         # sPoint = self.graph.node[start]['point']
+    #         # ePoint = self.graph.node[end]['point']
     #         # sTVal = self.curves[cIdx].IPE(sPoint)
     #         # eTVal = self.curves[cIdx].IPE(ePoint)
 
 
     #         if isinstance(self.curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
-    #             p2 = self.MDG.node[end]['point']
+    #             p2 = self.graph.node[end]['point']
     #             x, y = p2.x.evalf(), p2.y.evalf()
     #             verts.append( (x,y) )
     #             codes.append( mpath.Path.LINETO )
@@ -1331,7 +1380,7 @@ class Subdivision:
     #     # making sure that the last point of the path is not a control point of an arc
     #     if codes[-1] == 4:
     #         (start, end, k) = edgeList[0]
-    #         p = self.MDG.node[start]['point']
+    #         p = self.graph.node[start]['point']
     #         x, y = np.float(p.x.evalf()), np.float(p.y.evalf())
     #         verts.append( (x,y) )
     #         codes.append( mpath.Path.CLOSEPOLY )
@@ -1342,16 +1391,24 @@ class Subdivision:
 
     ############################################################################
     def save_to_image(self,  fileName, resolution=10.):
-        ''' a color coded image of subdivision  '''
+        ''' 
+        Subdivision class
+
+        a color coded image of subdivision  '''
         pass #TODO(saesha)
 
     ############################################################################
     def update_with_new_functions(self, newFunctions=[]):
-        ''' '''
+        '''
+        Subdivision class
+        '''
         pass #TODO(saesha)
 
     ############################################################################
     def transform(self, Translate, Rorate, Scale, subDecomposition=True):
+        '''
+        Subdivision class
+        '''
         # TODO: here here
         # TODO: what should be the order of applying Translate, Rorate, and Scale
 

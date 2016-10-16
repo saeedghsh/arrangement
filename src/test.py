@@ -37,10 +37,10 @@ class SubdivisionTests(unittest.TestCase):
     #     for selfIdx in subdiv.get_all_HalfEdge_indices():
     #         (s,e,k) = selfIdx
             
-    #         twinIdx = subdiv.MDG[s][e][k]['obj'].twinIdx
+    #         twinIdx = subdiv.graph[s][e][k]['obj'].twinIdx
     #         (ts,te,tk) = twinIdx
 
-    #         twinOfTwinIdx = subdiv.MDG[ts][te][tk]['obj'].twinIdx            
+    #         twinOfTwinIdx = subdiv.graph[ts][te][tk]['obj'].twinIdx            
 
     #         res += [ selfIdx == twinOfTwinIdx ]
 
@@ -66,14 +66,14 @@ class SubdivisionTests(unittest.TestCase):
             ########## testing number of nodes
             if 'number_of_nodes' in data.keys():
                 n_nodes = data['number_of_nodes']
-                self.assertEqual( len(subdiv.MDG.nodes()), n_nodes, 'incorrect number of nodes')
+                self.assertEqual( len(subdiv.graph.nodes()), n_nodes, 'incorrect number of nodes')
             else:
                 print 'number of nodes is not available for ' + key, '...'
 
             ########## testing number of edges
             if 'number_of_edges' in data.keys():
                 n_edges = data['number_of_edges']
-                self.assertEqual( len(subdiv.MDG.edges()), n_edges,
+                self.assertEqual( len(subdiv.graph.edges()), n_edges,
                                   'incorrect number of edges')
             else:
                 print 'number of edges is not available for ' + key, '...'
@@ -157,15 +157,15 @@ if __name__ == '__main__':
 #     for idx in range(len(face.halfEdges)-1):
 #         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
 #         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
-#         assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+#         assert (mySubdivision.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
         
 #         (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
 #         assert (ts == ss)
 
 #     (cs,ce,ck) = face.halfEdges[-1] # current halfEdgeIdx
 #     (ss,se,sk) = face.halfEdges[0] # successor halfEdgeIdx
-#     assert (mySubdivision.MDG[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+#     assert (mySubdivision.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
 
-#     (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#     (ts,te,tk) = mySubdivision.graph[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
 # ########################################

@@ -303,27 +303,6 @@ clean-up, and speed-up
 
       [ ] from sympy.geometry import Curve
 
-      [ ] API documentation
-	$ cd Dropbox/myGits/dev/subdivision/
-	$ pyreverse -o svg -p subdivision src/*.py
-
-	- what are the date structures?
-	  - a tree of data structures; e.g
-	    subdiv: (MDG, decomposition, [curves], ... )
-	    decomposition: (graph, [faces], ... )
-	    MDG: (nodes, edges)
-	  
-	- how to index each data structure and access their object?
-	  
-	- what is the relation between indices of different lists,
-	  e.g. nodes vs ips vs edges ...
-
-      [ ] add parser's manual to the readMe file
-
-      [ ] update report over
-	- comments from Adam and Slawomir
-	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
-
       [ ] half edge attributes:
 	- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
 	- [v] 1stDer, 2ndDer removed.
@@ -385,6 +364,28 @@ clean-up, and speed-up
 --------------------------------------------------------------------------------
 Documentation
 -------------
+      [ ] add parser's manual to the readMe file
+
+      [ ] API documentation
+	$ cd Dropbox/myGits/dev/subdivision/
+	$ pyreverse -o svg -p subdivision src/*.py
+
+	- what are the date structures?
+	  - a tree of data structures; e.g
+	    subdiv: (MDG, decomposition, [curves], ... )
+	    decomposition: (graph, [faces], ... )
+	    MDG: (nodes, edges)
+	  
+	- how to index each data structure and access their object?
+	  
+	- what is the relation between indices of different lists,
+	  e.g. nodes vs ips vs edges ...
+
+      [ ] update report over
+	- comments from Adam and Slawomir
+	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
+
+
 https://readthedocs.org/
 
 [ ] doc-tool:

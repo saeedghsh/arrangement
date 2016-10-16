@@ -84,7 +84,7 @@ def plot_edges(axis, subdiv,
 
     for (start, end, k) in halfEdgeList:
         
-        he_obj = subdiv.MDG[start][end][k]['obj']
+        he_obj = subdiv.graph[start][end][k]['obj']
         curve_obj = subdiv.curves[he_obj.cIdx].obj
         
         thei =  he_obj.twinIdx
@@ -93,16 +93,16 @@ def plot_edges(axis, subdiv,
         eTVal = he_obj.eTVal
 
         # # TODO: eliminating sTVal and eTVal
-        # sPoint = subdiv.MDG.node[start]['point']
-        # ePoint = subdiv.MDG.node[end]['point']
+        # sPoint = subdiv.graph.node[start]['point']
+        # ePoint = subdiv.graph.node[end]['point']
         # sTVal = subdiv.curves[he_obj.cIdx].IPE(sPoint)
         # eTVal = subdiv.curves[he_obj.cIdx].IPE(ePoint)
 
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
-                p1 = subdiv.MDG.node[start]['point']
-                p2 = subdiv.MDG.node[end]['point']
+                p1 = subdiv.graph.node[start]['point']
+                p2 = subdiv.graph.node[end]['point']
                 x, y = p1.x.evalf() , p1.y.evalf()
                 dx, dy = p2.x.evalf()-x, p2.y.evalf()-y
 
@@ -166,8 +166,8 @@ def plot_nodes (axis, subdiv, nodes=None,
                alp = 0.5, col = 'k',
                printLabels = False):
 
-    if nodes==None:  nodes = subdiv.MDG.nodes()
-    points = [subdiv.MDG.node[idx]['point'] for idx in nodes]
+    if nodes==None:  nodes = subdiv.graph.nodes()
+    points = [subdiv.graph.node[idx]['point'] for idx in nodes]
         
     nx = [p.x for p in points]
     ny = [p.y for p in points]
@@ -175,9 +175,9 @@ def plot_nodes (axis, subdiv, nodes=None,
 
     if printLabels:
         font = {'color':col, 'size': 10}
-        for idx in subdiv.MDG.nodes():            
-            axis.text(subdiv.MDG.node[idx]['point'].x,
-                      subdiv.MDG.node[idx]['point'].y,
+        for idx in subdiv.graph.nodes():            
+            axis.text(subdiv.graph.node[idx]['point'].x,
+                      subdiv.graph.node[idx]['point'].y,
                       'n#'+str(idx))
 
 
@@ -350,7 +350,7 @@ def plot_new_halfEdge(axis):
     plot_edges (axis, subdiv, alp=0.1)
 
     # drawing new haldfedge
-    halfEdge_direction = subdiv.MDG[start][end][k]['obj'].direction
+    halfEdge_direction = subdiv.graph[start][end][k]['obj'].direction
     if halfEdge_direction == 'positive':
         plot_edges(axis, subdiv,
                    halfEdgeIdx= [(start,end,k)],
@@ -367,9 +367,9 @@ def plot_new_halfEdge(axis):
     # ##########################################################################
     # ################################# drawing derivatives of the new haldfedge
     # if False:
-    #     p1 = subdiv.MDG.node[start]['point']
+    #     p1 = subdiv.graph.node[start]['point']
     #     px, py = p1.x.evalf() , p1.y.evalf()
-    #     he_obj = subdiv.MDG[start][end][k]['obj']
+    #     he_obj = subdiv.graph[start][end][k]['obj']
 
     #     # Blue: 1st derivative - tangent to the curve
     #     dx,dy = he_obj.s1stDer
