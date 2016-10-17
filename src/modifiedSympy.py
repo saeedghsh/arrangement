@@ -25,19 +25,74 @@ import sympy as sym
 ################################################# Modified Circle
 ################################################################################
 
+sym.Point.scale , sym.Point.rotate, sym.Point.translate
+
+sym.Line.scale , sym.Line.rotate, sym.Line.translate
+sym.Ray.scale , sym.Ray.rotate, sym.Ray.translate
+sym.Segment.scale , sym.Segment.rotate, sym.Segment.translate
+
+sym.Circle.scale , sym.Circle.rotate, sym.Circle.translate
+
+
+
 ################################################################################
 class LineModified:
 
     ####################################
     def __init__ (self, args):
+        '''
+        LineModified class
+        '''
         if isinstance(args[1],sym.Point):
             self.obj = sym.Line( *args )
         else:
             self.obj = sym.Line( args[0], slope=args[1] )
 
     ####################################
+    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+        '''
+        LineModified class
+
+        this method performs a sequence of transformation processes expressed by
+        
+        * operTypes: defines the type of each transformation
+        * operVals: the values for each transformation
+        * operRefs: the reference point for each transformation
+        -- reference point is irrelevant for translation, still should be provided for consistency
+        
+        example:
+        obj.transform_sequence( operTypes='TTRST',
+        operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
+        operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
+        
+        order: ordering of transformation
+        e.g. 'TRS' -> 1)translate 2)rotate 3)scale
+        e.g. 'RTS' -> 1)rotate 2)translate 3)scale
+        '''
+        
+        for opIdx, opType in enumerate(operTypes):
+            
+            if opType == 'T' and operVals[opIdx]!=(0,0):
+                tx,ty = operVals[opIdx]
+                self.obj = self.obj.translate(tx,ty)
+                
+            elif opType == 'R' and operVals[opIdx]!=0:
+                theta = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(theta,ref)
+                
+            elif opType == 'S' and operVals[opIdx]!=(1,1):
+                sx,sy = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(sx,sy,ref)
+
+
+
+    ####################################
     def DPE(self, t):
         '''
+        LineModified class
+
         TD: not sure when and how I did this, double-check
 
         Direct Parametric Equation
@@ -59,6 +114,8 @@ class LineModified:
     ####################################
     def IPE(self, point):
         '''
+        LineModified class
+
         TD: not sure when and how I did this, double-check
 
         Inverse Parametric Equation
@@ -79,12 +136,13 @@ class LineModified:
     ####################################
     def firstDerivative (self, point=None, direction='positive'):
         '''
+        LineModified class
+
         generally:
         dy/dx = lim_{ Delta_x -> 0 } Delta_y / Delta_x
         
         for a straight line:
         dy/dx = Delta_y / Delta_x
-        
         
         1stDer = [dx,dy],
         slope = tan(theta) -> theta = arctan(slope)
@@ -103,6 +161,8 @@ class LineModified:
     ####################################
     def secondDerivative(self, point=None, direction='positive'):
         '''
+        LineModified class
+
         although it is independant of the location of the point
         we include for consistency with a general form of curves
         note: direction does not affect the 2nd derivative of a line
@@ -112,6 +172,8 @@ class LineModified:
     ####################################
     def tangentAngle(self, point=None, direction='positive'):
         '''
+        LineModified class
+
         although it is independant of the location of the point
         we include for consistency with a general form of curves
 
@@ -124,6 +186,8 @@ class LineModified:
     ####################################
     def curvature(self, point=None, direction='positive'):
         '''
+        LineModified class
+
         although it is independant of the location of the point
         we include for consistency with a general form of curves
         note: direction does not affect the curvature of a line
@@ -137,11 +201,21 @@ class LineModified:
 class RayModified(LineModified):
     ####################################
     def __init__ (self, args):
+        '''
+        RayModified class 
+
+        note that "RayModified" is a subClass of "LineModified"
+        but the self.obj is aggregated from sym.Ray
+        
+        '''
         self.obj = sym.Ray( *args )
+
 
     ####################################
     def DPE(self, t):
         '''
+        RayModified class 
+
         TD: not sure when and how I did this, double-check
 
         Direct Parametric Equation
@@ -166,6 +240,8 @@ class RayModified(LineModified):
     ####################################
     def IPE(self, point):
         '''
+        RayModified class 
+
         TD: not sure when and how I did this, double-check
 
         Inverse Parametric Equation
@@ -193,12 +269,21 @@ class RayModified(LineModified):
 class SegmentModified(LineModified):
     ####################################
     def __init__ (self, args):
+        '''
+        SegmentModified class 
+
+        note that "SegmentModified" is a subClass of "LineModified"
+        but the self.obj is aggregated from sym.Segment
+
+        '''
         self.obj = sym.Segment( *args )
 
 
     ####################################
     def DPE(self, t):
         '''
+        SegmentModified class 
+
         TD: not sure when and how I did this, double-check
 
         Direct Parametric Equation
@@ -222,6 +307,8 @@ class SegmentModified(LineModified):
     ####################################
     def IPE(self, point):
         '''
+        SegmentModified class
+
         TD: not sure when and how I did this, double-check
 
         Inverse Parametric Equation
@@ -248,11 +335,56 @@ class CircleModified:
 
     ####################################
     def __init__ (self, args):
+        '''
+        CircleModified class
+        '''
         self.obj = sym.Circle( *args )
+
+    ####################################
+    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+        '''
+        CircleModified class
+
+        this method performs a sequence of transformation processes expressed by
+        
+        * operTypes: defines the type of each transformation
+        * operVals: the values for each transformation
+        * operRefs: the reference point for each transformation
+        -- reference point is irrelevant for translation, still should be provided for consistency
+        
+        example:
+        obj.transform_sequence( operTypes='TTRST',
+        operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
+        operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
+        
+        order: ordering of transformation
+        e.g. 'TRS' -> 1)translate 2)rotate 3)scale
+        e.g. 'RTS' -> 1)rotate 2)translate 3)scale
+        '''
+        
+        for opIdx, opType in enumerate(operTypes):
+            
+            if opType == 'T' and operVals[opIdx]!=(0,0):
+                tx,ty = operVals[opIdx]
+                self.obj = self.obj.translate(tx,ty)
+                
+            elif opType == 'R' and operVals[opIdx]!=0:
+                theta = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(theta,ref)
+                
+            elif opType == 'S' and operVals[opIdx]!=(1,1):
+                sx,sy = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(sx,sy,ref)
+
+
 
     ####################################
     def DPE(self, t):
         '''
+        CircleModified class
+
         Direct Parametric Equation
         (x,y) = fd(t)|(xc,yc,rc)
         '''
@@ -263,6 +395,8 @@ class CircleModified:
     ####################################
     def IPE(self, point):
         '''
+        CircleModified class
+
         Inverse Parametric Equation
         t = fi(x,y)|(xc,yc,rc)
         '''
@@ -274,6 +408,8 @@ class CircleModified:
     ####################################
     def firstDerivative (self, point, direction='positive'):
         '''
+        CircleModified class
+
         A circle's first derivative wrt \theta
         x = xc + radius*cos(theta)
         y = yc + radius*sin(theta)
@@ -290,6 +426,8 @@ class CircleModified:
     ####################################
     def secondDerivative(self, point, direction='positive'):
         '''
+        CircleModified class
+
         A circle's second derivative wrt \theta
         x = xc + radius*cos(theta)
         y = yc + radius*sin(theta)
@@ -309,6 +447,8 @@ class CircleModified:
     ####################################
     def tangentAngle(self, point, direction='positive'):
         '''
+        CircleModified class
+
         although it is independant of the location of the point
         we include for consistency with a general form of curves
 
@@ -322,6 +462,8 @@ class CircleModified:
     ####################################
     def curvature(self, point=None, direction='positive'):
         '''
+        CircleModified class
+
         although it is independant of the location of the point
         we include for consistency with a general form of curves
         '''
@@ -336,6 +478,13 @@ class ArcModified(CircleModified):
     ####################################
     def __init__ (self, args):
         '''
+        ArcModified class
+
+
+        note that "ArcModified" is a subClass of "CircleModified"
+        but the self.obj is aggregated from sym.Circle
+
+
         theta \in [-pi/2, pi/2])
         TODO: 
         so how to define an arc where (t1,t2)=(pi/2, 3pi/2)
@@ -356,4 +505,47 @@ class ArcModified(CircleModified):
         # make sure t1 and t2 are sorted CCW (t1<t2)
         self.t1 = min(args[2])
         self.t2 = max(args[2])
+
+    ####################################
+    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+        '''
+        ArcModified class
+
+        this method performs a sequence of transformation processes expressed by
+        
+        * operTypes: defines the type of each transformation
+        * operVals: the values for each transformation
+        * operRefs: the reference point for each transformation
+        -- reference point is irrelevant for translation, still should be provided for consistency
+        
+        example:
+        obj.transform_sequence( operTypes='TTRST',
+        operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
+        operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
+        
+        order: ordering of transformation
+        e.g. 'TRS' -> 1)translate 2)rotate 3)scale
+        e.g. 'RTS' -> 1)rotate 2)translate 3)scale
+        '''
+        
+        for opIdx, opType in enumerate(operTypes):
+            
+            if opType == 'T' and operVals[opIdx]!=(0,0):
+                tx,ty = operVals[opIdx]
+                self.obj = self.obj.translate(tx,ty)
+                
+            elif opType == 'R' and operVals[opIdx]!=0:
+                theta = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(theta,ref)
+                # TODO: too many consequtive rotation might carry t1 and t2 out of the predefined interval
+                # correct them if there is going to be any valid interval for t1 and t2
+                self.t1 += theta
+                self.t2 += theta
+
+                
+            elif opType == 'S' and operVals[opIdx]!=(1,1):
+                sx,sy = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.obj = self.obj.rotate(sx,sy,ref)
 

@@ -192,13 +192,52 @@ class Node:
         self.curveIdx = curveIdx
         self.curveTval = curveTval
 
-    def transform(self, matrix):
+    ####################################
+    def transform_sequence(self,
+                           curves,
+                           operTypes='', operVals=(), operRefs=() ):
         '''
         Node class
+
+        this method performs a sequence of transformation processes expressed by
+        
+        * operTypes: defines the type of each transformation
+        * operVals: the values for each transformation
+        * operRefs: the reference point for each transformation
+        -- reference point is irrelevant for translation, still should be provided for consistency
+        
+        example:
+        obj.transform_sequence( operTypes='TTRST',
+        operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
+        operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
+        
+        order: ordering of transformation
+        e.g. 'TRS' -> 1)translate 2)rotate 3)scale
+        e.g. 'RTS' -> 1)rotate 2)translate 3)scale
         '''
-        pass
 
+        # transforming the self.poin
+        for opIdx, opType in enumerate(operTypes):
+            
+            if opType == 'T' and operVals[opIdx]!=(0,0):
+                tx,ty = operVals[opIdx]
+                self.point = self.point.translate(tx,ty)
+                
+            elif opType == 'R' and operVals[opIdx]!=0:
+                theta = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.point = self.point.rotate(theta,ref)
+                
+            elif opType == 'S' and operVals[opIdx]!=(1,1):
+                sx,sy = operVals[opIdx]
+                ref = operRefs[opIdx]
+                self.point = self.point.rotate(sx,sy,ref)
 
+        # updating self.curveTval after transforming the self.point
+        self.curveTval = [curves[cIdx].IPE(self.point) for cIdx in self.curveIdx]
+        
+
+################################################################################
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
@@ -226,12 +265,15 @@ class HalfEdge:
         elif self.sTVal > self.eTVal:
             assert (self.direction=='negative')
 
-    def transform(self, matrix):
+    ####################################
+    def update_tvals(self, curves, nodes):
         '''
         HalfEdge class
         '''
-        pass
-
+        (s,e,k) = self.selfIdx
+        self.sTVal = curves[self.cIdx].IPE(nodes[s])
+        self.eTVal = curves[self.cIdx].IPE(nodes[e])
+        
 
 ################################################################################
 class Face:
@@ -244,6 +286,17 @@ class Face:
         self.holes = ()               # tuple of faces
         self.attributes = {}
 
+    ####################################
+    def update_path(self, graph, curves):
+        '''
+        Face class
+        '''
+        self.path = edgeList_2_mplPath (self.edgeList, graph, curves)
+
+        for hole in self.holes:
+            hole.path = edgeList_2_mplPath (hole.edgeList, graph, curves)
+
+    ####################################
     def get_area(self, considerHoles=True):
         '''
         Face class
@@ -270,6 +323,7 @@ class Face:
 
         return PolyArea - holesArea
 
+    ####################################
     def is_point_inside(self, point):
         '''
         Face class
@@ -281,6 +335,7 @@ class Face:
             return True        
         return False
 
+    ####################################
     def punch_hole(self, holeFace):
         '''
         Face class
@@ -311,6 +366,7 @@ class Face:
         # storing final list of holes after conversion to tuple
         self.holes = tuple(holes)
 
+    ####################################
     def get_punched_path(self):
         '''
         Face class
@@ -330,12 +386,6 @@ class Face:
 
         return mpath.Path(verts, codes)
 
-    def transform(self, matrix):
-        '''
-        Face class
-        '''
-        # update self.path and self.holes[i].path
-        pass
 
 
         
@@ -594,13 +644,13 @@ class Subdivision:
 
         #### STAGE A: construct nodes
         tic = time.time()
-        self.nodes = {}
+        # self.nodes = {}
         self.construct_nodes()
         if timing: print 'nodes:', time.time() - tic
 
         #### STAGE B: construct edges
         tic = time.time()
-        self.edges = {}
+        # self.edges = {}
         self.construct_edges()
         if timing: print 'edges:', time.time() - tic
 
@@ -973,13 +1023,6 @@ class Subdivision:
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        # here here
-        # nodes = [ [ pIdx,
-        #             {'point': intersectionsFlat[pIdx],
-        #              'curveIdx': ipsCurveIdx[pIdx],
-        #              'curveTval':ipsCurveTVal[pIdx]} ]
-        #           for pIdx in range(len(intersectionsFlat)) ]
-
         nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx],  ipsCurveIdx[pIdx], ipsCurveTVal[pIdx])} ]
                   for pIdx in range(len(intersectionsFlat)) ]
         
@@ -991,19 +1034,11 @@ class Subdivision:
         # restrict the to any interval ([-pi, pi] or [0, 2pi])
         for nIdx in range(len(nodes)):
 
-            # for idx, cIdx in enumerate(nodes[nIdx][1].curveIdx):
             for idx, cIdx in enumerate(nodes[nIdx][1]['obj'].curveIdx):
 
                 if isinstance(self.curves[cIdx], mSym.ArcModified):
                     t1 = self.curves[cIdx].t1
                     t2 = self.curves[cIdx].t2
-
-                    # if t1 < nodes[nIdx][1].curveTval[idx] < t2:
-                    #     pass
-                    # elif t1 < nodes[nIdx][1].curveTval[idx] +2*np.pi < t2:
-                    #     nodes[nIdx][1].curveTval[idx] += 2*np.pi
-                    # elif t1 < nodes[nIdx][1].curveTval[idx] -2*np.pi < t2:
-                    #     nodes[nIdx][1].curveTval[idx] -= 2*np.pi
 
                     if t1 < nodes[nIdx][1]['obj'].curveTval[idx] < t2:
                         pass
@@ -1016,9 +1051,8 @@ class Subdivision:
         ########################################
         # adding nodes to the graph
         self.graph.add_nodes_from( nodes )
-        self.nodes = self.graph.node
-
-        # assert len(self.graph.nodes()) == len(intersectionsFlat)
+        # self.nodes = self.graph.node
+        assert len(self.graph.nodes()) == len(intersectionsFlat)
 
 
     ############################################################################
@@ -1137,9 +1171,9 @@ class Subdivision:
 
                 self.graph.add_edges_from([e1, e2])
 
-                # here here
-                self.edges[idx1] = {'idx': idx1, 'obj': he1}
-                self.edges[idx2] = {'idx': idx2, 'obj': he2}
+                # # here here
+                # self.edges[idx1] = {'idx': idx1, 'obj': he1}
+                # self.edges[idx2] = {'idx': idx2, 'obj': he2}
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
@@ -1472,61 +1506,10 @@ class Subdivision:
         pass #TODO(saesha)
 
     ############################################################################
-    def transform(self, Translate, Rorate, Scale, subDecomposition=True):
+    def transform(self,
+                  Translate, Rorate, Scale,
+                  subDecomposition=True):
         '''
         Subdivision class
-        '''
-        #     # update curves, nodes, edges
-        #     # update decompositions' curves, nodes, edges
-        #     # update decompositions' faces' path
-
-        # TODO: here here
-        # TODO: what should be the order of applying Translate, Rorate, and Scale
-
-        # Important note;
-        # nodes and half-edges are internal to the graph class
-        # and faces are internal to the decomposition class
-        # the transformation must be seperately applied to:
-        # curves, decompositions (later graphs will be only in here)
-        # and if one 
-        
-        # tranforming all the curves
-        for cIdx in self.curves:
-            # TODO, does these method modify the object
-            # or do they return a new object with transformation
-            self.curves.obj.rotate(Rotate)
-            self.curves.obj.scale(Scale)
-            self.curves.obj.translate(Translate)
-
-
-        # transforming nodes of the main decomposition
-        for nIdx in self.decomposition.graph.nodes():
-            # TODO, does these method modify the object
-            # or do they return a new object with transformation
-            newPoint = self.decomposition.graph.node[nIdx]['obj'].point
-            newPoint.rotate(Rotate)
-            newPoint.scale(Scale)
-            newPoint.translate(Translate)
-            curveTvals = [ self.curves[cIdx].IPE(newPoint)
-                           for cIdx in self.decomposition.graph.node[nIdx]['obj'].curveIdx ]
-
-            self.decomposition.graph.node[nIdx]['obj'].curveTval = curveTvals
-            self.decomposition.graph.node[nIdx]['obj'].point = newPoint
-
-        # transforming faces of the main decomposition
-        for fIdx in range(len(self.decomposition.faces)):
-            self.decomposition.faces[fIdx].path.transform()
-
-            # transforming holes of each face
-            for hIdx in range(len(self.decomposition.faces[fIdx].holes)):
-                self.decomposition.faces[fIdx].holes[hIdx].transform()
-
-        # transforming the superFace of the main decomposition            
-        self.decomposition.superFace.path.transform()
-            
-
-        if subDecomposition==True:
-            pass
-            # transforming nodes of the subDecompositions
-            # transforming faces of the subDecompositions
-            # transforming superFace of the subDecompositions
+        '''      
+        pass

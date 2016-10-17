@@ -145,8 +145,9 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 '''
 
 # subdiv = mySubdivision
-# subdiv.subGraphs, subdiv.subDecompositions
-# subdiv.graph, subdiv.decomposition
+# subdiv.subDecompositions
+# subdiv.decomposition
+# subdiv.graph (==subdiv.decomposition.graph)
 
 # # access nodes of networkX graph and their attribute dict
 # for nodeIdx in subdiv.graph.nodes():
@@ -185,11 +186,24 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 #     print cycle
 
 
+'''
+curves, nodes and edges in each Decomposition are copies of are the same lists/dicts of Subdivision
 
- 
-# assert len(mySubdivision.edges) == len(mySubdivision.graph.edges())
-# for s,e,k in mySubdivision.edges:
-#     # print mySubdivision.edges[(s,e,k)]
-#     # print mySubdivision.graph.edge[s][e][k]
-#     assert mySubdivision.edges[(s,e,k)]['obj'] == mySubdivision.graph.edge[s][e][k]['obj']
-# self.graph.add_edges_from([e, e2])
+
+# for k in mySubdivision.nodes.keys():
+#     print k, mySubdivision.nodes[k]['obj']
+
+# for (s,e,k) in mySubdivision.edges.keys():
+#     print (s,e,k), mySubdivision.edges[(s,e,k)]['obj']
+
+
+
+
+
+'''
+
+# test halfEdge tvals:
+
+
+
+

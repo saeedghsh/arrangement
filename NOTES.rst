@@ -177,6 +177,19 @@ Developement
       [ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
 
       [ ] Subdivision.transform(M(R,T,S))
+
+      for transformation:
+
+      1_a) update subdivision.curves --> should propagate to decomposition.curves
+      [v] modify LineModified (to update: self.obj) --> RayModified and SegmentModified should inherit
+      [v] CircleModified (to update: self.obj)
+      [v] ArcModified (to update: self.obj / self.t1, self.t2)
+      
+      1_b) update subdivision.graph (nodes/edges)  --> should propagate to decomposition.graph
+      
+      2_b) update decomposition.faces (to update: self.path / self.holes[i].path)
+
+
 	- Essential for the dynamic subdivision
 	- Robot-centric subdivision [1]
 	- extended perception field [2]
