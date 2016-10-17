@@ -68,7 +68,7 @@ test_cases_key = [
 ]
 
 ########################################
-testNumber = 15
+testNumber = 18
 timing = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
@@ -114,9 +114,38 @@ elif not(testing):
     print 'faces:\t\t', len(mySubdivision.decomposition.faces)
     print 'subGraphs:\t', len(mySubdivision.subDecompositions)
 
+
+
+
 ################################################################################
-####################################################################### plotting
+################################################################### testing area
 ################################################################################
+tic = time.time()
+mySubdivision.transform_sequence('T',
+                                 ((10,0),),
+                                 ((0,0),) )
+print time.time() - tic
+
+tic = time.time()
+mySubdivision.transform_sequence('R',
+                                 (np.pi/2,),
+                                 ((0,0),) )
+print time.time() - tic
+
+
+tic = time.time()
+mySubdivision.transform_sequence('S',
+                                 ((.2,.2),),
+                                 ((0,0),) )
+print time.time() - tic
+
+
+
+################################################################################
+################################################################## visualization
+################################################################################
+
+############################### plotting
 # myplt.plot_graph(mySubdivision.graph)
 # myplt.plot_decomposition_colored(mySubdivision,
 #                                  printNodeLabels=False,
@@ -128,11 +157,13 @@ myplt.plot_decomposition(mySubdivision,
                          plotNodes=True, printNodeLabels=True,
                          plotEdges=True, printEdgeLabels=True)
 
-################################################################################
-###################################################################### animating
-################################################################################
+
+############################## animating
 # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
+
 myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
+
+
 
 ################################################################################
 ####################################################################### API demo
@@ -182,5 +213,6 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 #     print cycle
 # for cycle in nx.cycles.cycle_basis(MG):
 #     print cycle
+
 
 

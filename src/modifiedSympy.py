@@ -75,7 +75,7 @@ class LineModified:
             elif opType == 'S' and operVals[opIdx]!=(1,1):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.obj = self.obj.rotate(sx,sy,ref)
+                self.obj = self.obj.scale(sx,sy,ref)
 
     ####################################
     def DPE(self, t):
@@ -360,12 +360,24 @@ class CircleModified:
             elif opType == 'R' and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.obj = self.obj.rotate(theta,ref)
+                
+                # Important note
+                # ideally I would like to do this:
+                # self.obj = self.obj.rotate(theta,ref)
+                # but as rotate is not effective for circles (don't know why!)
+                # and since I can not set the attributes of the circel as:
+                # self.obj.center = self.obj.center.rotate(theta,ref)
+                # I am left with no choice but to define a new circle and assign it to the obj
+                # fortunately this won't be a problem, as this obj instance is an attribute
+                # to the modifiedCircle instance, and that's what I want to maintain a reference to
+                c = self.obj.center.rotate(theta,ref)
+                r = self.obj.radius
+                self.obj = sym.Circle(c,r)
                 
             elif opType == 'S' and operVals[opIdx]!=(1,1):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.obj = self.obj.rotate(sx,sy,ref)
+                self.obj = self.obj.scale(sx,sy,ref)
 
 
 
@@ -430,7 +442,6 @@ class CircleModified:
         theta = np.float(self.IPE(point))
         x_ = -self.obj.radius * np.cos(theta) # sym.cos(theta).evalf()
         y_ = -self.obj.radius * np.sin(theta) # sym.sin(theta).evalf()
-        # print self, theta, x_, y_
         return np.array([x_.evalf(), y_.evalf()], float)
 
     ####################################
@@ -526,7 +537,20 @@ class ArcModified(CircleModified):
             elif opType == 'R' and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.obj = self.obj.rotate(theta,ref)
+
+                                # Important note
+                # ideally I would like to do this:
+                # self.obj = self.obj.rotate(theta,ref)
+                # but as rotate is not effective for circles (don't know why!)
+                # and since I can not set the attributes of the circel as:
+                # self.obj.center = self.obj.center.rotate(theta,ref)
+                # I am left with no choice but to define a new circle and assign it to the obj
+                # fortunately this won't be a problem, as this obj instance is an attribute
+                # to the modifiedCircle instance, and that's what I want to maintain a reference to
+                c = self.obj.center.rotate(theta,ref)
+                r = self.obj.radius
+                self.obj = sym.Circle(c,r)
+
                 # TODO: too many consequtive rotation might carry t1 and t2 out of the predefined interval
                 # correct them if there is going to be any valid interval for t1 and t2
                 self.t1 += theta
@@ -536,5 +560,5 @@ class ArcModified(CircleModified):
             elif opType == 'S' and operVals[opIdx]!=(1,1):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.obj = self.obj.rotate(sx,sy,ref)
+                self.obj = self.obj.scale(sx,sy,ref)
 

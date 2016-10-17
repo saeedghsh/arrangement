@@ -220,7 +220,7 @@ class Node:
             elif opType == 'S' and operVals[opIdx]!=(1,1):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
-                self.point = self.point.rotate(sx,sy,ref)
+                self.point = self.point.scale(sx,sy,ref)
 
         # updating self.curveTval after transforming the self.point
         self.update_tval(curves)
@@ -289,10 +289,10 @@ class Face:
         '''
         Face class
         '''
-        self.path = edgeList_2_mplPath (self.edgeList, graph, curves)
+        self.path = edgeList_2_mplPath (self.halfEdges, graph, curves)
 
         for hole in self.holes:
-            hole.path = edgeList_2_mplPath (hole.edgeList, graph, curves)
+            hole.path = edgeList_2_mplPath (hole.halfEdges, graph, curves)
 
     ####################################
     def get_area(self, considerHoles=True):
@@ -1343,7 +1343,7 @@ class Subdivision:
       
         # update subdivision.graph (nodes)
         for nIdx in self.graph.nodes():
-            self.graph.node[nIdx].transform_sequence(operTypes, operVals, operRefs, self.curves)
+            self.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.curves)
         
         # update subdivision.decomposition.faces
         self.decomposition.update_face_path()
@@ -1353,7 +1353,7 @@ class Subdivision:
         if subDecompositions==True:
             for subDec in self.subDecompositions:
                 for nIdx in subDec.graph.nodes():
-                    subDec.graph.node[nIdx].transform_sequence(operTypes, operVals, operRefs, self.curves)
+                    subDec.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.curves)
                 subDec.update_face_path()
 
     ############################################################################
