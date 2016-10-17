@@ -173,7 +173,7 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 ################################################################# Face
 ################################################################################
 class Node:
-    def __init__ (self, selfIdx, point, curveIdx, curveTval ):
+    def __init__ (self, selfIdx, point, curveIdx, curves):
         '''
         Node class
         '''
@@ -182,12 +182,11 @@ class Node:
         self.selfIdx = selfIdx   # self-index
         self.point = point
         self.curveIdx = curveIdx
-        self.curveTval = curveTval
+        self.update_tval(curves)
+
 
     ####################################
-    def transform_sequence(self,
-                           curves,
-                           operTypes='', operVals=(), operRefs=() ):
+    def transform_sequence(self, curves, operTypes='', operVals=(), operRefs=() ):
         '''
         Node class
 
@@ -226,7 +225,19 @@ class Node:
                 self.point = self.point.rotate(sx,sy,ref)
 
         # updating self.curveTval after transforming the self.point
+        self.update_tval(curves)
+
+    ####################################
+    def update_tval (self, curves):
+        '''
+        Node class
+        '''
         self.curveTval = [curves[cIdx].IPE(self.point) for cIdx in self.curveIdx]
+    
+
+
+
+
         
 
 ################################################################################
@@ -398,6 +409,7 @@ class Decomposition:
             self.superFace = None
             self.faces = faces
 
+    ####################################
     def find_face(self, point):
         '''
         Decomposition class
@@ -407,6 +419,7 @@ class Decomposition:
                 return idx
         return None
 
+    ####################################
     def find_neighbours(self, faceIdx):
         '''
         Decomposition class
@@ -438,7 +451,8 @@ class Decomposition:
             neighbours.pop( neighbours.index(faceIdx) )
     
         return neighbours
-        
+
+    ####################################        
     def get_extents(self):
         '''
         Decomposition class
@@ -446,6 +460,7 @@ class Decomposition:
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
 
+    ####################################
     def does_intersect(self, other):
         '''
         Decomposition class
@@ -453,6 +468,7 @@ class Decomposition:
         assert self.superFace and other.superFace
         return self.superFace.path.intersects_path(other.superFace.path,filled=False) 
 
+    ####################################
     def does_overlap(self, other):
         '''
         Decomposition class
@@ -460,6 +476,7 @@ class Decomposition:
         assert self.superFace and other.superFace
         return self.superFace.path.intersects_path(other.superFace.path,filled=True) 
 
+    ####################################
     def does_enclose(self, other):
         '''
         Decomposition class
@@ -473,6 +490,7 @@ class Decomposition:
                 return True
         return False
 
+    ####################################
     def merge_faces(self, faceIndices):
         '''
         Decomposition class
@@ -593,7 +611,7 @@ class Decomposition:
         print 'faces merged'
         self.faces = newFaces + (newFace,)
 
-
+    ####################################
     def transform(self, matrix):
         '''
         Decomposition class
@@ -1003,43 +1021,15 @@ class Subdivision:
         assert len(intersectionsFlat) == len(ipsCurveIdx)
 
         ########################################
-        # step 8: find the t-value of each Curve at the intersection
-        ipsCurveTVal = [ [ self.curves[cIdx].IPE(p) for cIdx in cIndices]
-                            for (cIndices,p) in zip(ipsCurveIdx, intersectionsFlat) ]
-        assert len(intersectionsFlat) == len(ipsCurveTVal)
-
-        ########################################
         # step 9: creating nodes from >intersection points<
         '''
         pIdx: intersection point's index
         cIdx: intersecting curves' indices
         tVal: intersecting curves' t-value at the intersection point
         '''
-        nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx],  ipsCurveIdx[pIdx], ipsCurveTVal[pIdx])} ]
+        nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx], ipsCurveIdx[pIdx], self.curves)} ]
                   for pIdx in range(len(intersectionsFlat)) ]
         
-        ########################################
-        # step x: fixing arcs' tval,
-        # in intersection function, we already check if the intersection is
-        # withing the interval of the arc or not, but we check with +2pi and -2pi
-        # to make sure they are in range, we modify the tval of the node and do not
-        # restrict the to any interval ([-pi, pi] or [0, 2pi])
-        for nIdx in range(len(nodes)):
-
-            for idx, cIdx in enumerate(nodes[nIdx][1]['obj'].curveIdx):
-
-                if isinstance(self.curves[cIdx], mSym.ArcModified):
-                    t1 = self.curves[cIdx].t1
-                    t2 = self.curves[cIdx].t2
-
-                    if t1 < nodes[nIdx][1]['obj'].curveTval[idx] < t2:
-                        pass
-                    elif t1 < nodes[nIdx][1]['obj'].curveTval[idx] +2*np.pi < t2:
-                        nodes[nIdx][1]['obj'].curveTval[idx] += 2*np.pi
-                    elif t1 < nodes[nIdx][1]['obj'].curveTval[idx] -2*np.pi < t2:
-                        nodes[nIdx][1]['obj'].curveTval[idx] -= 2*np.pi
-
-
         ########################################
         # adding nodes to the graph
         self.graph.add_nodes_from( nodes )

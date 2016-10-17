@@ -86,8 +86,6 @@ class LineModified:
                 ref = operRefs[opIdx]
                 self.obj = self.obj.rotate(sx,sy,ref)
 
-
-
     ####################################
     def DPE(self, t):
         '''
