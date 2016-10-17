@@ -241,8 +241,8 @@ class Node:
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
-                  cIdx, direction,
-                  sTVal, eTVal):
+                  cIdx, direction):# ,
+                  # sTVal, eTVal):
         '''
         HalfEdge class
         '''
@@ -256,14 +256,14 @@ class HalfEdge:
         self.cIdx = cIdx           # Index of the curve creating the edge
         self.direction = direction # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
-        # TODO: I think I should remove all the following    
-        self.sTVal = sTVal
-        self.eTVal = eTVal
+        # # TODO: I think I should remove all the following    
+        # self.sTVal = sTVal
+        # self.eTVal = eTVal
 
-        if self.sTVal < self.eTVal:
-            assert (self.direction=='positive')
-        elif self.sTVal > self.eTVal:
-            assert (self.direction=='negative')
+        # if self.sTVal < self.eTVal:
+        #     assert (self.direction=='positive')
+        # elif self.sTVal > self.eTVal:
+        #     assert (self.direction=='negative')
 
     ####################################
     def update_tvals(self, curves, nodes):
@@ -271,9 +271,18 @@ class HalfEdge:
         HalfEdge class
         '''
         (s,e,k) = self.selfIdx
-        self.sTVal = curves[self.cIdx].IPE(nodes[s])
-        self.eTVal = curves[self.cIdx].IPE(nodes[e])
-        
+
+        sTVal = nodes[s].curveTval[nodes[s].curveIdx.index(self.cIdx)]
+        eTVal = nodes[e].curveTval[nodes[e].curveIdx.index(self.cIdx)]
+
+        # for the case of circles and the half-edge that crosses the theta=0=2pi
+        if (self.direction=='positive') and not(sTVal < eTVal):
+            eTVal += 2*np.pi
+        if (self.direction=='negative') and not(sTVal > eTVal):
+            sTVal += 2*np.pi
+
+        self.sTVal = sTVal
+        self.eTVal = eTVal
 
 ################################################################################
 class Face:
@@ -1107,7 +1116,6 @@ class Subdivision:
                 endIdxList = ipsIdx[1:]
                 endTValList = tvals[1:]
 
-
             elif isinstance(curve, mSym.ArcModified): # and isinstance(curve.obj, sym.Circ)
 
                 # Important note: The order of elif matters...
@@ -1161,12 +1169,12 @@ class Subdivision:
 
                 # first half-edge
                 direction = 'positive'                
-                he1 = HalfEdge(idx1, idx2, cIdx, direction, sTVal, eTVal)
+                he1 = HalfEdge(idx1, idx2, cIdx, direction)#, sTVal, eTVal)
                 e1 = ( sIdx, eIdx, {'obj':he1} )
 
                 # second half-edge
                 direction = 'negative'                
-                he2 = HalfEdge(idx2, idx1, cIdx, direction, eTVal, sTVal)
+                he2 = HalfEdge(idx2, idx1, cIdx, direction)#, eTVal, sTVal)
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.graph.add_edges_from([e1, e2])
@@ -1174,6 +1182,11 @@ class Subdivision:
                 # # here here
                 # self.edges[idx1] = {'idx': idx1, 'obj': he1}
                 # self.edges[idx2] = {'idx': idx2, 'obj': he2}
+
+
+        nodes = [ self.graph.node[key]['obj'] for key in self.graph.node.keys()]
+        for s,e,k in self.get_all_HalfEdge_indices():
+            self.graph[s][e][k]['obj'].update_tvals(self.curves, nodes)
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
