@@ -82,22 +82,14 @@ def plot_edges(axis, subdiv,
     else:
         halfEdgeList = halfEdgeIdx
 
+
     for (start, end, k) in halfEdgeList:
         
         he_obj = subdiv.graph[start][end][k]['obj']
         curve_obj = subdiv.curves[he_obj.cIdx].obj
         
         thei =  he_obj.twinIdx
-
-        sTVal = he_obj.sTVal
-        eTVal = he_obj.eTVal
-
-        # # TODO: eliminating sTVal and eTVal
-        # sPoint = subdiv.graph.node[start]['obj'].point
-        # ePoint = subdiv.graph.node[end]['obj'].point
-        # sTVal = subdiv.curves[he_obj.cIdx].IPE(sPoint)
-        # eTVal = subdiv.curves[he_obj.cIdx].IPE(ePoint)
-
+        sTVal, eTVal = he_obj.get_tvals(subdiv.curves, subdiv.graph.node)
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:

@@ -105,15 +105,7 @@ def edgeList_2_mplPath (edgeList, graph, curves):
         (start, end, k) = halfEdge
         halfEdge_obj = graph[start][end][k]['obj']
         cIdx = halfEdge_obj.cIdx
-        sTVal = halfEdge_obj.sTVal
-        eTVal = halfEdge_obj.eTVal
-
-        # # TODO: eliminating sTVal and eTVal
-        # for some reason it fails
-        # sPoint = graph.node[start]['obj'].point
-        # ePoint = graph.node[end]['obj'].point
-        # sTVal = self.curves[cIdx].IPE(sPoint)
-        # eTVal = self.curves[cIdx].IPE(ePoint)
+        sTVal, eTVal = halfEdge_obj.get_tvals(curves, graph.node)
 
 
         if isinstance(curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
@@ -241,8 +233,7 @@ class Node:
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
-                  cIdx, direction):# ,
-                  # sTVal, eTVal):
+                  cIdx, direction):
         '''
         HalfEdge class
         '''
@@ -256,24 +247,16 @@ class HalfEdge:
         self.cIdx = cIdx           # Index of the curve creating the edge
         self.direction = direction # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
-        # # TODO: I think I should remove all the following    
-        # self.sTVal = sTVal
-        # self.eTVal = eTVal
-
-        # if self.sTVal < self.eTVal:
-        #     assert (self.direction=='positive')
-        # elif self.sTVal > self.eTVal:
-        #     assert (self.direction=='negative')
 
     ####################################
-    def update_tvals(self, curves, nodes):
+    def get_tvals(self, curves, nodes):
         '''
         HalfEdge class
         '''
         (s,e,k) = self.selfIdx
 
-        sTVal = nodes[s].curveTval[nodes[s].curveIdx.index(self.cIdx)]
-        eTVal = nodes[e].curveTval[nodes[e].curveIdx.index(self.cIdx)]
+        sTVal = nodes[s]['obj'].curveTval[nodes[s]['obj'].curveIdx.index(self.cIdx)]
+        eTVal = nodes[e]['obj'].curveTval[nodes[e]['obj'].curveIdx.index(self.cIdx)]
 
         # for the case of circles and the half-edge that crosses the theta=0=2pi
         if (self.direction=='positive') and not(sTVal < eTVal):
@@ -281,8 +264,8 @@ class HalfEdge:
         if (self.direction=='negative') and not(sTVal > eTVal):
             sTVal += 2*np.pi
 
-        self.sTVal = sTVal
-        self.eTVal = eTVal
+        return (sTVal, eTVal)
+    
 
 ################################################################################
 class Face:
@@ -1165,28 +1148,20 @@ class Subdivision:
                 idx1 = (sIdx, eIdx, newPathKey1)
                 idx2 = (eIdx, sIdx, newPathKey2)
 
-                # Halfedge(selfIdx, twinIdx, cIdx, side, sTVal, eTVal)
+                # Halfedge(selfIdx, twinIdx, cIdx, side)
 
                 # first half-edge
                 direction = 'positive'                
-                he1 = HalfEdge(idx1, idx2, cIdx, direction)#, sTVal, eTVal)
+                he1 = HalfEdge(idx1, idx2, cIdx, direction)
                 e1 = ( sIdx, eIdx, {'obj':he1} )
 
                 # second half-edge
                 direction = 'negative'                
-                he2 = HalfEdge(idx2, idx1, cIdx, direction)#, eTVal, sTVal)
+                he2 = HalfEdge(idx2, idx1, cIdx, direction)
                 e2 = ( eIdx, sIdx, {'obj': he2} )
 
                 self.graph.add_edges_from([e1, e2])
 
-                # # here here
-                # self.edges[idx1] = {'idx': idx1, 'obj': he1}
-                # self.edges[idx2] = {'idx': idx2, 'obj': he2}
-
-
-        nodes = [ self.graph.node[key]['obj'] for key in self.graph.node.keys()]
-        for s,e,k in self.get_all_HalfEdge_indices():
-            self.graph[s][e][k]['obj'].update_tvals(self.curves, nodes)
     
     ############################################################################
     def get_all_HalfEdge_indices (self, graph=None):
