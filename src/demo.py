@@ -161,8 +161,6 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 # # access main graph of subdivision:
 
 
-
-
 ############################# find cycles?
 # import networkx as ns
 # graph = mySubdivision.graph
@@ -185,35 +183,4 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 # for cycle in nx.cycles.cycle_basis(MG):
 #     print cycle
 
-
-'''
-curves, nodes and edges in each Decomposition are copies of are the same lists/dicts of Subdivision
-
-# for k in mySubdivision.nodes.keys():
-#     print k, mySubdivision.nodes[k]['obj']
-
-# for (s,e,k) in mySubdivision.edges.keys():
-#     print (s,e,k), mySubdivision.edges[(s,e,k)]['obj']
-
-
-
-
-
-'''
-
-# # test halfEdge tvals:
-# nodes = [ mySubdivision.graph.node[key]['obj'] for key in mySubdivision.graph.node.keys()]
-# for s,e,k in mySubdivision.get_all_HalfEdge_indices():
-#     he = mySubdivision.graph[s][e][k]['obj']
-
-#     sTVal = nodes[s].curveTval[nodes[s].curveIdx.index(he.cIdx)]
-#     eTVal = nodes[e].curveTval[nodes[e].curveIdx.index(he.cIdx)]
-    
-#     if (he.direction=='positive') and not(sTVal < eTVal):
-#         eTVal += 2*np.pi
-#     if (he.direction=='negative') and not(sTVal > eTVal):
-#         sTVal += 2*np.pi
-
-#     assert he.sTVal == sTVal
-#     assert he.eTVal == eTVal
 

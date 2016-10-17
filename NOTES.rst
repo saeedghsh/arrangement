@@ -185,7 +185,7 @@ Developement
       [v] CircleModified (to update: self.obj)
       [v] ArcModified (to update: self.obj / self.t1, self.t2)
       
-      1_b) update subdivision.graph (nodes/edges)  --> should propagate to decomposition.graph
+      1_b) update subdivision.graph (nodes)  --> should propagate to decomposition.graph
       
       2_b) update decomposition.faces (to update: self.path / self.holes[i].path)
 

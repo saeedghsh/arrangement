@@ -25,15 +25,6 @@ import sympy as sym
 ################################################# Modified Circle
 ################################################################################
 
-sym.Point.scale , sym.Point.rotate, sym.Point.translate
-
-sym.Line.scale , sym.Line.rotate, sym.Line.translate
-sym.Ray.scale , sym.Ray.rotate, sym.Ray.translate
-sym.Segment.scale , sym.Segment.rotate, sym.Segment.translate
-
-sym.Circle.scale , sym.Circle.rotate, sym.Circle.translate
-
-
 
 ################################################################################
 class LineModified:
@@ -49,7 +40,7 @@ class LineModified:
             self.obj = sym.Line( args[0], slope=args[1] )
 
     ####################################
-    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+    def transform_sequence(self, operTypes, operVals, operRefs):
         '''
         LineModified class
 
@@ -339,7 +330,7 @@ class CircleModified:
         self.obj = sym.Circle( *args )
 
     ####################################
-    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+    def transform_sequence(self, operTypes, operVals, operRefs ):
         '''
         CircleModified class
 
@@ -505,7 +496,7 @@ class ArcModified(CircleModified):
         self.t2 = max(args[2])
 
     ####################################
-    def transform_sequence(self, operTypes='', operVals=(), operRefs=() ):
+    def transform_sequence(self, operTypes, operVals, operRefs ):
         '''
         ArcModified class
 
