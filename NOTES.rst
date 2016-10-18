@@ -33,14 +33,21 @@ remove: self.subGraphs ( are included in self.subDecomposition )
 
 
 
-
-
       [ ] how to detect the overlap of two arcs
+
+
+      [later] fix the  - test_cases_key[18] with rotate(pi/2)
+      it happens to be genuinely a degenerate case, that is to say the peoblem 
+      happens when a node after rotation is slightly off the original curve and the
+      curve.IPE(node.point) returns False!      
+
 
       [later] fix the  - test_cases_key[13]
       it happens to be genuinely a degenerate case, that is to say the peoblem 
       happens when the angles of tangent to two tangent half-edge differ after
       the 7th digit of the fractional part
+
+
 
       [vx] the angle restriction in arc description
 

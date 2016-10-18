@@ -24,7 +24,7 @@
 <text text-anchor="start" x="27" y="-83.3" font-family="Times,serif" font-size="14.00">does_overlap()</text>
 <text text-anchor="start" x="27" y="-68.3" font-family="Times,serif" font-size="14.00">merge_faces()</text>
 <text text-anchor="start" x="27" y="-53.3" font-family="Times,serif" font-size="14.00">get_extents()</text>
-<text text-anchor="start" x="27" y="-38.3" font-family="Times,serif" font-size="14.00">transform()</text>
+<text text-anchor="start" x="27" y="-38.3" font-family="Times,serif" font-size="14.00">update_face_path()</text>
 <text text-anchor="start" x="27" y="-23.3" font-family="Times,serif" font-size="14.00">does_intersect()</text>
 <text text-anchor="start" x="27" y="-8.3" font-family="Times,serif" font-size="14.00">find_neighbours()</text>
 </g>
@@ -40,12 +40,12 @@
 <text text-anchor="start" x="7.5" y="-423.3" font-family="Times,serif" font-size="14.00">curves : list</text>
 <polyline fill="none" stroke="black" points="-0.5,-415.5 178.5,-415.5 "/>
 <text text-anchor="start" x="7.5" y="-400.3" font-family="Times,serif" font-size="14.00">find_successor_HalfEdge()</text>
-<text text-anchor="start" x="7.5" y="-385.3" font-family="Times,serif" font-size="14.00">transform()</text>
-<text text-anchor="start" x="7.5" y="-370.3" font-family="Times,serif" font-size="14.00">store_curves()</text>
-<text text-anchor="start" x="7.5" y="-355.3" font-family="Times,serif" font-size="14.00">save_to_image()</text>
-<text text-anchor="start" x="7.5" y="-340.3" font-family="Times,serif" font-size="14.00">decompose_graph()</text>
-<text text-anchor="start" x="7.5" y="-325.3" font-family="Times,serif" font-size="14.00">update_with_new_functions()</text>
-<text text-anchor="start" x="7.5" y="-310.3" font-family="Times,serif" font-size="14.00">construct_nodes()</text>
+<text text-anchor="start" x="7.5" y="-385.3" font-family="Times,serif" font-size="14.00">store_curves()</text>
+<text text-anchor="start" x="7.5" y="-370.3" font-family="Times,serif" font-size="14.00">save_to_image()</text>
+<text text-anchor="start" x="7.5" y="-355.3" font-family="Times,serif" font-size="14.00">decompose_graph()</text>
+<text text-anchor="start" x="7.5" y="-340.3" font-family="Times,serif" font-size="14.00">transform_sequence()</text>
+<text text-anchor="start" x="7.5" y="-325.3" font-family="Times,serif" font-size="14.00">construct_nodes()</text>
+<text text-anchor="start" x="7.5" y="-310.3" font-family="Times,serif" font-size="14.00">update_with_new_functions()</text>
 <text text-anchor="start" x="7.5" y="-295.3" font-family="Times,serif" font-size="14.00">construct_edges()</text>
 <text text-anchor="start" x="7.5" y="-280.3" font-family="Times,serif" font-size="14.00">get_all_HalfEdge_indices()</text>
 </g>

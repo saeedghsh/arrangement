@@ -239,7 +239,13 @@ class RayModified(LineModified):
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
-        if self.obj.contains(point):
+
+        # TODO: 
+        # this condition checking is a problem when the curve and a node on it are rotated,
+        # but after rotation, the node is slightly off the curve and this function would return False!
+        # temporarily I disable this condition checking until later
+
+        if True: #self.obj.contains(point):
             if self.obj.slope == 0:
                 return point.x
             elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
@@ -306,7 +312,13 @@ class SegmentModified(LineModified):
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
-        if self.obj.contains(point):
+
+        # TODO: 
+        # this condition checking is a problem when the curve and a node on it are rotated,
+        # but after rotation, the node is slightly off the curve and this function would return False!
+        # temporarily I disable this condition checking until later
+
+        if True: # self.obj.contains(point):
             if self.obj.slope == 0:
                 return point.x
             elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
