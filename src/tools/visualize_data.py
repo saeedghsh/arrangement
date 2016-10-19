@@ -64,7 +64,7 @@ test_cases_key = [
 ]
 
 ######################################## load data
-testNumber = 29
+testNumber = 7
 timing = False
 
 file_name = '../testCases/'+test_cases_key[testNumber]+'.yaml'

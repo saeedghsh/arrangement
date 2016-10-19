@@ -550,7 +550,7 @@ class ArcModified(CircleModified):
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
 
-                                # Important note
+                # Important note
                 # ideally I would like to do this:
                 # self.obj = self.obj.rotate(theta,ref)
                 # but as rotate is not effective for circles (don't know why!)

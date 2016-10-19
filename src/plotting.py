@@ -78,7 +78,8 @@ def plot_edges(axis, subdiv,
                printLabels=False):
 
     if halfEdgeIdx==None:
-        halfEdgeList = subdiv.get_all_HalfEdge_indices()
+        halfEdgeList = subdiv.graph.edges(keys=True) # subdiv.get_all_HalfEdge_indices()
+        
     else:
         halfEdgeList = halfEdgeIdx
 
@@ -86,7 +87,7 @@ def plot_edges(axis, subdiv,
     for (start, end, k) in halfEdgeList:
         
         he_obj = subdiv.graph[start][end][k]['obj']
-        curve_obj = subdiv.curves[he_obj.cIdx].obj
+        curve_obj = subdiv.curves[he_obj.curveIdx].obj
         
         thei =  he_obj.twinIdx
         sTVal, eTVal = he_obj.get_tvals(subdiv.curves, subdiv.graph.node)
@@ -325,7 +326,7 @@ def plot_new_halfEdge(axis):
     global subdiv
     
     # updating the counter, and fetching the next half edge
-    allHalfEdgeIdx = subdiv.get_all_HalfEdge_indices() 
+    allHalfEdgeIdx = subdiv.graph.edges(keys=True) # subdiv.get_all_HalfEdge_indices() 
     halfEdge_counter = np.mod( halfEdge_counter+1, len(allHalfEdgeIdx) )
     (start,end,k) = allHalfEdgeIdx[halfEdge_counter]
 

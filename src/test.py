@@ -19,6 +19,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 import os
 import unittest
 
+import numpy as np
+
 import subdivision as sdv
 reload(sdv)
 
@@ -89,10 +91,27 @@ class SubdivisionTests(unittest.TestCase):
             ########## testing number of subGraphs
             if 'number_of_subGraphs' in data.keys():
                 n_subGraphs = data['number_of_subGraphs']
-                self.assertEqual( len(subdiv.subDecompositions), n_subGraphs,
+                self.assertEqual( len(subdiv._subDecompositions), n_subGraphs,
                                   'incorrect number of subGraphs')
             else:
                 print 'number of subGraphs is not available for ' + key, '...'
+
+
+            ########## testing neighbourhood function [incomplete]
+            ########## it checks if neighbourhood is valid in both direction
+            for fIdx in range(len(subdiv.decomposition.faces)):
+                for nfIdx in subdiv.decomposition.find_neighbours(fIdx):
+                    assert fIdx in subdiv.decomposition.find_neighbours(nfIdx)
+
+
+
+            ########## testing transformation [incomplete]
+            ########## it doesn't check the correctness
+            ########## it just checks whether if it completes the process
+            subdiv.transform_sequence('SRT',
+                                      ((5,5), -np.pi/2, (-10,0), ),
+                                      ((0,0), (0,0),    (0,0), ) )
+            
             
 
 
@@ -185,3 +204,4 @@ if __name__ == '__main__':
 #     (ts,te,tk) = mySubdivision.graph[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
 # ########################################
+

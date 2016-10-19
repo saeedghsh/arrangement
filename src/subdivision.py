@@ -17,6 +17,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
 import operator
+import itertools 
 
 import numpy as np
 import sympy as sym
@@ -104,7 +105,7 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 
         (start, end, k) = halfEdge
         halfEdge_obj = graph[start][end][k]['obj']
-        cIdx = halfEdge_obj.cIdx
+        cIdx = halfEdge_obj.curveIdx
         sTVal, eTVal = halfEdge_obj.get_tvals(curves, graph.node)
 
 
@@ -179,7 +180,8 @@ class Node:
         self.attributes = {}
         self.selfIdx = selfIdx   # self-index
         self.point = point
-        self.curveIdx = curveIdx
+        self._curveIdx = curveIdx
+        self._curveTval = []
         self.update_tval(curves)
 
 
@@ -222,7 +224,7 @@ class Node:
                 ref = operRefs[opIdx]
                 self.point = self.point.scale(sx,sy,ref)
 
-        # updating self.curveTval after transforming the self.point
+        # updating self._curveTval after transforming the self.point
         self.update_tval(curves)
 
     ####################################
@@ -230,19 +232,14 @@ class Node:
         '''
         Node class
         '''
-        self.curveTval = [curves[cIdx].IPE(self.point) for cIdx in self.curveIdx]
-    
-
-
-
-
-        
+        self._curveTval = [curves[cIdx].IPE(self.point) for cIdx in self._curveIdx]
+            
 
 ################################################################################
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
-                  cIdx, direction):
+                  curveIdx, direction):
         '''
         '''
         self.attributes = {}
@@ -251,7 +248,7 @@ class HalfEdge:
         self.succIdx = None # index to the successor half-edge
 
         # half edge Curve's attributes:
-        self.cIdx = cIdx           # Index of the curve creating the edge
+        self.curveIdx = curveIdx           # Index of the curve creating the edge
         self.direction = direction # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
 
@@ -262,8 +259,8 @@ class HalfEdge:
         '''
         (s,e,k) = self.selfIdx
 
-        sTVal = nodes[s]['obj'].curveTval[nodes[s]['obj'].curveIdx.index(self.cIdx)]
-        eTVal = nodes[e]['obj'].curveTval[nodes[e]['obj'].curveIdx.index(self.cIdx)]
+        sTVal = nodes[s]['obj']._curveTval[nodes[s]['obj']._curveIdx.index(self.curveIdx)]
+        eTVal = nodes[e]['obj']._curveTval[nodes[e]['obj']._curveIdx.index(self.curveIdx)]
 
         # for the case of circles and the half-edge that crosses the theta=0=2pi
         if (self.direction=='positive') and not(sTVal < eTVal):
@@ -284,6 +281,16 @@ class Face:
         self.holes = ()               # tuple of faces
         self.attributes = {}
 
+    
+    ####################################
+    def get_all_halfEdges_Idx(self):
+        '''
+        Face class
+        '''
+        return [heIdx
+                for hole in self.holes
+                for heIdx in hole.halfEdges ]  + self.halfEdges
+        
     ####################################
     def update_path(self, graph, curves):
         '''
@@ -353,6 +360,7 @@ class Face:
 
         # withholding nested holes
         redundant = []
+
         for idx1, h1 in enumerate(holes):
             for idx2, h2 in enumerate(holes):
                 if idx1 != idx2 and h1.path.contains_path(h2.path):
@@ -412,31 +420,45 @@ class Decomposition:
         return None
 
     ####################################
-    def find_neighbours(self, faceIdx):
+    def find_mutual_halfEdges(self, f1Idx, f2Idx):
         '''
         Decomposition class
         '''
 
-        # finding the indices to half-edges of the face
-        twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
-                     for (s,e,k) in self.faces[faceIdx].halfEdges ]
+        mutualsIdx = []
+                
+        for (s,e,k) in self.faces[f1Idx].get_all_halfEdges_Idx():
+            (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
+            if (ts,te,tk) in self.faces[f2Idx].get_all_halfEdges_Idx():
+                mutualsIdx.append( (s,e,k) )
+                mutualsIdx.append( (ts,te,tk) )
 
-        # finding the indices to half-edges of the holes of the face
-        twinsIdx += [ self.graph[s][e][k]['obj'].twinIdx
-                      for hole in self.faces[faceIdx].holes
-                      for (s,e,k) in hole.halfEdges ]
+        return mutualsIdx
+
+
+    ####################################
+    def find_neighbours(self, faceIdx):
+        '''
+        Decomposition class
+        '''
+        
+        twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
+                     for (s,e,k) in self.faces[faceIdx].get_all_halfEdges_Idx() ]
         
         # picking the face which have any of the twins as their boundary
         # or the baoundary of their holes
         neighbours = []
         for fIdx,face in enumerate(self.faces):
-            boundary = face.halfEdges
-            boundary += [heIdx
-                         for hole in face.holes
-                         for heIdx in hole.halfEdges]
+            boundary = face.get_all_halfEdges_Idx()
 
             if any([ twin in boundary  for twin in twinsIdx]):
                 neighbours.append(fIdx)
+
+        # identical:
+        # neighbours = [ fIdx
+        #                for fIdx,face in enumerate(self.faces)
+        #                if any([ twin in face.get_all_halfEdges_Idx()
+        #                         for twin in twinsIdx]) ]
 
         # rejecting the face itself if it is included in the neighbours
         if faceIdx in neighbours:
@@ -456,24 +478,60 @@ class Decomposition:
     def does_intersect(self, other):
         '''
         Decomposition class
+
+        checks only the intersection of the boundaries
+        "other" could be: Face, Decomposition, Subdivision
         '''
-        assert self.superFace and other.superFace
-        return self.superFace.path.intersects_path(other.superFace.path,filled=False) 
+
+        assert self.superFace
+
+        if isinstance(other, Face):
+            otherPath = other.path
+
+        elif isinstance(other, Decomposition):
+            assert other.superFace
+            otherPath = other.superFace.path
+
+        elif isinstance(other, Subdivision):
+            assert other.decomposition.superFace
+            otherPath = other.decomposition.superFace.path
+
+        return self.superFace.path.intersects_path(otherPath,filled=False)
 
     ####################################
     def does_overlap(self, other):
         '''
         Decomposition class
+
+        checks overlapping (and enclosure) of two regions
+        "other" could be: Face, Decomposition, Subdivision
         '''
-        assert self.superFace and other.superFace
-        return self.superFace.path.intersects_path(other.superFace.path,filled=True) 
+
+        assert self.superFace
+
+        if isinstance(other, Face):
+            otherPath = other.path
+
+        elif isinstance(other, Decomposition):
+            assert other.superFace
+            otherPath = other.superFace.path
+
+        elif isinstance(other, Subdivision):
+            assert other.decomposition.superFace
+            otherPath = other.decomposition.superFace.path
+
+        return self.superFace.path.intersects_path(otherPath,filled=True)
 
     ####################################
     def does_enclose(self, other):
         '''
         Decomposition class
+
+        checks if self encloses the other without boundary intersection
+        "other" could only be on the Decomposition type
         '''
         assert self.superFace and other.superFace
+
         if self.does_overlap(other) and not(self.does_intersect(other)):
             sampleNodeIdx = other.graph.nodes()[0]
             samplePoint = other.graph.node[sampleNodeIdx]['obj'].point
@@ -482,126 +540,6 @@ class Decomposition:
                 return True
         return False
 
-    ####################################
-    def merge_faces(self, faceIndices):
-        '''
-        Decomposition class
-        '''
-        # problem 1: mpath.Path.make_compound_path doesn't work
-
-        # problem 2: this is a blind merge,
-        # it would be nice to have a class method for merging two neighbouring faces.
-
-        # TODO: don't forget to update halfEdge.successors
-        # those twins that are removed, won't have successor
-        
-        f1Idx, f2Idx = faceIndices
-        twinsIdx = []
-        if not(f1Idx in self.find_neighbours(f2Idx)) :
-            print 'do not merge if the faces are not neighbours'
-            return None
-        else:
-            # finding the indices to half-edges of the face
-            twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
-                         for (s,e,k) in self.faces[f1Idx].halfEdges ]
-
-            # finding the indices to half-edges of the holes of the face
-            twinsIdx += [ self.graph[s][e][k]['obj'].twinIdx
-                          for hole in self.faces[f1Idx].holes
-                          for (s,e,k) in hole.halfEdges ]
-
-        for idx in range(len(twinsIdx)-1,-1,-1):
-            if not(twinsIdx[idx] in self.faces[f2Idx].halfEdges):
-                twinsIdx.pop(idx)
-
-        f2Mutuals = twinsIdx
-        f1Mutuals = [ self.graph[s][e][k]['obj'].twinIdx
-                      for (s,e,k) in twinsIdx ]
-
-        # tsesting:
-        assert len(f1Mutuals) == len(f2Mutuals)
-        assert all([ self.graph[s][e][k]['obj'].twinIdx in f2Mutuals
-                     for (s,e,k) in f1Mutuals ] )
-        assert all([ self.graph[s][e][k]['obj'].twinIdx in f1Mutuals
-                     for (s,e,k) in f2Mutuals ] )
-
-
-        ### creating the halfEdge list for the new face
-        f1Unshared = [ heIdx
-                        for heIdx in self.faces[f1Idx].halfEdges
-                        if not( heIdx in f1Mutuals) ]
-        f2Unshared = [ heIdx
-                        for heIdx in self.faces[f1Idx].halfEdges
-                        if not( heIdx in f1Mutuals) ]
-
-        if len(f1Unshared) > 0: 
-            start = f1Unshared[0]
-            print 'starting from the the first face'
-        elif len(f2Unshared) > 0: 
-            start = f2Unshared[0]
-        else:
-            print 'error, how can two faces not have unshared half-edges?'
-
-        newEdgeList = []
-        newEdgeList.append(start)
-
-        (s,e,k) = newEdgeList[0]
-        succIdx = self.graph[s][e][k]['obj'].succIdx
-        if succIdx in f1Mutuals+f2Mutuals:
-            (ss,se,sk) = succIdx
-            (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
-            succIdx = self.graph[ts][te][tk]['obj'].succIdx
-
-        idx = 1
-        while succIdx!=newEdgeList[0]:
-
-            # adding the latest found successor to the list
-            newEdgeList.append(succIdx)
-
-            # finding the successor to the last item of the list
-            (s,e,k) = newEdgeList[-1]            
-            succIdx = self.graph[s][e][k]['obj'].succIdx
-            if succIdx in f1Mutuals+f2Mutuals:
-                # if the successor is in the mutual list, then it is invalide
-                # and the correct successor is the successor to the twin of the 
-                # currently invalide successor.
-                (ss,se,sk) = succIdx
-                (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
-                succIdx = self.graph[ts][te][tk]['obj'].succIdx
-                
-
-            # checking if the while loop is stuck
-            idx += 1            
-            if idx > len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges):
-                
-                print idx, len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges)
-                print 'staying too long in the successor loop, break'
-                break
-        
-        # updating the successor of the last halfEdge
-        for idx in range(len(newEdgeList)-1):
-            (s,e,k) = newEdgeList[idx]
-            self.graph[s][e][k]['obj'].succIdx = newEdgeList[idx+1]
-        (s,e,k) = newEdgeList[-1]
-        self.graph[s][e][k]['obj'].succIdx = newEdgeList[-1]
-
-
-        ### converting the edgelist to matplotlib path
-        newPath = edgeList_2_mplPath(newEdgeList, self.graph, self.curves)
-
-        ### putting all holes together
-        # there is no need to process holes, they should just be copied
-        newHoles = self.faces[f1Idx].holes + self.faces[f2Idx].holes
-
-        newFace = Face( newEdgeList, newPath)
-        for hole in newHoles:
-            newFace.punch_hole( hole )
-
-        newFaces = tuple ( [ self.faces[fIdx]
-                             for fIdx in range(len(self.faces))
-                             if not(fIdx in [f1Idx, f2Idx]) ] )
-        print 'faces merged'
-        self.faces = newFaces + (newFace,)
 
     ####################################
     def update_face_path(self):
@@ -613,8 +551,144 @@ class Decomposition:
 
         if self.superFace != None:
             self.superFace.update_path(self.graph, self.curves)
-            
-            
+
+    # ####################################
+    # def merge_faces(self, faceIndices):
+    #     '''
+    #     Decomposition class
+    #     if f1 and f2 belong to different subgraphs:        
+    #     if f1 and f2 belong to the same subgraph:
+
+    #     problem 1: mpath.Path.make_compound_path doesn't work
+
+    #     problem 2: this is a blind merge,
+    #     it would be nice to have a class method for merging two neighbouring faces.
+
+    #     TODO: don't forget to update halfEdge.successors
+    #     those twins that are removed, won't have successor
+
+    #     it would fail if one of the faces belongs to a hole of the other face
+    #     if one face is a part of the hole, the superface of the hole must be updated
+    #     then the corresponding hole must be updated accordingly!!!
+    #     Shit!
+
+    #     make sure the edge list is sorted after merging, because it is important in path construction
+    #     when assigning other.superface to self.holes, I delete holes of superface, is that ok?
+        
+    #     since I need to update the superface that became a hole in self.holes,
+    #     I have to keep track of that assigment 
+
+    #     '''        
+    #     f1Idx, f2Idx = faceIndices
+    #     twinsIdx = []
+    #     if not(f1Idx in self.find_neighbours(f2Idx)) :
+    #         print 'do not merge if the faces are not neighbours'
+    #         return None
+    #     else:
+    #         # finding the indices to half-edges of the face
+    #         twinsIdx = [ self.graph[s][e][k]['obj'].twinIdx
+    #                      for (s,e,k) in self.faces[f1Idx].halfEdges ]
+
+    #         # finding the indices to half-edges of the holes of the face
+    #         twinsIdx += [ self.graph[s][e][k]['obj'].twinIdx
+    #                       for hole in self.faces[f1Idx].holes
+    #                       for (s,e,k) in hole.halfEdges ]
+
+    #     for idx in range(len(twinsIdx)-1,-1,-1):
+    #         if not(twinsIdx[idx] in self.faces[f2Idx].halfEdges):
+    #             twinsIdx.pop(idx)
+
+    #     f2Mutuals = twinsIdx
+    #     f1Mutuals = [ self.graph[s][e][k]['obj'].twinIdx
+    #                   for (s,e,k) in twinsIdx ]
+
+    #     # tsesting:
+    #     assert len(f1Mutuals) == len(f2Mutuals)
+    #     assert all([ self.graph[s][e][k]['obj'].twinIdx in f2Mutuals
+    #                  for (s,e,k) in f1Mutuals ] )
+    #     assert all([ self.graph[s][e][k]['obj'].twinIdx in f1Mutuals
+    #                  for (s,e,k) in f2Mutuals ] )
+
+
+    #     ### creating the halfEdge list for the new face
+    #     f1Unshared = [ heIdx
+    #                     for heIdx in self.faces[f1Idx].halfEdges
+    #                     if not( heIdx in f1Mutuals) ]
+    #     f2Unshared = [ heIdx
+    #                     for heIdx in self.faces[f1Idx].halfEdges
+    #                     if not( heIdx in f1Mutuals) ]
+
+    #     if len(f1Unshared) > 0: 
+    #         start = f1Unshared[0]
+    #         print 'starting from the the first face'
+    #     elif len(f2Unshared) > 0: 
+    #         start = f2Unshared[0]
+    #     else:
+    #         print 'error, how can two faces not have unshared half-edges?'
+
+    #     newEdgeList = []
+    #     newEdgeList.append(start)
+
+    #     (s,e,k) = newEdgeList[0]
+    #     succIdx = self.graph[s][e][k]['obj'].succIdx
+    #     if succIdx in f1Mutuals+f2Mutuals:
+    #         (ss,se,sk) = succIdx
+    #         (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
+    #         succIdx = self.graph[ts][te][tk]['obj'].succIdx
+
+    #     idx = 1
+    #     while succIdx!=newEdgeList[0]:
+
+    #         # adding the latest found successor to the list
+    #         newEdgeList.append(succIdx)
+
+    #         # finding the successor to the last item of the list
+    #         (s,e,k) = newEdgeList[-1]            
+    #         succIdx = self.graph[s][e][k]['obj'].succIdx
+    #         if succIdx in f1Mutuals+f2Mutuals:
+    #             # if the successor is in the mutual list, then it is invalide
+    #             # and the correct successor is the successor to the twin of the 
+    #             # currently invalide successor.
+    #             (ss,se,sk) = succIdx
+    #             (ts,te,tk) = self.graph[ss][se][sk]['obj'].twinIdx
+    #             succIdx = self.graph[ts][te][tk]['obj'].succIdx
+
+    #         # checking if the while loop is stuck
+    #         idx += 1            
+    #         if idx > len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges):
+                
+    #             print idx, len(self.faces[f1Idx].halfEdges)+len(self.faces[f2Idx].halfEdges)
+    #             print 'staying too long in the successor loop, break'
+    #             break
+        
+    #     # updating the successor of the last halfEdge
+    #     for idx in range(len(newEdgeList)-1):
+    #         (s,e,k) = newEdgeList[idx]
+    #         self.graph[s][e][k]['obj'].succIdx = newEdgeList[idx+1]
+    #     (s,e,k) = newEdgeList[-1]
+    #     self.graph[s][e][k]['obj'].succIdx = newEdgeList[-1]
+
+
+    #     ### converting the edgelist to matplotlib path
+    #     newPath = edgeList_2_mplPath(newEdgeList, self.graph, self.curves)
+
+    #     ### putting all holes together
+    #     # there is no need to process holes, they should just be copied
+    #     newHoles = self.faces[f1Idx].holes + self.faces[f2Idx].holes
+
+    #     newFace = Face( newEdgeList, newPath)
+    #     for hole in newHoles:
+    #         newFace.punch_hole( hole )
+
+    #     newFaces = tuple ( [ self.faces[fIdx]
+    #                          for fIdx in range(len(self.faces))
+    #                          if not(fIdx in [f1Idx, f2Idx]) ] )
+    #     print 'faces merged'
+    #     self.faces = newFaces + (newFace,)
+
+
+
+
         
 ################################################################################
 ############################################################## Subdivision class
@@ -630,51 +704,85 @@ class Subdivision:
         multiProcessing=0 -> no multi-processing
         multiProcessing=n -> n: number of processes
         '''
-        self.multiProcessing = multiProcessing
+        self._multiProcessing = multiProcessing
 
         timing = False
         ########## reject duplicated curves and store internally
         self.curves = []
-        self.store_curves(curves)
+        self._store_curves(curves)
 
-        ########## construct the base graph and subGraphs
+        ########## construct the base graph
         tic = time.time()
         self.graph = nx.MultiDiGraph()
         if timing: print 'Graphs:', time.time() - tic
 
         #### STAGE A: construct nodes
         tic = time.time()
-        # self.nodes = {}
-        self.construct_nodes()
+        self._construct_nodes()
         if timing: print 'nodes:', time.time() - tic
 
         #### STAGE B: construct edges
         tic = time.time()
-        # self.edges = {}
-        self.construct_edges()
+        self._construct_edges()
         if timing: print 'edges:', time.time() - tic
 
-        #### STAGE C: split the base graph into connected subgraphs
+        ########## decomposition
         tic = time.time()
+        self._decompose()
+        if timing: print 'decomposition:', time.time() - tic
+
+
+    ############################################################################
+    def merge_faces(self, faceIdx=[]):
+        '''
+        Subdivision class
+        '''
+        
+        halfEdge2Remove = []
+
+        for (f1Idx,f2Idx) in itertools.combinations(faceIdx, 2):
+            f1 = self.decomposition.faces[f1Idx]
+            f2 = self.decomposition.faces[f2Idx]
+
+            halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
+            
+        print halfEdge2Remove
+
+        # remove all halfEdges, that separate the iput faces, from the graph
+        self.graph.remove_edges_from( list(set(halfEdge2Remove)) )
+
+        # check if any node is loose and not connected
+        nodeDegrees = self.graph.degree(self.graph.nodes())
+        self.graph.remove_nodes_from( [k
+                                       for k in nodeDegrees.keys()
+                                       if nodeDegrees[k] == 0 ] )
+        
+        # recompute the decomposition
+        self._decompose()
+
+    ############################################################################
+    def _decompose(self):
+        '''
+        Subdivision class
+        '''
+
+        #### STAGE 0: split the base graph into connected subgraphs
         subGraphs = list(nx.connected_component_subgraphs(self.graph.to_undirected()))
         subGraphs = [sg.to_directed() for sg in subGraphs]
-        if timing: print 'connected components:', time.time() - tic
-
-        ########## decomposition
+        
         #### STAGE A: decomposition of each subgraph and merging
-        tic = time.time()
         subDecompositions = []
-        for iii, sg in enumerate( subGraphs ):
-            faces = self.decompose_graph(sg)
+        for subGraphIdx, sg in enumerate( subGraphs ):
+            faces = self._decompose_graph(sg)
             if len(faces) == 0:
-                # we need to check if self.decompose_graph(sg) returns anything
+                # we need to check if self._decompose_graph(sg) returns anything
                 # for instance, if two line intersect only with each other,
                 # there will be a subgraph of one node, with no edge or face
                 # therefore, no decomposition shall be stored
                 superFaceIdx = None
 
+            # find the superFace of the decomposition
             else:
-                # find the superFace of the decomposition                
                 if len(faces) == 2:
                     # if only there are two faces, they will have the same area size
                     # so we look into the side attribute of half-edges of each face
@@ -698,21 +806,26 @@ class Subdivision:
                                 # ta: twin's departure angle
                                 (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
                                 twin = self.graph[ts][te][tk]['obj']
-                                curve = self.curves[twin.cIdx]
+                                curve = self.curves[twin.curveIdx]
                                 ta = curve.tangentAngle( self.graph.node[ts]['obj'].point,
                                                          twin.direction)
                                 
                                 # sa: successor's departure angle
+                                ############################## debugging:
+                                # print (s,e,k)
+                                # print (s,e,k), sg[s][e][k]['obj'].succIdx
+                                # print (s,e,k), self.graph[s][e][k]['obj'].succIdx
+                                ##############################
                                 (ss,se,sk) = self.graph[s][e][k]['obj'].succIdx
                                 succ = self.graph[ss][se][sk]['obj']
-                                curve = self.curves[succ.cIdx]
+                                curve = self.curves[succ.curveIdx]
                                 sa = curve.tangentAngle( self.graph.node[ss]['obj'].point,
                                                          succ.direction)
                                 
                                 # sa, ta in [0,2pi]
-                                # and we want sth to be from ta to sa in ccw direction
-                                sth = ta - sa if ta>sa else (ta+2*np.pi) - sa
-                                angleSum[fIdx] += sth
+                                # and we want da to be from ta to sa in ccw direction
+                                da = ta - sa if ta>sa else (ta+2*np.pi) - sa
+                                angleSum[fIdx] += da
                                 
                         superFaceIdx = angleSum.index(max(angleSum))
                     
@@ -732,34 +845,15 @@ class Subdivision:
             subDecompositions.append( Decomposition(sg, self.curves,
                                                     faces, superFaceIdx) )
 
-        if timing: print 'decomposition:', time.time() - tic
-
-        #### STAGE B: intersection of sub_decomposition
-        tic = time.time()
-        for idx1 in range(len(subDecompositions)):
-            for idx2 in range(len(subDecompositions)):
-                if idx1 != idx2:
-                    sd1 = subDecompositions[idx1]
-                    sd2 = subDecompositions[idx2]
-
-                    # sd1 or sd2 could be empty; faces =[] and superFace=None
-                    if len(sd1.faces)>0 and len(sd2.faces)>0:
-                        if sd1.does_enclose(sd2):
-                            sampleNodeIdx = sd2.graph.nodes()[0]
-                            samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
-                            fIdx = sd1.find_face ( samplePoint )
-                            superFace = sd2.superFace
-                            subDecompositions[idx1].faces[fIdx].punch_hole ( superFace )
-
-        self.subDecompositions = subDecompositions
-        del subDecompositions
-        if timing: print 'intersect graphs', time.time() - tic
+        #### STAGE B: find holes of subDecompositions and punch holes
+        self._find_punch_holes(subDecompositions)
+        self._subDecompositions = subDecompositions
 
         #### STAGE C:
         # decomposition <- all faces and superFaces together
         allFaces = ()
         superfaces = []
-        for sd in self.subDecompositions:
+        for sd in self._subDecompositions:
             if len(sd.faces)>0:  # sd could be empty
                 allFaces += sd.faces
                 superfaces += [sd.superFace]
@@ -773,7 +867,35 @@ class Subdivision:
 
 
     ############################################################################
-    def store_curves(self, curves):
+    def _find_punch_holes(self, subDecompositions):
+
+        '''
+        Subdivision class
+        '''        
+        for (idx1,idx2) in itertools.permutations(range(len(subDecompositions)), 2):
+            sd1 = subDecompositions[idx1]
+            sd2 = subDecompositions[idx2]
+
+            # sd1 or sd2 could be empty; faces =[] and superFace=None
+            if len(sd1.faces)>0 and len(sd2.faces)>0 and sd1.does_enclose(sd2):
+                sampleNodeIdx = sd2.graph.nodes()[0]
+                samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
+                fIdx = sd1.find_face ( samplePoint )
+                subDecompositions[idx1].faces[fIdx].punch_hole ( sd2.superFace )
+
+        # for idx1,sd1 in enumerate(subDecompositions):
+        #     for idx2,sd2 in enumerate(subDecompositions):
+        #         if idx1 != idx2:
+                    
+        #             # sd1 or sd2 could be empty; faces =[] and superFace=None
+        #             if len(sd1.faces)>0 and len(sd2.faces)>0 and sd1.does_enclose(sd2):
+        #                     sampleNodeIdx = sd2.graph.nodes()[0]
+        #                     samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
+        #                     fIdx = sd1.find_face ( samplePoint )
+        #                     subDecompositions[idx1].faces[fIdx].punch_hole ( sd2.superFace )
+
+    ############################################################################
+    def _store_curves(self, curves):
         '''
         Subdivision class
 
@@ -823,7 +945,7 @@ class Subdivision:
 
 
     ############################################################################
-    def construct_nodes(self):
+    def _construct_nodes(self):
         '''
         Subdivision class
 
@@ -869,14 +991,14 @@ class Subdivision:
                             for col in range(len(self.curves)) ]
                           for row in range(len(self.curves)) ]
 
-        if self.multiProcessing: # with multiProcessing
+        if self._multiProcessing: # with multiProcessing
             curvesTuplesIdx = [ [row,col]
                                 for row in range(len(self.curves))
                                 for col in range(row) ]
 
             global curves
             curves = self.curves
-            with ctx.closing(mp.Pool(processes=self.multiProcessing)) as p:
+            with ctx.closing(mp.Pool(processes=self._multiProcessing)) as p:
                 intersections_tmp = p.map( intersection_star, curvesTuplesIdx)
             del curves, p
             
@@ -957,7 +1079,7 @@ class Subdivision:
         # duplicate: resulted of same curves intersection
         # collocated: resulted of different curves intersection
 
-        if self.multiProcessing:
+        if self._multiProcessing:
             distances = [ [ 0
                             for col in range(len(intersectionsFlat)) ]
                           for row in range(len(intersectionsFlat)) ]
@@ -968,7 +1090,7 @@ class Subdivision:
 
             global intersectionPoints
             intersectionPoints = intersectionsFlat
-            with ctx.closing(mp.Pool(processes=self.multiProcessing)) as p:
+            with ctx.closing(mp.Pool(processes=self._multiProcessing)) as p:
                 distancesFlat = p.map( distance_star, ipsTuplesIdx)
             del intersectionPoints
             
@@ -1016,12 +1138,11 @@ class Subdivision:
         ########################################
         # adding nodes to the graph
         self.graph.add_nodes_from( nodes )
-        # self.nodes = self.graph.node
         assert len(self.graph.nodes()) == len(intersectionsFlat)
 
 
     ############################################################################
-    def construct_edges(self):
+    def _construct_edges(self):
         '''
         Subdivision class
 
@@ -1040,8 +1161,8 @@ class Subdivision:
         curveIpsTVal = [[] for i in range(len(self.curves))]
 
         for nodeIdx in self.graph.nodes():
-            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['obj'].curveTval,
-                                   self.graph.node[nodeIdx]['obj'].curveIdx) :
+            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['obj']._curveTval,
+                                   self.graph.node[nodeIdx]['obj']._curveIdx) :
                 curveIpsIdx[cIdx].append(nodeIdx)
                 curveIpsTVal[cIdx].append(tVal)
 
@@ -1133,25 +1254,27 @@ class Subdivision:
 
                 self.graph.add_edges_from([e1, e2])
 
+    # ############################################################################
+    # def get_all_HalfEdge_indices (self, graph=None):
+    #     '''
+    #     Subdivision class
+    #     replaced "subdiv.get_all_HalfEdge_indices()" with "subdiv.graph.edges(keys=True)"
+        
+    #     '''
+
+    #     if graph==None: graph = self.graph
+
+    #     allHalfEdgeIdx = [(sIdx, eIdx, k)
+    #                       for sIdx in graph.nodes()
+    #                       for eIdx in graph[sIdx].keys()
+    #                       for k in graph[sIdx][eIdx].keys()]
+
+    #     return allHalfEdgeIdx
+
     ############################################################################
-    def get_all_HalfEdge_indices (self, graph=None):
-        '''
-        Subdivision class
-        '''
-
-        if graph==None: graph = self.graph
-
-        allHalfEdgeIdx = [(sIdx, eIdx, k)
-                          for sIdx in graph.nodes()
-                          for eIdx in graph[sIdx].keys()
-                          for k in graph[sIdx][eIdx].keys()]
-
-        return allHalfEdgeIdx
-
-    ############################################################################
-    def find_successor_HalfEdge(self, halfEdgeIdx, 
-                              allHalfEdgeIdx=None,
-                              direction='ccw_before'):
+    def _find_successor_HalfEdge(self, halfEdgeIdx, 
+                                 allHalfEdgeIdx=None,
+                                 direction='ccw_before'):
         '''
         Subdivision class
         '''
@@ -1162,7 +1285,7 @@ class Subdivision:
         # otherwise the loop for find the face will never terminate!
         
         if allHalfEdgeIdx == None:
-            allHalfEdgeIdx = self.get_all_HalfEdge_indices(self.graph)
+            allHalfEdgeIdx = self.graph.edges(keys=True) # self.get_all_HalfEdge_indices(self.graph) here here
 
         (start, end, k) = halfEdgeIdx
 
@@ -1202,7 +1325,7 @@ class Subdivision:
 
             # sorting values of the reference (twin of the current half-edge)
             # 1stKey: alpha - 2ndkey: beta
-            refObjCurve = self.curves[refObj.cIdx]
+            refObjCurve = self.curves[refObj.curveIdx]
             sPoint = self.graph.node[tStart]['obj'].point
             refAlpha = refObjCurve.tangentAngle(sPoint, refObj.direction)
             refBeta = refObjCurve.curvature(sPoint, refObj.direction)
@@ -1213,7 +1336,7 @@ class Subdivision:
             for candidateIdx in candidateEdges:
                 (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
                 canObj = self.graph[cStart][cEnd][ck]['obj']
-                canObjCurve = self.curves[canObj.cIdx]
+                canObjCurve = self.curves[canObj.curveIdx]
                 canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.direction) )
                 canBeta.append( canObjCurve.curvature(sPoint, canObj.direction) )
 
@@ -1235,7 +1358,7 @@ class Subdivision:
 
 
     ############################################################################
-    def decompose_graph(self, graph):
+    def _decompose_graph(self, graph):
         '''
         Subdivision class
 
@@ -1253,7 +1376,8 @@ class Subdivision:
         # to a seperate method that caches all the successors in advance.
         
         faces = []
-        allHalfEdgeIdx = self.get_all_HalfEdge_indices(graph)
+        allHalfEdgeIdx = graph.edges(keys=True)
+
         openList = [ 1 for heIdx in allHalfEdgeIdx]
         # note that the index to "openList" is equivalent to "allHalfEdgeIdx"
         
@@ -1281,16 +1405,16 @@ class Subdivision:
                 # through this while-loop, only "eNodeIdx" will update
                 # the "sNodeIdx" will remain fix (i.e. for the current face)
 
-                nextHalfEdgeIdx = self.find_successor_HalfEdge( face_tmp[0],
-                                                                allHalfEdgeIdx,
-                                                                direction='ccw_before')
+                nextHalfEdgeIdx = self._find_successor_HalfEdge( face_tmp[0],
+                                                                 allHalfEdgeIdx,
+                                                                 direction='ccw_before')
 
                 while face_tmp[0] != nextHalfEdgeIdx:#sNodeIdx == eNodeIdx:
 
                     # find the next half-edge in the trajectory
-                    nextHalfEdgeIdx = self.find_successor_HalfEdge( face_tmp[-1],
-                                                                    allHalfEdgeIdx,
-                                                                    direction='ccw_before')
+                    nextHalfEdgeIdx = self._find_successor_HalfEdge( face_tmp[-1],
+                                                                     allHalfEdgeIdx,
+                                                                     direction='ccw_before')
 
                     # update the face_tmp, if the next half-edge is open
                     if openList[nextHalfEdgeIdx]:

@@ -68,8 +68,9 @@ test_cases_key = [
 ]
 
 ########################################
-testNumber = 18
+testNumber = 15
 timing = False
+visualize = False
 
 file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
 data = load_data_from_yaml( file_name )
@@ -100,97 +101,141 @@ if testing:
     cond += [ len(mySubdivision.graph.nodes()) == n_nodes ]
     cond += [ len(mySubdivision.graph.edges()) == n_edges ]
     cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
-    cond += [ len(mySubdivision.subDecompositions) == n_subGraphs ]
+    cond += [ len(mySubdivision._subDecompositions) == n_subGraphs ]
     print 'success' if all(cond) else 'fail'
 
     print 'nodes:\t\t', len(mySubdivision.graph.nodes()), '\t expected:', n_nodes
     print 'edges:\t\t', len(mySubdivision.graph.edges()), '\t expected:', n_edges
     print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
-    print 'subGraphs:\t', len(mySubdivision.subDecompositions), '\t expected:', n_subGraphs
+    print 'subGraphs:\t', len(mySubdivision._subDecompositions), '\t expected:', n_subGraphs
 
 elif not(testing):
     print 'nodes:\t\t', len(mySubdivision.graph.nodes())
     print 'edges:\t\t', len(mySubdivision.graph.edges())
     print 'faces:\t\t', len(mySubdivision.decomposition.faces)
-    print 'subGraphs:\t', len(mySubdivision.subDecompositions)
-
-
+    print 'subGraphs:\t', len(mySubdivision._subDecompositions)
 
 
 ################################################################################
 ################################################################### testing area
 ################################################################################
-tic = time.time()
-mySubdivision.transform_sequence('T',
-                                 ((10,0),),
-                                 ((0,0),) )
-print time.time() - tic
+# tic = time.time()
+# print time.time() - tic
 
-tic = time.time()
-mySubdivision.transform_sequence('R',
-                                 (np.pi/2,),
-                                 ((0,0),) )
-print time.time() - tic
-
-
-tic = time.time()
-mySubdivision.transform_sequence('S',
-                                 ((.2,.2),),
-                                 ((0,0),) )
-print time.time() - tic
+# since teh three step above are not too slow, now:
+# merge_face is a function of subdivision:
+#     1_ get a list of faceIxd and find all pairs of twing half-edges between those neighboring faces
+#     2_ remove those half-edge from the graph
+#     3_ check if there is a none connected node, remove it
+#     mySubdivision.graph.degree(mySubdivision.graph.nodes())
+#     4_ perform the three step of decomposition again.
 
 
+
+# def _decompose_graph(graph):
+#     def _find_successor_HalfEdge(halfEdgeIdx, allHalfEdgeIdx, direction)
+#         curves / graphs
+
+# print [mySubdivision.graph[s][e][k]['obj'].twinIdx
+#        for (s,e,k) in  mySubdivision.graph.edges(keys=True)]
+
+
+# mySubdivision.merge_faces([1,2,3,4])
 
 ################################################################################
 ################################################################## visualization
 ################################################################################
 
-############################### plotting
-# myplt.plot_graph(mySubdivision.graph)
-# myplt.plot_decomposition_colored(mySubdivision,
-#                                  printNodeLabels=False,
-#                                  printEdgeLabels=False)
-
-myplt.plot_decomposition(mySubdivision,
-                         interactive_onClick=False,
-                         interactive_onMove=False,
-                         plotNodes=True, printNodeLabels=True,
-                         plotEdges=True, printEdgeLabels=True)
-
-
-############################## animating
-# myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
-
-myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
+if True: #visualize:
+    ############################### plotting
+    # myplt.plot_graph(mySubdivision.graph)
+    # myplt.plot_decomposition_colored(mySubdivision,
+    #                                  printNodeLabels=False,
+    #                                  printEdgeLabels=False)
+    myplt.plot_decomposition(mySubdivision,
+                             interactive_onClick=False,
+                             interactive_onMove=False,
+                             plotNodes=True, printNodeLabels=True,
+                             plotEdges=True, printEdgeLabels=True)
+    
+    
+    ############################## animating
+    # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
+    myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
 
 
 
 ################################################################################
 ####################################################################### API demo
 ################################################################################
-'''
-important note about nodes of networkx:
-graph.nodes() is not neccessarily [0,1,2,...]
-it's important to remember that graph.node is a dict, not a list
-graph.node[idx] is not actually indexing the graph.node, but fetching from a dict
-'''
 
-# subdiv = mySubdivision
-# subdiv.subDecompositions
+# # ################# curve initialization deploying subdivision
+# import modifiedSympy as mSym
+# curves = [mSym.CircleModified( args=((i,i), 3) ) for i in range(4)]
+
+# import subdivision as sdv
+# subdiv = sdv.Subdivision(curves, multiProcessing=4)
+
+# # main attributes of the subdivision class
+# subdiv.curves
 # subdiv.decomposition
-# subdiv.graph (==subdiv.decomposition.graph)
+# subdiv.graph # (identical to subdiv.decomposition.graph)
 
-# # access nodes of networkX graph and their attribute dict
+# ################# access nodes and their attributes
+# '''
+# it's important to remember that graph.node is a dict, not a list
+# graph.node[idx] is not actually indexing the graph.node, but fetching from a dictionary
+# '''
 # for nodeIdx in subdiv.graph.nodes():
-#     print nodeIdx, ': ', subdiv.graph.node[nodeIdx]
+#     print nodeIdx, ': ', subdiv.graph.node[nodeIdx]['obj'].attributes
 
-# # access edges of networkX graph:
-# for halfEdgeIdx in subdiv.get_all_HalfEdge_indices():
+# ################# access edges and their attributes
+# '''
+# it's important to remember that graph is a dict
+# graph[s][e][k] is not actually indexing the graph, but fetching from a dictionary
+# '''
+# for halfEdgeIdx in subdiv.graph.edges(keys=True):
 #     (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-#     print (s,e,k), ': ', subdiv.graph[s][e][k]['obj']
+#     print (s,e,k), ': ', subdiv.graph[s][e][k]['obj'].attributes
 
-# # access main graph of subdivision:
+# ################# access faces and their attributes
+# for fIdx,face in enumerate(subdiv.decomposition.faces):
+#     print fIdx, ': ', face.attributes
 
+
+# ################# transformation example
+# subdiv.transform_sequence('T', ( (10,0), ), ( (0,0), ) )
+# subdiv.transform_sequence('R', ( np.pi/2, ), ( (0,0), ) )
+# subdiv.transform_sequence('S', ( (.2,.2), ), ( (0,0), ) )
+# subdiv.transform_sequence('SRT',
+#                                  ((5,5), -np.pi/2, (-10,0), ),
+#                                  ((0,0), (0,0),    (0,0), ) )
+
+# ################# visualization
+# # plotting
+# myplt.plot_decomposition(subdiv,
+#                          interactive_onClick=False, interactive_onMove=False,
+#                          plotNodes=True, printNodeLabels=True,
+#                          plotEdges=True, printEdgeLabels=True)
+
+# # animating
+# myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+########################################################################### Dump
+################################################################################
 
 ############################# find cycles?
 # import networkx as ns
@@ -215,4 +260,37 @@ graph.node[idx] is not actually indexing the graph.node, but fetching from a dic
 #     print cycle
 
 
+
+
+##############################
+# import networkx as nx
+# g = mySubdivision.graph.copy()
+# print '--------------------------'
+# for k in g.node.keys():
+#     print g.node[k]['obj'].point
+# cc = list(nx.connected_component_subgraphs(g.to_undirected()))
+# print '-------------'
+# for c in cc:
+#     print c.node[c.node.keys()[0]]['obj'].point
+#     c.node[c.node.keys()[0]]['obj'].point = c.node[c.node.keys()[0]]['obj'].point.translate(10,0)
+# for k in g.node.keys():
+#     print g.node[k]['obj'].point
+
+# conclusion is that the connected_component_subgraphs are not references to the other original graph, but to 
+##############################
+
+##############################
+# mySubdivision._subDecompositions[2].superFace = mySubdivision._subDecompositions[1].superFace
+
+# conclusion is that updating superFace of _subDecompositions[2], does not update mySubdivision.decomposition.faces[3]
+##############################
+
+
+##############################
+# sg[s][e][k]['obj'].succIdx -> None
+# self.graph[s][e][k]['obj'].succIdx -> (ss,se,sk)
+
+# conclusion is that if subgraphs of sebdecompositions are to be relevant, every update applied to self.graph must be applied to self.subDecompositions.graph too.
+# or, store halfEdges separately and refer to them in the graph structure.
+##############################
 
