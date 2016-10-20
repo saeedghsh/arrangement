@@ -4,11 +4,6 @@ Subdivision
 This repository provides a python package for decomposition of a 2D plane over a set of curves.
 Currently straight lines and circles are the supported classes of curves.
 
-IMPORTANT: This project is currently under development,
-please note that efficiency and optimallity have not been the objective of the implementation.
-As a consequence, the code at your disposal is not in its best shape.
-The objective of this implementation has been to show the concept and prototyping it.
-
 Dependencies and Download
 -------------------------
 - Dependencies
@@ -32,8 +27,7 @@ cd subdivision/src/
 
 Basic Use and API
 -----------------
-
-Basic Use
+- Basic Use
 ```python
 # define curves:
 import modifiedSympy as mSym
@@ -50,8 +44,6 @@ myplt.animate_face_patches(subdiv)
 <!--- ![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
 <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
 ![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
-
-API
 
 - Subdivision class Hierarchy (the figure is created by [Pyreverse](https://www.logilab.org/blogentry/6883))
 ![classes_subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/classes_subdivision.png)
@@ -130,6 +122,8 @@ For more examples and details see the [demo.py](https://github.com/saeedghsh/sub
 <!---
 Limitations, Bugs and TODO
 --------------------------
+This project is currently under development, please note that efficiency and optimallity have not been the objective of the implementation. As a consequence, the code at your disposal is not in its best shape. The objective of this implementation has been to show the concept and prototyping it.
+
 - [ ] How to detect the overlap of two arcs?
 - [ ] `Decomposition.does_intersect()`, `Decomposition.does_overlap()` and `Decomposition.does_enclose()` require the `Decomposition.superFace` not to be `None`. Which by default is!
 - [ ] Include the boundary points of segments, rays and arcs as nodes so that a segment/ray/arc is full included in the graph.
@@ -145,7 +139,7 @@ Limitations, Bugs and TODO
 
 License
 -------
-Distributed with a BSD license; see LICENSE
+Distributed with a BSD license; see LICENSE.
 ```
 Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
 ```
