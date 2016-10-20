@@ -1,6 +1,6 @@
 Subdivision
 ===========
-<logo src="https://github.com/saeedghsh/subdivision/blob/master/pysubdiv.png" alt="none" width="50" height="50">
+<!--- <logo src="https://github.com/saeedghsh/subdivision/blob/master/pysubdiv.png" alt="none" width="50" height="50"> --->
 This repository provides a python package for decomposition of a 2D plane over a set of curves.
 Currently straight lines and circles are the supported classes of curves.
 
@@ -9,8 +9,7 @@ please note that efficiency and optimallity have not been the objective of the i
 As a consequence, the code at your disposal is not in its best shape.
 The objective of this implementation has been to show the concept and prototyping it.
 
-<animation src="https://github.com/saeedghsh/subdivision/blob/master/figures/animation_big.gif" alt="none" width="200" height="200">
-<!--- .. image:: animation_big.gif--->
+![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
 
 Dependencies and Download
 -------------------------
@@ -50,12 +49,14 @@ subdiv = sdv.Subdivision(curves, multiProcessing=4)
 import plotting as myplt
 myplt.animate_face_patches(subdiv)
 ```
-<subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="50" height="50">
+![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
+<!--- <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
 
 API
 
 - Subdivision class Hierarchy (the figure is created by [Pyreverse](https://www.logilab.org/blogentry/6883))
-<classes_subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/classes_subdivision.png" alt="none" width="50" height="50">
+![classes_subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/classes_subdivision.png)
+<!--- <classes_subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/classes_subdivision.png" alt="none" width="50" height="50"> --->
 
 - Accessing nodes, edges and faces
 ```python
@@ -79,8 +80,11 @@ myplt.plot_decomposition(subdiv,
 
 myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
 ```
-<subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="50" height="50">
-<animation src="https://github.com/saeedghsh/subdivision/blob/master/figures/animation.png" alt="none" width="50" height="50">
+![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
+<!--- 
+<subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="50" height="50"> --->
+
+<!--- <animation src="https://github.com/saeedghsh/subdivision/blob/master/figures/animation.png" alt="none" width="50" height="50"> --->
 
 - Transformation example
 ```python
@@ -91,7 +95,14 @@ subdiv.transform_sequence('SRT',
                                  ((5,5), -np.pi/2, (-10,0), ),
                                  ((0,0), (0,0),    (0,0), ) )
 ```
-<translate src="https://github.com/saeedghsh/subdivision/blob/master/figures/T.png" alt="none" width="50" height="50"> <rotation src="https://github.com/saeedghsh/subdivision/blob/master/figures/R.png" alt="none" width="50" height="50"> <scale src="https://github.com/saeedghsh/subdivision/blob/master/figures/S.png" alt="none" width="50" height="50"> <SRT src="https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png" alt="none" width="50" height="50">
+![translate](https://github.com/saeedghsh/subdivision/blob/master/figures/T.png)
+<!--- <translate src="https://github.com/saeedghsh/subdivision/blob/master/figures/T.png" alt="none" width="50" height="50"> --->
+![rotate](https://github.com/saeedghsh/subdivision/blob/master/figures/R.png)
+<!--- <rotate src="https://github.com/saeedghsh/subdivision/blob/master/figures/R.png" alt="none" width="50" height="50"> --->
+![scale](https://github.com/saeedghsh/subdivision/blob/master/figures/S.png)
+<!--- <scale src="https://github.com/saeedghsh/subdivision/blob/master/figures/S.png" alt="none" width="50" height="50"> --->
+![SRT](https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png)
+<!--- <SRT src="https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png" alt="none" width="50" height="50"> --->
 
 <!---
 - Checking sundivisions' intersection
@@ -113,7 +124,8 @@ print subdiv.decomposition.does_enclose(subdiv_new.decomposition)
 subdiv.merge_faces([2,3,4,5,6,7,8,9])
 myplt.animate_face_patches(subdiv)
 ```
-<merge_faces src="https://github.com/saeedghsh/subdivision/blob/master/figures/merge_faces.png" alt="none" width="50" height="50">
+![merge_faces](https://github.com/saeedghsh/subdivision/blob/master/figures/merge_faces.png)
+<!--- <merge_faces src="https://github.com/saeedghsh/subdivision/blob/master/figures/merge_faces.png" alt="none" width="50" height="50"> --->
 
 For more examples and details see the [demo.py](https://github.com/saeedghsh/subdivision/blob/master/src/demo.py).
 
@@ -139,3 +151,4 @@ Distributed with a BSD license; see LICENSE
 ```
 Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
 ```
+
