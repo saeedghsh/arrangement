@@ -9,8 +9,6 @@ please note that efficiency and optimallity have not been the objective of the i
 As a consequence, the code at your disposal is not in its best shape.
 The objective of this implementation has been to show the concept and prototyping it.
 
-![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
-
 Dependencies and Download
 -------------------------
 - Dependencies
@@ -49,8 +47,9 @@ subdiv = sdv.Subdivision(curves, multiProcessing=4)
 import plotting as myplt
 myplt.animate_face_patches(subdiv)
 ```
-![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
-<!--- <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
+<!--- ![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
+<subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
+![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
 
 API
 
@@ -80,8 +79,7 @@ myplt.plot_decomposition(subdiv,
 
 myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
 ```
-![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
-<!--- 
+<!--- ![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
 <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="50" height="50"> --->
 
 <!--- <animation src="https://github.com/saeedghsh/subdivision/blob/master/figures/animation.png" alt="none" width="50" height="50"> --->
@@ -95,14 +93,14 @@ subdiv.transform_sequence('SRT',
                                  ((5,5), -np.pi/2, (-10,0), ),
                                  ((0,0), (0,0),    (0,0), ) )
 ```
-![translate](https://github.com/saeedghsh/subdivision/blob/master/figures/T.png)
-<!--- <translate src="https://github.com/saeedghsh/subdivision/blob/master/figures/T.png" alt="none" width="50" height="50"> --->
+<!--- ![translate](https://github.com/saeedghsh/subdivision/blob/master/figures/T.png)
+<translate src="https://github.com/saeedghsh/subdivision/blob/master/figures/T.png" alt="none" width="50" height="50">
 ![rotate](https://github.com/saeedghsh/subdivision/blob/master/figures/R.png)
-<!--- <rotate src="https://github.com/saeedghsh/subdivision/blob/master/figures/R.png" alt="none" width="50" height="50"> --->
+<rotate src="https://github.com/saeedghsh/subdivision/blob/master/figures/R.png" alt="none" width="50" height="50">
 ![scale](https://github.com/saeedghsh/subdivision/blob/master/figures/S.png)
-<!--- <scale src="https://github.com/saeedghsh/subdivision/blob/master/figures/S.png" alt="none" width="50" height="50"> --->
+<scale src="https://github.com/saeedghsh/subdivision/blob/master/figures/S.png" alt="none" width="50" height="50">
 ![SRT](https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png)
-<!--- <SRT src="https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png" alt="none" width="50" height="50"> --->
+<SRT src="https://github.com/saeedghsh/subdivision/blob/master/figures/SRT.png" alt="none" width="50" height="50"> --->
 
 <!---
 - Checking sundivisions' intersection
