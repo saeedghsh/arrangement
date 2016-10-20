@@ -1,24 +1,10 @@
 --------------------------------------------------------------------------------
-
-
-
-
-
---------------------------------------------------------------------------------
 Debugging:
 ----------
 [v] graphs are stored in the decomposistion class, do we need to store them separately?
 - [x] remove: self.MDG ( is included in self.decomposition )
   [v] remove: self.subGraphs ( are included in self.subDecomposition )
 
-
-[ ] how to detect the overlap of two arcs
-
-
-[later] fix the  - test_cases_key[18] with rotate(pi/2)
-it happens to be genuinely a degenerate case, that is to say the peoblem 
-happens when a node after rotation is slightly off the original curve and the
-curve.IPE(node.point) returns False!      
 
 
 [later] fix the  - test_cases_key[13]
@@ -27,10 +13,6 @@ happens when the angles of tangent to two tangent half-edge differ after
 the 7th digit of the fractional part
 
 [vx] the angle restriction in arc description
-
-[vx] test_cases_key[20] and [24] [23]
-rays (and segments), eventhough different, they are rejected as similar
-because they are based on the same underlying line entity
 
 [vx] if a bunch of curves intersect in a way that there are more than one nodes, it will result in at least one half-edge. consequently the face identification will initiate, but if there is no face, it will become problematic.
 TODO: Of each subgraph construct a graph, only of positive half edges, start face identification only if there is a close path in it.
@@ -172,23 +154,11 @@ Developement
 
 [v] merging and splitting faces locally.
 
-[ ] include the boundary points of segments, rays and arcs as nodes
-so that a segment/ray/arc is full included in the graph
-
-[ ] Dynamic Subdivision - self.update_with_new_functions([newFunctions])
-
-[ ] svg_to_yaml_parser()
-
 [ ] should I have used  "geometric_graph"?
 
-[ ] when dealing with ray or segment (and later Arc), a given point might not be on the object (out of the interval). that's why I should always check if object.contians(point) this appears in IPE,DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
 
 [ ] 'save_to_image(fileName)'
 it should be fast, both for debugging sessions' sake and final application
-
-[ ] check if the point is on any of the border functions
-how does path.contains_point(p) work? -> it checks contain, not enclose!
-includes the path itself, or not?
 
 [ ] multi-level of abstraction, wrt functions's priority
 like the functions could be in 3 groups, [H]igh, [M]iddle, and [L]ow priority
@@ -440,19 +410,3 @@ https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.s
   
 
 
-other notes
---------
-NOTE: there is no exact representation of the circle using Bezier curves.
-
-NOTE: the hole problem (a non-intersecting circle located inside anthor face)
-If I had implemented the the "point In Polygone" as a classmethod, it could be sufficient to 
-just add an extra edge (the whole circle) to the face.
-But using mpl.path, such approach wouldn't work.
-Therefore I add a new slot to the face class, that is a list of holes in each face. Each hole in the face.
-
-NOTE:
-I use mpl.path to represent faces
--> circles are approximated -> consequently find_face_point is also not accurate
-Nevertheless, I do store edges in the face along with the path repesentation.
-So anytime I manage to develope that stupid "point in polygone" with a decent speed,
-this approximation won't be much of a problem.
