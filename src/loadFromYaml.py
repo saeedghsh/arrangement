@@ -17,6 +17,13 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+import sys
+if sys.version_info[0] == 3:
+    from importlib import reload
+elif sys.version_info[0] == 2:
+    pass
+
+
 import yaml
 import sympy as sym
 import numpy as np

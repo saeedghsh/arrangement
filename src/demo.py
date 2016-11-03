@@ -16,6 +16,16 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+from __future__ import print_function
+
+
+import sys
+if sys.version_info[0] == 3:
+    from importlib import reload
+elif sys.version_info[0] == 2:
+    pass
+
+
 import time
 import numpy as np
 import sympy as sym
@@ -88,11 +98,11 @@ else:
 ################################################################################
 ###################################### deploying subdivision (and decomposition)
 ################################################################################
-print '\nstart decomposition:', test_cases_key[testNumber]
+print( '\nstart decomposition:', test_cases_key[testNumber])
 
 tic = time.time()
 mySubdivision = sdv.Subdivision(curves, multiProcessing=4)
-if timing: print 'Subdivision time:', time.time() - tic
+if timing: print( 'Subdivision time:', time.time() - tic)
 
 ################################################################################
 ############################################# testing: if test data is available
@@ -103,18 +113,18 @@ if testing:
     cond += [ len(mySubdivision.graph.edges()) == n_edges ]
     cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
     cond += [ len(mySubdivision._subDecompositions) == n_subGraphs ]
-    print 'success' if all(cond) else 'fail'
+    print( 'success' if all(cond) else 'fail' )
 
-    print 'nodes:\t\t', len(mySubdivision.graph.nodes()), '\t expected:', n_nodes
-    print 'edges:\t\t', len(mySubdivision.graph.edges()), '\t expected:', n_edges
-    print 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces
-    print 'subGraphs:\t', len(mySubdivision._subDecompositions), '\t expected:', n_subGraphs
+    print( 'nodes:\t\t', len(mySubdivision.graph.nodes()), '\t expected:', n_nodes )
+    print( 'edges:\t\t', len(mySubdivision.graph.edges()), '\t expected:', n_edges )
+    print( 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces )
+    print( 'subGraphs:\t', len(mySubdivision._subDecompositions), '\t expected:', n_subGraphs )
 
 elif not(testing):
-    print 'nodes:\t\t', len(mySubdivision.graph.nodes())
-    print 'edges:\t\t', len(mySubdivision.graph.edges())
-    print 'faces:\t\t', len(mySubdivision.decomposition.faces)
-    print 'subGraphs:\t', len(mySubdivision._subDecompositions)
+    print( 'nodes:\t\t', len(mySubdivision.graph.nodes()) )
+    print( 'edges:\t\t', len(mySubdivision.graph.edges()) )
+    print( 'faces:\t\t', len(mySubdivision.decomposition.faces) )
+    print( 'subGraphs:\t', len(mySubdivision._subDecompositions) )
 
 
 ################################################################################

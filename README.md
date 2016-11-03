@@ -12,10 +12,22 @@ Dependencies and Download
  * sympy >= 1.0
  * networkx >= 1.10
  * matplotlib >= 1.4.3
+ * yaml >= 3.10 [optional]
 
+- Installing Dependencies
 ```shell
-sudo apt-get install python-numpy python-matplotlib python-sympy
+% python2:
+apt-get install python-numpy python-matplotlib python-sympy
 pip install networkx
+pip install pyyaml
+
+% python3:
+apt-get install python3-matplotlib
+apt-get install python3-pip
+pip3 install numpy
+pip3 install sympy
+pip3 install networkx
+pip3 install pyyaml
 ```
 
 - Download
@@ -44,6 +56,34 @@ myplt.animate_face_patches(subdiv)
 <!--- ![subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png)
 <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
 ![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
+
+- Storing curves in a yaml file
+A yaml file storing the curves should look like this:
+
+```yaml
+lines:
+    - [x1,y1, x2,y2] or [x1,y1, slope]
+    
+segments:
+    - [x1,y1, x2,y2]
+    
+rays:
+    - [x1,y1, x2,y2]
+
+circles:
+    - [center_x, center_y, radius]
+    
+arcs:
+    - [center_x, center_y, radius, interval_lower , interval_upper]
+```
+
+Use the script [loadFromYaml.py](https://github.com/saeedghsh/subdivision/blob/master/src/loadFromYaml.py) to retrieve data from yaml file as following:
+```python
+from loadFromYaml import load_data_from_yaml
+data = load_data_from_yaml( address+fileName )
+curves = data['curves']
+```
+
 
 - Subdivision class Hierarchy (the figure is created by [Pyreverse](https://www.logilab.org/blogentry/6883))
 ![classes_subdivision](https://github.com/saeedghsh/subdivision/blob/master/figures/classes_subdivision.png)
@@ -119,11 +159,18 @@ myplt.animate_face_patches(subdiv)
 
 For more examples and details see the [demo.py](https://github.com/saeedghsh/subdivision/blob/master/src/demo.py).
 
-<!---
+<!--- 
 Limitations, Bugs and TODO
 --------------------------
 This project is currently under development, please note that efficiency and optimallity have not been the objective of the implementation. As a consequence, the code at your disposal is not in its best shape. The objective of this implementation has been to show the concept and prototyping it.
 
+- [ ] make the code python3 compatible
+- [x] add to readme: yaml_parser() usage instructions
+- [ ] Using [CGAL](cgal.org/):
+ - [2D arrangement] (http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html)
+ - [halfEdge data structure] (http://doc.cgal.org/latest/HalfedgeDS/index.html)
+ - [Handles and Circulators] (http://doc.cgal.org/latest/Circulator/classCirculator.html)
+ - [python binding] (https://github.com/CGAL/cgal-swig-bindings/wiki/Package_wrappers_available)
 - [ ] How to detect the overlap of two arcs?
 - [ ] `Decomposition.does_intersect()`, `Decomposition.does_overlap()` and `Decomposition.does_enclose()` require the `Decomposition.superFace` not to be `None`. Which by default is!
 - [ ] Include the boundary points of segments, rays and arcs as nodes so that a segment/ray/arc is full included in the graph.

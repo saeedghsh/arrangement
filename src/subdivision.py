@@ -16,6 +16,9 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+
+from __future__ import print_function
+
 import operator
 import itertools 
 
@@ -577,22 +580,22 @@ class Subdivision:
         ########## construct the base graph
         tic = time.time()
         self.graph = nx.MultiDiGraph()
-        if timing: print 'Graphs:', time.time() - tic
+        if timing: print( 'Graphs:', time.time() - tic )
 
         #### STAGE A: construct nodes
         tic = time.time()
         self._construct_nodes()
-        if timing: print 'nodes:', time.time() - tic
+        if timing: print( 'nodes:', time.time() - tic )
 
         #### STAGE B: construct edges
         tic = time.time()
         self._construct_edges()
-        if timing: print 'edges:', time.time() - tic
+        if timing: print( 'edges:', time.time() - tic )
 
         ########## decomposition
         tic = time.time()
         self._decompose()
-        if timing: print 'decomposition:', time.time() - tic
+        if timing: print( 'decomposition:', time.time() - tic )
 
 
     ############################################################################
@@ -608,8 +611,6 @@ class Subdivision:
             f2 = self.decomposition.faces[f2Idx]
 
             halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
-            
-        print halfEdge2Remove
 
         # remove all halfEdges, that separate the iput faces, from the graph
         self.graph.remove_edges_from( list(set(halfEdge2Remove)) )
@@ -674,11 +675,6 @@ class Subdivision:
                                                          twin.direction)
                                 
                                 # sa: successor's departure angle
-                                ############################## debugging:
-                                # print (s,e,k)
-                                # print (s,e,k), sg[s][e][k]['obj'].succIdx
-                                # print (s,e,k), self.graph[s][e][k]['obj'].succIdx
-                                ##############################
                                 (ss,se,sk) = self.graph[s][e][k]['obj'].succIdx
                                 succ = self.graph[ss][se][sk]['obj']
                                 curve = self.curves[succ.curveIdx]
@@ -1285,7 +1281,6 @@ class Subdivision:
                         eNodeIdx = allHalfEdgeIdx[nextHalfEdgeIdx][1]
                         openList[nextHalfEdgeIdx] = 0
                     else:
-                        #print 'dump', face_tmp, allHalfEdgeIdx[nextHalfEdgeIdx], openList[nextHalfEdgeIdx]
                         break                        
                         # to be implemented later - or not!
                         # >> this will happen if one of the nodes is in infinity,
@@ -1294,7 +1289,6 @@ class Subdivision:
                         # because it is the face that contains infinity!
                         # and the openList is updated properly so far
 
-                # print face_tmp
                 if sNodeIdx == eNodeIdx:
                     # with this condition we check if the face closed
                     # or the "while-loop" broke, reaching an infinity

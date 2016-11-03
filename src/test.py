@@ -16,14 +16,14 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
+from __future__ import print_function
+
 import os
 import unittest
 
 import numpy as np
 
 import subdivision as sdv
-reload(sdv)
-
 from loadFromYaml import load_data_from_yaml
 
 ################################################################################
@@ -57,7 +57,7 @@ class SubdivisionTests(unittest.TestCase):
         for fileIdx, fileName in enumerate(sorted(fileList)):
             
             data = load_data_from_yaml( address+fileName )
-            print 'testing case: ' + data['dataset'] , '-\t', fileIdx+1, '/', len(fileList)
+            print('testing case: ' + data['dataset'] , '-\t', fileIdx+1, '/', len(fileList))
             curves = data['curves']            
             subdiv = sdv.Subdivision(curves, multiProcessing=4)
 
@@ -70,7 +70,7 @@ class SubdivisionTests(unittest.TestCase):
                 n_nodes = data['number_of_nodes']
                 self.assertEqual( len(subdiv.graph.nodes()), n_nodes, 'incorrect number of nodes')
             else:
-                print 'number of nodes is not available for ' + key, '...'
+                print('number of nodes is not available for ' + key, '...')
 
             ########## testing number of edges
             if 'number_of_edges' in data.keys():
@@ -78,7 +78,7 @@ class SubdivisionTests(unittest.TestCase):
                 self.assertEqual( len(subdiv.graph.edges()), n_edges,
                                   'incorrect number of edges')
             else:
-                print 'number of edges is not available for ' + key, '...'
+                print( 'number of edges is not available for ' + key, '...' )
 
             ########## testing number of faces
             if 'number_of_faces' in data.keys():
@@ -86,7 +86,7 @@ class SubdivisionTests(unittest.TestCase):
                 self.assertEqual( len(subdiv.decomposition.faces), n_faces,
                                   'incorrect number of faces')
             else:
-                print 'number of faces is not available for ' + key, '...'
+                print( 'number of faces is not available for ' + key, '...' )
 
             ########## testing number of subGraphs
             if 'number_of_subGraphs' in data.keys():
@@ -94,7 +94,7 @@ class SubdivisionTests(unittest.TestCase):
                 self.assertEqual( len(subdiv._subDecompositions), n_subGraphs,
                                   'incorrect number of subGraphs')
             else:
-                print 'number of subGraphs is not available for ' + key, '...'
+                print( 'number of subGraphs is not available for ' + key, '...' )
 
 
             ########## testing neighbourhood function [incomplete]
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 #         point = mySubdivision.nodes[n_idx][1]['obj'].point
 #         if curve.obj.contains(point):
 #             if not( c_idx in mySubdivision.ipsCurveIdx[n_idx] ):
-#                 print 'error'
+#                 print( 'error' )
 # ########################################
 
 
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 # he = (2,8,0)
 # idx = mySubdivision.find_successor_HalfEdge(he)
 # he = allHalfEdge[idx]
-# print he
+# print (he)
 # mySubdivision.find_successor_HalfEdge(he)
 # ########################################
 
