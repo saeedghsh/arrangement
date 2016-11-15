@@ -1,3 +1,36 @@
+>>> Dual graph
+topological adjacency graph -> subdiv.graph
+geometric adjacency graph -> subdiv.graph + half-edges
+topological connectivity graph -> subdiv.decomposition.faces
+geometric connectivity graph -> ????
+
+>>> Insert new curve:
+Intersect the new curve with all other curves, break it into half-edges, take a point on each half-edge and find the face it belongs to. Split the face. The problem is that my data structure of the arrangement is not flat, even worse, it is nested. I'm talking about holes.
+
+>>> Speed up intersection process.
+
+>>> [subdivision] [CGAL] 2D-arrangement
+Find Differences:
+1. Construction of half-edges, univariate representation of the curves, instead of line swipe.
+2. Find successor half-edge
+
+>>> [subdivision:tool]
+curves = extract_curves_from(map/image)
+GUI:tab1 - dominant orientation detection
+GUI:tab2 - lines/rays/segments
+GUI:tab3 - circles/arcs
+GUI: connected component detection -> find connectivity between segments/rays/arcs/...
+
+
+
+
+
+
+[v] Pass Configuration as a dictionary {Multiprocessor, Endpoint_inclusion}
+
+
+
+
 --------------------------------------------------------------------------------
 Debugging:
 ----------

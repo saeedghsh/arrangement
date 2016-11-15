@@ -18,22 +18,16 @@ Dependencies and Download
 ```shell
 % python2:
 apt-get install python-numpy python-matplotlib python-sympy
-pip install networkx
-pip install pyyaml
+pip install networkx pyyaml
 
 % python3:
-apt-get install python3-matplotlib
-apt-get install python3-pip
-pip3 install numpy
-pip3 install sympy
-pip3 install networkx
-pip3 install pyyaml
+apt-get install python3-matplotlib python3-pip
+pip3 install numpy sympy networkx pyyaml
 ```
 
 - Download
 ```shell
-git clone https://github.com/saeedghsh/subdivision/
-cd subdivision/src/
+git clone https://github.com/saeedghsh/subdivision/ && cd subdivision/src/
 ```
 
 
@@ -44,7 +38,8 @@ Basic Use and API
 # define curves:
 import modifiedSympy as mSym
 curves = [mSym.CircleModified( args=((i,i), 3) ) for i in range(4)]
- 
+
+
 # deploy subdivision
 import subdivision as sdv
 subdiv = sdv.Subdivision(curves, multiProcessing=4)
@@ -57,27 +52,24 @@ myplt.animate_face_patches(subdiv)
 <subdivision src="https://github.com/saeedghsh/subdivision/blob/master/figures/subdivision.png" alt="none" width="200" height="200"> --->
 ![animation](https://github.com/saeedghsh/subdivision/blob/master/figures/animation.gif)
 
-- Storing curves in a yaml file
+- Storing curves in a yaml file.
 A yaml file storing the curves should look like this:
 
 ```yaml
 lines:
     - [x1,y1, x2,y2] or [x1,y1, slope]
-    
 segments:
     - [x1,y1, x2,y2]
-    
 rays:
     - [x1,y1, x2,y2]
-
 circles:
     - [center_x, center_y, radius]
-    
 arcs:
     - [center_x, center_y, radius, interval_lower , interval_upper]
 ```
 
-Use the script [loadFromYaml.py](https://github.com/saeedghsh/subdivision/blob/master/src/loadFromYaml.py) to retrieve data from yaml file as following:
+See examples of yaml files in [testCases](https://github.com/saeedghsh/subdivision/tree/master/src/testCases).
+Use the script [loadFromYaml.py](https://github.com/saeedghsh/subdivision/blob/master/src/loadFromYaml.py) to retrieve data from a yaml file as following:
 ```python
 from loadFromYaml import load_data_from_yaml
 data = load_data_from_yaml( address+fileName )
@@ -118,11 +110,11 @@ myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
 
 - Transformation example
 ```python
+# subdiv.transform_sequence('sequence', ( values, ), ( point, ) )
 subdiv.transform_sequence('T', ( (10,0), ), ( (0,0), ) )
 subdiv.transform_sequence('R', ( np.pi/2, ), ( (0,0), ) )
 subdiv.transform_sequence('S', ( (.2,.2), ), ( (0,0), ) )
-subdiv.transform_sequence('SRT',
-                                 ((5,5), -np.pi/2, (-10,0), ),
+subdiv.transform_sequence('SRT', ((5,5), -np.pi/2, (-10,0), ),
                                  ((0,0), (0,0),    (0,0), ) )
 ```
 <!--- ![translate](https://github.com/saeedghsh/subdivision/blob/master/figures/T.png)
@@ -151,6 +143,7 @@ print subdiv.decomposition.does_enclose(subdiv_new.decomposition)
 
 - Merging Faces
 ```python
+# subdiv.merge_faces([face_indices,])
 subdiv.merge_faces([2,3,4,5,6,7,8,9])
 myplt.animate_face_patches(subdiv)
 ```

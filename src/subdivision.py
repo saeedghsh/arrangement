@@ -562,7 +562,7 @@ class Decomposition:
 ################################################################################
 class Subdivision:
     ############################################################################
-    def __init__ (self,curves , multiProcessing=0):
+    def __init__ (self, curves , config):
         '''
         curves are aggregated instances of sympy's geometric module
         (e.g. LineModified, CircleModified, ...)
@@ -570,7 +570,8 @@ class Subdivision:
         multiProcessing=0 -> no multi-processing
         multiProcessing=n -> n: number of processes
         '''
-        self._multiProcessing = multiProcessing
+        self._multi_processing = config['multi_processing'] if ('multi_processing' in config.keys()) else 0
+        self._end_point = config['end_point'] if ('end_point' in config.keys()) else False
 
         timing = False
         ########## reject duplicated curves and store internally
@@ -578,6 +579,7 @@ class Subdivision:
         self._store_curves(curves)
 
         ########## construct the base graph
+        # TODO: I know I need a directional-multi-graph, explain why
         tic = time.time()
         self.graph = nx.MultiDiGraph()
         if timing: print( 'Graphs:', time.time() - tic )
@@ -607,8 +609,8 @@ class Subdivision:
         halfEdge2Remove = []
 
         for (f1Idx,f2Idx) in itertools.combinations(faceIdx, 2):
-            f1 = self.decomposition.faces[f1Idx]
-            f2 = self.decomposition.faces[f2Idx]
+            # f1 = self.decomposition.faces[f1Idx]
+            # f2 = self.decomposition.faces[f2Idx]
 
             halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
 
@@ -850,14 +852,14 @@ class Subdivision:
                             for col in range(len(self.curves)) ]
                           for row in range(len(self.curves)) ]
 
-        if self._multiProcessing: # with multiProcessing
+        if self._multi_processing: # with multi_processing
             curvesTuplesIdx = [ [row,col]
                                 for row in range(len(self.curves))
                                 for col in range(row) ]
 
             global curves
             curves = self.curves
-            with ctx.closing(mp.Pool(processes=self._multiProcessing)) as p:
+            with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
                 intersections_tmp = p.map( intersection_star, curvesTuplesIdx)
             del curves, p
             
@@ -866,7 +868,7 @@ class Subdivision:
                 intersections[col][row] = ips
             del col,row, ips
                 
-        else:  # without multiProcessing
+        else:  # without multi_processing
             for row in range(len(self.curves)):
                 for col in range(row):
                     obj1 = self.curves[row].obj
@@ -920,6 +922,27 @@ class Subdivision:
                     intersections[row][row] = [ p.subs([(t,0)]).evalf() ]
 
         ########################################
+        # step x: adding end points of Ray, Segment and Arc as nodes
+        t = sym.Symbol('t')
+        if self._end_point == True:
+
+            for row in range(len(self.curves)):
+                # curve is arc
+                if isinstance(self.curves[row], mSym.ArcModified):
+                    p = self.curves[row].obj.arbitrary_point(t)
+                    intersections[row][row] += [ p.subs([(t, self.curves[row].t1)]).evalf(),
+                                                 p.subs([(t, self.curves[row].t2)]).evalf()]
+                # curve is segment
+                elif isinstance(self.curves[row], mSym.SegmentModified):
+                    intersections[row][row] += [ self.curves[row].obj.p1,
+                                                 self.curves[row].obj.p2]
+
+                # curve is Ray
+                elif isinstance(self.curves[row], mSym.RayModified):
+                    intersections[row][row] += [ self.curves[row].obj.p1 ]
+            
+
+        ########################################
         # step 4: flattening the intersections list-of-lists-of-lists
         intersectionsFlat = [p
                              for row in range(len(self.curves))
@@ -938,7 +961,7 @@ class Subdivision:
         # duplicate: resulted of same curves intersection
         # collocated: resulted of different curves intersection
 
-        if self._multiProcessing:
+        if self._multi_processing:
             distances = [ [ 0
                             for col in range(len(intersectionsFlat)) ]
                           for row in range(len(intersectionsFlat)) ]
@@ -949,7 +972,7 @@ class Subdivision:
 
             global intersectionPoints
             intersectionPoints = intersectionsFlat
-            with ctx.closing(mp.Pool(processes=self._multiProcessing)) as p:
+            with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
                 distancesFlat = p.map( distance_star, ipsTuplesIdx)
             del intersectionPoints
             

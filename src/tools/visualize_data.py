@@ -61,10 +61,11 @@ test_cases_key = [
     'example_11',                   # 27: 
     'caisr',                        # 28: 
     'specialCase_11',               # 29:
+    'example_12',                   # 30: 3 circle holes in one square, + 1xArc
 ]
 
 ######################################## load data
-testNumber = 7
+testNumber = 18
 timing = False
 
 file_name = '../testCases/'+test_cases_key[testNumber]+'.yaml'

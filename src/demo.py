@@ -18,17 +18,18 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 
 from __future__ import print_function
 
-
 import sys
 if sys.version_info[0] == 3:
     from importlib import reload
 elif sys.version_info[0] == 2:
     pass
 
-
 import time
+import itertools 
 import numpy as np
 import sympy as sym
+import networkx as nx
+import matplotlib.pyplot as plt
 
 import subdivision as sdv
 import plotting as myplt
@@ -36,7 +37,6 @@ import modifiedSympy as mSym
 reload(sdv)
 reload(myplt)
 reload(mSym)
-
 from loadFromYaml import load_data_from_yaml
 
 ################################################################################
@@ -77,11 +77,11 @@ test_cases_key = [
 
 ]
 
-testNumber = 15
+test_case_id = 8
 timing = False
 visualize = True
 
-file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
+file_name = 'testCases/'+test_cases_key[test_case_id]+'.yaml'
 data = load_data_from_yaml( file_name )
 curves = data['curves']
 # curves += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
@@ -98,10 +98,11 @@ else:
 ################################################################################
 ###################################### deploying subdivision (and decomposition)
 ################################################################################
-print( '\nstart decomposition:', test_cases_key[testNumber])
+print( '\nstart decomposition:', test_cases_key[test_case_id])
 
 tic = time.time()
-mySubdivision = sdv.Subdivision(curves, multiProcessing=4)
+config = {'multi_processing':4, 'end_point':False}
+subdiv = sdv.Subdivision(curves, config)
 if timing: print( 'Subdivision time:', time.time() - tic)
 
 ################################################################################
@@ -109,22 +110,22 @@ if timing: print( 'Subdivision time:', time.time() - tic)
 ################################################################################
 if testing:
     cond =[]
-    cond += [ len(mySubdivision.graph.nodes()) == n_nodes ]
-    cond += [ len(mySubdivision.graph.edges()) == n_edges ]
-    cond += [ len(mySubdivision.decomposition.faces) == n_faces ]
-    cond += [ len(mySubdivision._subDecompositions) == n_subGraphs ]
-    print( 'success' if all(cond) else 'fail' )
+    cond += [ len(subdiv.graph.nodes()) == n_nodes ]
+    cond += [ len(subdiv.graph.edges()) == n_edges ]
+    cond += [ len(subdiv.decomposition.faces) == n_faces ]
+    cond += [ len(subdiv._subDecompositions) == n_subGraphs ]
+    print( 'pass' if all(cond) else 'fail' )
 
-    print( 'nodes:\t\t', len(mySubdivision.graph.nodes()), '\t expected:', n_nodes )
-    print( 'edges:\t\t', len(mySubdivision.graph.edges()), '\t expected:', n_edges )
-    print( 'faces:\t\t', len(mySubdivision.decomposition.faces), '\t expected:', n_faces )
-    print( 'subGraphs:\t', len(mySubdivision._subDecompositions), '\t expected:', n_subGraphs )
+    print( 'nodes:\t\t', len(subdiv.graph.nodes()), '\t expected:', n_nodes )
+    print( 'edges:\t\t', len(subdiv.graph.edges()), '\t expected:', n_edges )
+    print( 'faces:\t\t', len(subdiv.decomposition.faces), '\t expected:', n_faces )
+    print( 'subGraphs:\t', len(subdiv._subDecompositions), '\t expected:', n_subGraphs )
 
 elif not(testing):
-    print( 'nodes:\t\t', len(mySubdivision.graph.nodes()) )
-    print( 'edges:\t\t', len(mySubdivision.graph.edges()) )
-    print( 'faces:\t\t', len(mySubdivision.decomposition.faces) )
-    print( 'subGraphs:\t', len(mySubdivision._subDecompositions) )
+    print( 'nodes:\t\t', len(subdiv.graph.nodes()) )
+    print( 'edges:\t\t', len(subdiv.graph.edges()) )
+    print( 'faces:\t\t', len(subdiv.decomposition.faces) )
+    print( 'subGraphs:\t', len(subdiv._subDecompositions) )
 
 
 ################################################################################
@@ -132,11 +133,11 @@ elif not(testing):
 ################################################################################
 if visualize:
     ############################### plotting
-    # myplt.plot_graph(mySubdivision.graph)
-    # myplt.plot_decomposition_colored(mySubdivision,
+    # myplt.plot_graph(subdiv.graph)
+    # myplt.plot_decomposition_colored(subdiv,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
-    myplt.plot_decomposition(mySubdivision,
+    myplt.plot_decomposition(subdiv,
                              interactive_onClick=False,
                              interactive_onMove=False,
                              plotNodes=True, printNodeLabels=True,
@@ -144,14 +145,67 @@ if visualize:
     
     
     ############################## animating
-    # myplt.animate_halfEdges(mySubdivision, timeInterval = 1.*1000)
-    myplt.animate_face_patches(mySubdivision, timeInterval = .5*1000)
+    # myplt.animate_halfEdges(subdiv, timeInterval = 1.*1000)
+    myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
 
 
 ################################################################################
 ################################################################### testing area
 ################################################################################
 
+'''
+>>> construct adjacency and connectivity:
+subdiv.graph is the main graph. I contains all sub-graphs (disconnected).
+subdiv.decomposition is the main decomposition. I contains all the faces.
+
+To construct adjacency and connectivity, just use:
+subdiv.graph -> adjacency
+subdiv.decomposition -> connectivity
+
+try to plot the conncetivity graphs on top of the subdivision, to do so, I could ignore the geometric incorrectness of the edges, but atleast I need geometric location of the nodes.
+
+'''
+
+
+TODO: plot using graphviz
+# http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
+
+
+for halfEdgeIdx in subdiv.graph.edges(keys=True):
+    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
+    print (s,e,k), ': ', subdiv.graph[s][e][k]['obj'].attributes
+
+nx.draw_networkx(subdiv.graph)
+plt.show()
+
+print (len(subdiv.graph), len(subdiv.graph.edges(keys=True)))
+
+adjacency = subdiv.graph.to_undirected()
+for halfEdgeIdx in adjacency.edges(keys=True):
+    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
+    print (s,e,k), ': ', adjacency[s][e][k]['obj'].attributes
+
+nx.draw_networkx(adjacency)
+plt.show()
+
+print (len(adjacency), len(adjacency.edges(keys=True)) )
+
+
+connectivity = nx.MultiGraph()
+nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(subdiv.decomposition.faces)]
+connectivity.add_nodes_from( nodes )
+
+for (f1Idx,f2Idx) in itertools.combinations( range(len(subdiv.decomposition.faces) ), 2):
+    mutualsHalfEdges = subdiv.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
+    if len(mutualsHalfEdges) !=0 :
+        connectivity.add_edges_from( [ (f1Idx,f2Idx, {'mutualsHalfEdges': mutualsHalfEdges}) ] )
+
+nx.draw_networkx(connectivity)
+plt.show()
+
+
+
+    
 
 
 ################################################################################
@@ -160,6 +214,6 @@ if visualize:
 
 ##############################
 # the connected_component_subgraphs are not references to the other original graph, but to 
-# updating superFace of _subDecompositions[2], does not update mySubdivision.decomposition.faces[3]
+# updating superFace of _subDecompositions[2], does not update subdiv.decomposition.faces[3]
 # if subgraphs of sebdecompositions are to be relevant, every update applied to self.graph must be applied to self.subDecompositions.graph too. Or, store halfEdges separately and refer to them in the graph structure.
 ##############################
