@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -31,10 +31,10 @@ import sympy as sym
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import subdivision as sdv
+import arrangement as arr
 import plotting as myplt
 import modifiedSympy as mSym
-reload(sdv)
+reload(arr)
 reload(myplt)
 reload(mSym)
 from loadFromYaml import load_data_from_yaml
@@ -96,36 +96,36 @@ else:
     testing = False
 
 ################################################################################
-###################################### deploying subdivision (and decomposition)
+###################################### deploying arrangement (and decomposition)
 ################################################################################
 print( '\nstart decomposition:', test_cases_key[test_case_id])
 
 tic = time.time()
 config = {'multi_processing':4, 'end_point':False}
-subdiv = sdv.Subdivision(curves, config)
-if timing: print( 'Subdivision time:', time.time() - tic)
+arrang = arr.Arrangement(curves, config)
+if timing: print( 'Arrangement time:', time.time() - tic)
 
 ################################################################################
 ############################################# testing: if test data is available
 ################################################################################
 if testing:
     cond =[]
-    cond += [ len(subdiv.graph.nodes()) == n_nodes ]
-    cond += [ len(subdiv.graph.edges()) == n_edges ]
-    cond += [ len(subdiv.decomposition.faces) == n_faces ]
-    cond += [ len(subdiv._subDecompositions) == n_subGraphs ]
+    cond += [ len(arrang.graph.nodes()) == n_nodes ]
+    cond += [ len(arrang.graph.edges()) == n_edges ]
+    cond += [ len(arrang.decomposition.faces) == n_faces ]
+    cond += [ len(arrang._subDecompositions) == n_subGraphs ]
     print( 'pass' if all(cond) else 'fail' )
 
-    print( 'nodes:\t\t', len(subdiv.graph.nodes()), '\t expected:', n_nodes )
-    print( 'edges:\t\t', len(subdiv.graph.edges()), '\t expected:', n_edges )
-    print( 'faces:\t\t', len(subdiv.decomposition.faces), '\t expected:', n_faces )
-    print( 'subGraphs:\t', len(subdiv._subDecompositions), '\t expected:', n_subGraphs )
+    print( 'nodes:\t\t', len(arrang.graph.nodes()), '\t expected:', n_nodes )
+    print( 'edges:\t\t', len(arrang.graph.edges()), '\t expected:', n_edges )
+    print( 'faces:\t\t', len(arrang.decomposition.faces), '\t expected:', n_faces )
+    print( 'subGraphs:\t', len(arrang._subDecompositions), '\t expected:', n_subGraphs )
 
 elif not(testing):
-    print( 'nodes:\t\t', len(subdiv.graph.nodes()) )
-    print( 'edges:\t\t', len(subdiv.graph.edges()) )
-    print( 'faces:\t\t', len(subdiv.decomposition.faces) )
-    print( 'subGraphs:\t', len(subdiv._subDecompositions) )
+    print( 'nodes:\t\t', len(arrang.graph.nodes()) )
+    print( 'edges:\t\t', len(arrang.graph.edges()) )
+    print( 'faces:\t\t', len(arrang.decomposition.faces) )
+    print( 'subGraphs:\t', len(arrang._subDecompositions) )
 
 
 ################################################################################
@@ -133,12 +133,12 @@ elif not(testing):
 ################################################################################
 if visualize:
     ############################### static plotting
-    # myplt.plot_graph(subdiv.graph)
-    # myplt.plot_decomposition_colored(subdiv,
+    # myplt.plot_graph(arrang.graph)
+    # myplt.plot_decomposition_colored(arrang,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
 
-    # myplt.plot_decomposition(subdiv,
+    # myplt.plot_decomposition(arrang,
     #                          interactive_onClick=False,
     #                          interactive_onMove=False,
     #                          plotNodes=True, printNodeLabels=True,
@@ -146,17 +146,17 @@ if visualize:
     
     
     ############################## animated plotting
-    # myplt.animate_halfEdges(subdiv, timeInterval = 1.*1000)
-    myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
+    # myplt.animate_halfEdges(arrang, timeInterval = 1.*1000)
+    myplt.animate_face_patches(arrang, timeInterval = .5*1000)
 
 
     ######################## plotting graphs
-    # myplt.plot_graph_pydot(subdiv.graph)
-    # myplt.plot_graph_pydot(subdiv.get_adjacency_graph())
-    # myplt.plot_graph_pydot(subdiv.get_connectivity_graph())
-    myplt.plot_multiple_graphs_pydot( [ subdiv.graph,
-                                        subdiv.get_adjacency_graph(),
-                                        subdiv.get_connectivity_graph() ] )
+    # myplt.plot_graph_pydot(arrang.graph)
+    # myplt.plot_graph_pydot(arrang.get_adjacency_graph())
+    # myplt.plot_graph_pydot(arrang.get_connectivity_graph())
+    myplt.plot_multiple_graphs_pydot( [ arrang.graph,
+                                        arrang.get_adjacency_graph(),
+                                        arrang.get_connectivity_graph() ] )
 
 
 ################################################################################
@@ -171,6 +171,6 @@ if visualize:
 
 ##############################
 # the connected_component_subgraphs are not references to the other original graph, but to 
-# updating superFace of _subDecompositions[2], does not update subdiv.decomposition.faces[3]
+# updating superFace of _subDecompositions[2], does not update arrang.decomposition.faces[3]
 # if subgraphs of sebdecompositions are to be relevant, every update applied to self.graph must be applied to self.subDecompositions.graph too. Or, store halfEdges separately and refer to them in the graph structure.
 ##############################

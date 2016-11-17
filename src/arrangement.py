@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -483,7 +483,7 @@ class Decomposition:
         Decomposition class
 
         checks only the intersection of the boundaries
-        "other" could be: Face, Decomposition, Subdivision
+        "other" could be: Face, Decomposition, Arrangement
         '''
 
         assert self.superFace
@@ -495,7 +495,7 @@ class Decomposition:
             assert other.superFace
             otherPath = other.superFace.path
 
-        elif isinstance(other, Subdivision):
+        elif isinstance(other, Arrangement):
             assert other.decomposition.superFace
             otherPath = other.decomposition.superFace.path
 
@@ -507,7 +507,7 @@ class Decomposition:
         Decomposition class
 
         checks overlapping (and enclosure) of two regions
-        "other" could be: Face, Decomposition, Subdivision
+        "other" could be: Face, Decomposition, Arrangement
         '''
 
         assert self.superFace
@@ -519,7 +519,7 @@ class Decomposition:
             assert other.superFace
             otherPath = other.superFace.path
 
-        elif isinstance(other, Subdivision):
+        elif isinstance(other, Arrangement):
             assert other.decomposition.superFace
             otherPath = other.decomposition.superFace.path
 
@@ -557,10 +557,10 @@ class Decomposition:
 
         
 ################################################################################
-############################################################## Subdivision class
+############################################################## Arrangement class
 ####################################################### aggregates from networkx
 ################################################################################
-class Subdivision:
+class Arrangement:
     ############################################################################
     def __init__ (self, curves , config):
         '''
@@ -603,10 +603,10 @@ class Subdivision:
     ############################################################################
     def get_connectivity_graph(self):
         '''
-        Subdivision class
+        Arrangement class
         
-        subdiv.decomposition is the main decomposition. I contains all the faces.
-        subdiv.decomposition -> connectivity
+        arrang.decomposition is the main decomposition. I contains all the faces.
+        arrang.decomposition -> connectivity
         '''
         
         connectivity = nx.MultiGraph()
@@ -625,16 +625,16 @@ class Subdivision:
     ############################################################################
     def get_adjacency_graph(self):
         '''
-        Subdivision class
+        Arrangement class
 
-        subdiv.graph is the main graph. I contains all sub-graphs (disconnected).
-        subdiv.graph -> adjacency
+        arrang.graph is the main graph. I contains all sub-graphs (disconnected).
+        arrang.graph -> adjacency
 
         why wouldn't this work?
-        adjacency = subdiv.graph.to_undirected()
+        adjacency = arrang.graph.to_undirected()
         because the correspondance between indices of the edges of the original graph
         and the adjacency graph is missing, hence we don't know which edge in adjacency
-        corresponds to which face in the subdiv.decomposition.faces
+        corresponds to which face in the arrang.decomposition.faces
         '''
 
 
@@ -662,7 +662,7 @@ class Subdivision:
     ############################################################################
     def merge_faces(self, faceIdx=[]):
         '''
-        Subdivision class
+        Arrangement class
         '''
         
         halfEdge2Remove = []
@@ -688,7 +688,7 @@ class Subdivision:
     ############################################################################
     def _decompose(self):
         '''
-        Subdivision class
+        Arrangement class
         '''
 
         #### STAGE 0: split the base graph into connected subgraphs
@@ -722,7 +722,7 @@ class Subdivision:
                     else:
                         # TODO: I have no idea whether this is correct! check!
                         # hypothesis:
-                        # when a subdivision returns only two face, of which one is superFace
+                        # when a arrangement returns only two face, of which one is superFace
                         # the sum of the internal angles of superFace is always bigger than 
                         # the corresponding value of the inner face.
                         angleSum = [0,0]
@@ -790,7 +790,7 @@ class Subdivision:
     def _find_punch_holes(self, subDecompositions):
 
         '''
-        Subdivision class
+        Arrangement class
         '''        
         for (idx1,idx2) in itertools.permutations(range(len(subDecompositions)), 2):
             sd1 = subDecompositions[idx1]
@@ -817,7 +817,7 @@ class Subdivision:
     ############################################################################
     def _store_curves(self, curves):
         '''
-        Subdivision class
+        Arrangement class
 
         discard overlapping and invalid curves
 
@@ -867,7 +867,7 @@ class Subdivision:
     ############################################################################
     def _construct_nodes(self):
         '''
-        Subdivision class
+        Arrangement class
 
         |STAGE A| of Graph construction: node construction
         first we need a list of all intersections,
@@ -1085,7 +1085,7 @@ class Subdivision:
     ############################################################################
     def _construct_edges(self):
         '''
-        Subdivision class
+        Arrangement class
 
 
         |STAGE B| of Graph construction: edge construction
@@ -1198,8 +1198,8 @@ class Subdivision:
     # ############################################################################
     # def get_all_HalfEdge_indices (self, graph=None):
     #     '''
-    #     Subdivision class
-    #     replaced "subdiv.get_all_HalfEdge_indices()" with "subdiv.graph.edges(keys=True)"
+    #     Arrangement class
+    #     replaced "arrang.get_all_HalfEdge_indices()" with "arrang.graph.edges(keys=True)"
         
     #     '''
 
@@ -1217,7 +1217,7 @@ class Subdivision:
                                  allHalfEdgeIdx=None,
                                  direction='ccw_before'):
         '''
-        Subdivision class
+        Arrangement class
         '''
 
         # Note that in cases where there is a circle with one node on it,
@@ -1301,7 +1301,7 @@ class Subdivision:
     ############################################################################
     def _decompose_graph(self, graph):
         '''
-        Subdivision class
+        Arrangement class
 
         >>> face detection and identification procedure!
         '''
@@ -1398,17 +1398,17 @@ class Subdivision:
     ############################################################################
     def transform_sequence(self, operTypes, operVals, operRefs, subDecompositions=False):
         '''
-        Subdivision class
+        Arrangement class
         '''      
-        # update subdivision.curves
+        # update arrangement.curves
         for curve in self.curves:
             curve.transform_sequence(operTypes, operVals, operRefs)
       
-        # update subdivision.graph (nodes)
+        # update arrangement.graph (nodes)
         for nIdx in self.graph.nodes():
             self.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.curves)
         
-        # update subdivision.decomposition.faces
+        # update arrangement.decomposition.faces
         self.decomposition.update_face_path()
 
 
@@ -1422,15 +1422,15 @@ class Subdivision:
     ############################################################################
     def save_to_image(self,  fileName, resolution=10.):
         ''' 
-        Subdivision class
+        Arrangement class
 
-        a color coded image of subdivision
+        a color coded image of arrangement
         '''
         pass #TODO(saesha)
 
     ############################################################################
     def add_new_curves(self, curves=[]):
         '''
-        Subdivision class
+        Arrangement class
         '''
         pass #TODO(saesha)

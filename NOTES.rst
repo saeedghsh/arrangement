@@ -390,7 +390,10 @@ Documentation
 
       [ ] API documentation
 	$ cd Dropbox/myGits/dev/subdivision/
-	$ pyreverse -o svg -p subdivision src/*.py
+	$ pyreverse -o svg -p arrangement src/*.py
+	$ pyreverse -o svg -p modifiedSympy src/modifiedSympy.py
+	$ pyreverse -o svg -p arrangement src/arrangement.py
+
 
 	-a N, -A    depth of research for ancestors
 	-s N, -S    depth of research for associated classes

@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -21,12 +21,11 @@ import sympy as sym
 import networkx as nx
 
 import matplotlib.pyplot as plt
-
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.transforms
-
 import matplotlib.image as mpimg
+
 from cStringIO import StringIO
 
 
@@ -85,11 +84,11 @@ def plot_graph_pygraphviz(graph):
     # http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
 
     # # write graph to a dot file
-    # nx.drawing.nx_pydot.write_dot(subdiv.graph,'multi.dot')
+    # nx.drawing.nx_pydot.write_dot(arrang.graph,'multi.dot')
     # !neato -T png multi.dot > multi.png
     pass
 
-# agraph = nx.to_agraph(subdiv.graph)
+# agraph = nx.to_agraph(arrang.graph)
 ################################################################################
 ########################################################## interactive functions
 ################################################################################
@@ -100,9 +99,9 @@ def onClick(event):
     if xe and ye:
         # print 'clicked: ', xe, ye
 
-        global subdiv
+        global arrang
         point = sym.Point(xe, ye)
-        faceIdx = subdiv.decomposition.find_face(point)
+        faceIdx = arrang.decomposition.find_face(point)
         print faceIdx
 
     else:
@@ -113,13 +112,13 @@ def onClick(event):
 def onMove(event):
     xe, ye = event.xdata, event.ydata
 
-    global subdiv
+    global arrang
     global ax
 
     if xe and ye:
         # print 'moving: ',  xe, ye
         point = sym.Point(xe, ye)
-        fIdx = subdiv.decomposition.find_face(point)
+        fIdx = arrang.decomposition.find_face(point)
 
         if fIdx is not None: # explicit, because fIdx could be 0
             plot_new_face_with_patch(ax, faceIdx=fIdx)
@@ -134,14 +133,14 @@ def onMove(event):
 ################################################################################
 
 ################################### plotting edges
-def plot_edges(axis, subdiv,
+def plot_edges(axis, arrang,
                alp=0.2, col='b',
                halfEdgeIdx=None,
                withArrow=False,
                printLabels=False):
 
     if halfEdgeIdx==None:
-        halfEdgeList = subdiv.graph.edges(keys=True) # subdiv.get_all_HalfEdge_indices()
+        halfEdgeList = arrang.graph.edges(keys=True) # arrang.get_all_HalfEdge_indices()
         
     else:
         halfEdgeList = halfEdgeIdx
@@ -149,16 +148,16 @@ def plot_edges(axis, subdiv,
 
     for (start, end, k) in halfEdgeList:
         
-        he_obj = subdiv.graph[start][end][k]['obj']
-        curve_obj = subdiv.curves[he_obj.curveIdx].obj
+        he_obj = arrang.graph[start][end][k]['obj']
+        curve_obj = arrang.curves[he_obj.curveIdx].obj
         
         thei =  he_obj.twinIdx
-        sTVal, eTVal = he_obj.get_tvals(subdiv.curves, subdiv.graph.node)
+        sTVal, eTVal = he_obj.get_tvals(arrang.curves, arrang.graph.node)
 
         if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
-                p1 = subdiv.graph.node[start]['obj'].point
-                p2 = subdiv.graph.node[end]['obj'].point
+                p1 = arrang.graph.node[start]['obj'].point
+                p2 = arrang.graph.node[end]['obj'].point
                 x, y = p1.x.evalf() , p1.y.evalf()
                 dx, dy = p2.x.evalf()-x, p2.y.evalf()-y
 
@@ -218,12 +217,12 @@ def plot_edges(axis, subdiv,
 
 
 ################################### plotting nodes
-def plot_nodes (axis, subdiv, nodes=None,
+def plot_nodes (axis, arrang, nodes=None,
                alp = 0.5, col = 'k',
                printLabels = False):
 
-    if nodes==None:  nodes = subdiv.graph.nodes()
-    points = [subdiv.graph.node[idx]['obj'].point for idx in nodes]
+    if nodes==None:  nodes = arrang.graph.nodes()
+    points = [arrang.graph.node[idx]['obj'].point for idx in nodes]
         
     nx = [p.x for p in points]
     ny = [p.y for p in points]
@@ -231,24 +230,24 @@ def plot_nodes (axis, subdiv, nodes=None,
 
     if printLabels:
         font = {'color':col, 'size': 10}
-        for idx in subdiv.graph.nodes():            
-            axis.text(subdiv.graph.node[idx]['obj'].point.x,
-                      subdiv.graph.node[idx]['obj'].point.y,
+        for idx in arrang.graph.nodes():            
+            axis.text(arrang.graph.node[idx]['obj'].point.x,
+                      arrang.graph.node[idx]['obj'].point.y,
                       'n#'+str(idx))
 
 
 
 ######################################## plot decomposition, no faces 
-def plot_decomposition(subdivision,
+def plot_decomposition(arrangement,
                        interactive_onClick=False,
                        interactive_onMove=False,
                        plotNodes=False, printNodeLabels=False,
                        plotEdges=True, printEdgeLabels=False):
 
     if interactive_onClick or interactive_onMove:
-        global subdiv
+        global arrang
         global ax
-    subdiv = subdivision
+    arrang = arrangement
 
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
@@ -260,12 +259,12 @@ def plot_decomposition(subdivision,
         cid_move = fig.canvas.mpl_connect('motion_notify_event', onMove)
 
     if plotEdges:
-        plot_edges (ax, subdiv, printLabels=printEdgeLabels)
+        plot_edges (ax, arrang, printLabels=printEdgeLabels)
     if plotNodes:
-        plot_nodes (ax, subdiv, nodes=None, printLabels=printNodeLabels)
+        plot_nodes (ax, arrang, nodes=None, printLabels=printNodeLabels)
 
     # set axes limit
-    bb = subdiv.decomposition.get_extents()
+    bb = arrang.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
 
@@ -275,7 +274,7 @@ def plot_decomposition(subdivision,
 
 
 ######################################## plot decomposition, face-> patch 
-def plot_decomposition_colored (subdiv,
+def plot_decomposition_colored (arrang,
                                 printNodeLabels=True,
                                 printEdgeLabels=False,
                                 fCol='b', eCol='r'):
@@ -284,16 +283,16 @@ def plot_decomposition_colored (subdiv,
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
 
-    plot_edges (ax, subdiv, printLabels=printEdgeLabels)
-    plot_nodes (ax, subdiv, nodes=None, printLabels=printNodeLabels)
+    plot_edges (ax, arrang, printLabels=printEdgeLabels)
+    plot_nodes (ax, arrang, nodes=None, printLabels=printNodeLabels)
 
-    for face in subdiv.decomposition.faces:
+    for face in arrang.decomposition.faces:
         patch = mpatches.PathPatch(face.get_punched_path(),
                                    facecolor=fCol, edgecolor=eCol, alpha=0.5)
         ax.add_patch(patch)
 
     # set axes limit
-    bb = subdiv.decomposition.get_extents()
+    bb = arrang.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
 
@@ -311,14 +310,14 @@ def plot_decomposition_colored (subdiv,
 
 
 ######################################## 
-def animate_face_patches(subdivision, timeInterval=1000):
+def animate_face_patches(arrangement, timeInterval=1000):
 
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
 
-    global subdiv
+    global arrang
     global face_counter
-    subdiv = subdivision
+    arrang = arrangement
     face_counter = -1
 
     # Create a new timer object. 1000 is default
@@ -330,7 +329,7 @@ def animate_face_patches(subdivision, timeInterval=1000):
     # timer.stop()
 
     # set axes limit
-    bb = subdivision.decomposition.get_extents()
+    bb = arrangement.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
     
@@ -343,11 +342,11 @@ def animate_face_patches(subdivision, timeInterval=1000):
 
 #########################################
 def plot_new_face_with_patch(axis, faceIdx=None):
-    global subdiv
+    global arrang
     
     if faceIdx is None: # explicit, because faceIdx could be 0
         global face_counter
-        face_counter = np.mod(face_counter+1, len(subdiv.decomposition.faces))
+        face_counter = np.mod(face_counter+1, len(arrang.decomposition.faces))
         faceIdx = face_counter
   
     # removing [almost] all plot instances
@@ -360,10 +359,10 @@ def plot_new_face_with_patch(axis, faceIdx=None):
             ch.remove()
 
     # redrawing the base
-    plot_edges (axis, subdiv, alp=0.1)
+    plot_edges (axis, arrang, alp=0.1)
 
     # drawing new face via path-patch
-    face = subdiv.decomposition.faces[ faceIdx ]
+    face = arrang.decomposition.faces[ faceIdx ]
     patch = mpatches.PathPatch(face.get_punched_path(),
                                facecolor='b', edgecolor='r', alpha=0.5)
                                # facecolor='r', edgecolor='k', alpha=0.5)
@@ -375,7 +374,7 @@ def plot_new_face_with_patch(axis, faceIdx=None):
               fontdict={'color':'m', 'size': 25})
 
     # set axes limit
-    bb = subdiv.decomposition.get_extents()
+    bb = arrang.decomposition.get_extents()
     axis.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     axis.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
 
@@ -391,18 +390,18 @@ def plot_new_face_with_patch(axis, faceIdx=None):
 
 
 ########################################
-def animate_halfEdges(subdivision, timeInterval = .1*1000):
+def animate_halfEdges(arrangement, timeInterval = .1*1000):
 
     fig = plt.figure(figsize=(12,12))
     ax = fig.add_subplot(111)
 
-    global subdiv
+    global arrang
     global halfEdge_counter
-    subdiv = subdivision
+    arrang = arrangement
     halfEdge_counter = -1
 
     # plotting nodes
-    plot_nodes (ax, subdiv, printLabels = True)
+    plot_nodes (ax, arrang, printLabels = True)
 
     # Create a new timer object. 1000 is default
     timer = fig.canvas.new_timer(interval=timeInterval)
@@ -413,7 +412,7 @@ def animate_halfEdges(subdivision, timeInterval = .1*1000):
     # timer.stop()
 
     # set axes limit
-    bb = subdivision.decomposition.get_extents()
+    bb = arrangement.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
 
@@ -428,10 +427,10 @@ def animate_halfEdges(subdivision, timeInterval = .1*1000):
 def plot_new_halfEdge(axis):
 
     global halfEdge_counter
-    global subdiv
+    global arrang
     
     # updating the counter, and fetching the next half edge
-    allHalfEdgeIdx = subdiv.graph.edges(keys=True) # subdiv.get_all_HalfEdge_indices() 
+    allHalfEdgeIdx = arrang.graph.edges(keys=True) # arrang.get_all_HalfEdge_indices() 
     halfEdge_counter = np.mod( halfEdge_counter+1, len(allHalfEdgeIdx) )
     (start,end,k) = allHalfEdgeIdx[halfEdge_counter]
 
@@ -445,17 +444,17 @@ def plot_new_halfEdge(axis):
             ch.remove()
 
     # redrawing the base
-    plot_edges (axis, subdiv, alp=0.1)
+    plot_edges (axis, arrang, alp=0.1)
 
     # drawing new haldfedge
-    halfEdge_direction = subdiv.graph[start][end][k]['obj'].direction
+    halfEdge_direction = arrang.graph[start][end][k]['obj'].direction
     if halfEdge_direction == 'positive':
-        plot_edges(axis, subdiv,
+        plot_edges(axis, arrang,
                    halfEdgeIdx= [(start,end,k)],
                    alp=0.9, col='g',
                    withArrow=True)
     elif halfEdge_direction == 'negative':
-        plot_edges(axis, subdiv,
+        plot_edges(axis, arrang,
                    halfEdgeIdx= [(start,end,k)],
                    alp=0.9, col='r',
                    withArrow=True)
@@ -465,9 +464,9 @@ def plot_new_halfEdge(axis):
     # ##########################################################################
     # ################################# drawing derivatives of the new haldfedge
     # if False:
-    #     p1 = subdiv.graph.node[start]['obj'].point
+    #     p1 = arrang.graph.node[start]['obj'].point
     #     px, py = p1.x.evalf() , p1.y.evalf()
-    #     he_obj = subdiv.graph[start][end][k]['obj']
+    #     he_obj = arrang.graph[start][end][k]['obj']
 
     #     # Blue: 1st derivative - tangent to the curve
     #     dx,dy = he_obj.s1stDer
@@ -498,7 +497,7 @@ def plot_new_halfEdge(axis):
               fontdict={'color':'m', 'size': 25})
 
     # set axes limit
-    bb = subdiv.decomposition.get_extents()
+    bb = arrang.decomposition.get_extents()
     axis.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     axis.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
 

@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangision Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -23,26 +23,26 @@ import unittest
 
 import numpy as np
 
-import subdivision as sdv
+import arrangement as arr
 from loadFromYaml import load_data_from_yaml
 
 ################################################################################
 ################################################################## testing class
 ################################################################################
 
-class SubdivisionTests(unittest.TestCase):    
+class ArrangementTests(unittest.TestCase):    
     # '''  '''
-    # def test_twinAssignment(self, subdiv):
+    # def test_twinAssignment(self, arrang):
     #     # checking the correctness of twin assignment in half-edge construction
         
     #     res = []
-    #     for selfIdx in subdiv.get_all_HalfEdge_indices():
+    #     for selfIdx in arrang.get_all_HalfEdge_indices():
     #         (s,e,k) = selfIdx
             
-    #         twinIdx = subdiv.graph[s][e][k]['obj'].twinIdx
+    #         twinIdx = arrang.graph[s][e][k]['obj'].twinIdx
     #         (ts,te,tk) = twinIdx
 
-    #         twinOfTwinIdx = subdiv.graph[ts][te][tk]['obj'].twinIdx            
+    #         twinOfTwinIdx = arrang.graph[ts][te][tk]['obj'].twinIdx            
 
     #         res += [ selfIdx == twinOfTwinIdx ]
 
@@ -58,24 +58,25 @@ class SubdivisionTests(unittest.TestCase):
             
             data = load_data_from_yaml( address+fileName )
             print('testing case: ' + data['dataset'] , '-\t', fileIdx+1, '/', len(fileList))
-            curves = data['curves']            
-            subdiv = sdv.Subdivision(curves, multiProcessing=4)
+            curves = data['curves']
+            config = {'multi_processing':4, 'end_point':False}
+            arrang = arr.Arrangement(curves, config)
 
             # ########## testing twin assignment
-            # self.assertEqual( self.test_twinAssignment(subdiv), True,
+            # self.assertEqual( self.test_twinAssignment(arrang), True,
             #                   'incorrect twin assignment')
 
             ########## testing number of nodes
             if 'number_of_nodes' in data.keys():
                 n_nodes = data['number_of_nodes']
-                self.assertEqual( len(subdiv.graph.nodes()), n_nodes, 'incorrect number of nodes')
+                self.assertEqual( len(arrang.graph.nodes()), n_nodes, 'incorrect number of nodes')
             else:
                 print('number of nodes is not available for ' + key, '...')
 
             ########## testing number of edges
             if 'number_of_edges' in data.keys():
                 n_edges = data['number_of_edges']
-                self.assertEqual( len(subdiv.graph.edges()), n_edges,
+                self.assertEqual( len(arrang.graph.edges()), n_edges,
                                   'incorrect number of edges')
             else:
                 print( 'number of edges is not available for ' + key, '...' )
@@ -83,7 +84,7 @@ class SubdivisionTests(unittest.TestCase):
             ########## testing number of faces
             if 'number_of_faces' in data.keys():
                 n_faces = data['number_of_faces']
-                self.assertEqual( len(subdiv.decomposition.faces), n_faces,
+                self.assertEqual( len(arrang.decomposition.faces), n_faces,
                                   'incorrect number of faces')
             else:
                 print( 'number of faces is not available for ' + key, '...' )
@@ -91,26 +92,26 @@ class SubdivisionTests(unittest.TestCase):
             ########## testing number of subGraphs
             if 'number_of_subGraphs' in data.keys():
                 n_subGraphs = data['number_of_subGraphs']
-                self.assertEqual( len(subdiv._subDecompositions), n_subGraphs,
+                self.assertEqual( len(arrang._subDecompositions), n_subGraphs,
                                   'incorrect number of subGraphs')
             else:
                 print( 'number of subGraphs is not available for ' + key, '...' )
 
 
-            ########## testing neighbourhood function [incomplete]
-            ########## it checks if neighbourhood is valid in both direction
-            for fIdx in range(len(subdiv.decomposition.faces)):
-                for nfIdx in subdiv.decomposition.find_neighbours(fIdx):
-                    assert fIdx in subdiv.decomposition.find_neighbours(nfIdx)
+            # ########## testing neighbourhood function [incomplete]
+            # ########## it checks if neighbourhood is valid in both direction
+            # for fIdx in range(len(arrang.decomposition.faces)):
+            #     for nfIdx in arrang.decomposition.find_neighbours(fIdx):
+            #         assert fIdx in arrang.decomposition.find_neighbours(nfIdx)
 
 
 
-            ########## testing transformation [incomplete]
-            ########## it doesn't check the correctness
-            ########## it just checks whether if it completes the process
-            subdiv.transform_sequence('SRT',
-                                      ((5,5), -np.pi/2, (-10,0), ),
-                                      ((0,0), (0,0),    (0,0), ) )
+            # ########## testing transformation [incomplete]
+            # ########## it doesn't check the correctness
+            # ########## it just checks whether if it completes the process
+            # arrang.transform_sequence('SRT',
+            #                           ((5,5), -np.pi/2, (-10,0), ),
+            #                           ((0,0), (0,0),    (0,0), ) )
             
             
 
@@ -125,21 +126,21 @@ if __name__ == '__main__':
 
 # ########################################
 # # test node construction
-# # does mySubdivision.nodes correspond to mySubdivision.intersectionFlat?
-# num_of_intersections = len( mySubdivision.intersectionsFlat)
-# num_of_nodes = len( mySubdivision.nodes )
+# # does myArrangement.nodes correspond to myArrangement.intersectionFlat?
+# num_of_intersections = len( myArrangement.intersectionsFlat)
+# num_of_nodes = len( myArrangement.nodes )
 # asser (num_of_intersections == num_of_nodes)
 
-# for (n, p) in zip (mySubdivision.nodes, mySubdivision.intersectionsFlat):
-#     n_point = mySubdivision.nodes[n_idx][1]['obj'].point
+# for (n, p) in zip (myArrangement.nodes, myArrangement.intersectionsFlat):
+#     n_point = myArrangement.nodes[n_idx][1]['obj'].point
 #     assert(n_point.compare(p) == 0)
 
 # # are nodes assigned correctly to curves?
-# for c_idx, curve in enumerate(mySubdivision.curves):
-#     for n_idx, node in enumerate(mySubdivision.nodes):
-#         point = mySubdivision.nodes[n_idx][1]['obj'].point
+# for c_idx, curve in enumerate(myArrangement.curves):
+#     for n_idx, node in enumerate(myArrangement.nodes):
+#         point = myArrangement.nodes[n_idx][1]['obj'].point
 #         if curve.obj.contains(point):
-#             if not( c_idx in mySubdivision.ipsCurveIdx[n_idx] ):
+#             if not( c_idx in myArrangement.ipsCurveIdx[n_idx] ):
 #                 print( 'error' )
 # ########################################
 
@@ -154,9 +155,9 @@ if __name__ == '__main__':
 
 
 ############################# test halfEdge tvals
-# nodes = [ mySubdivision.graph.node[key]['obj'] for key in mySubdivision.graph.node.keys()]
-# for s,e,k in mySubdivision.get_all_HalfEdge_indices():
-#     he = mySubdivision.graph[s][e][k]['obj']
+# nodes = [ myArrangement.graph.node[key]['obj'] for key in myArrangement.graph.node.keys()]
+# for s,e,k in myArrangement.get_all_HalfEdge_indices():
+#     he = myArrangement.graph[s][e][k]['obj']
 
 #     sTVal = nodes[s].curveTval[nodes[s].curveIdx.index(he.cIdx)]
 #     eTVal = nodes[e].curveTval[nodes[e].curveIdx.index(he.cIdx)]
@@ -174,12 +175,12 @@ if __name__ == '__main__':
 # # test face construction
 # # could a pair of twins be in oen face simultaneously? YES! They could!
 
-# allHalfEdge = mySubdivision.get_all_HalfEdge_indices()
+# allHalfEdge = myArrangement.get_all_HalfEdge_indices()
 # he = (2,8,0)
-# idx = mySubdivision.find_successor_HalfEdge(he)
+# idx = myArrangement.find_successor_HalfEdge(he)
 # he = allHalfEdge[idx]
 # print (he)
-# mySubdivision.find_successor_HalfEdge(he)
+# myArrangement.find_successor_HalfEdge(he)
 # ########################################
 
 
@@ -188,20 +189,20 @@ if __name__ == '__main__':
 
 # ########################################
 # # testing the successor/twin assigment
-# for face in mySubdivision.decomposition.faces:
+# for face in myArrangement.decomposition.faces:
 #     for idx in range(len(face.halfEdges)-1):
 #         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
 #         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
-#         assert (mySubdivision.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+#         assert (myArrangement.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
         
-#         (ts,te,tk) = mySubdivision.MDG[cs][ce][ck]['obj'].twinIdx
+#         (ts,te,tk) = myArrangement.MDG[cs][ce][ck]['obj'].twinIdx
 #         assert (ts == ss)
 
 #     (cs,ce,ck) = face.halfEdges[-1] # current halfEdgeIdx
 #     (ss,se,sk) = face.halfEdges[0] # successor halfEdgeIdx
-#     assert (mySubdivision.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
+#     assert (myArrangement.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
 
-#     (ts,te,tk) = mySubdivision.graph[cs][ce][ck]['obj'].twinIdx
+#     (ts,te,tk) = myArrangement.graph[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
 # ########################################
 
