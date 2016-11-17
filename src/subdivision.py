@@ -601,6 +601,65 @@ class Subdivision:
 
 
     ############################################################################
+    def get_connectivity_graph(self):
+        '''
+        Subdivision class
+        
+        subdiv.decomposition is the main decomposition. I contains all the faces.
+        subdiv.decomposition -> connectivity
+        '''
+        
+        connectivity = nx.MultiGraph()
+        nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(self.decomposition.faces)]
+        connectivity.add_nodes_from( nodes )
+
+        for (f1Idx,f2Idx) in itertools.combinations( range(len(self.decomposition.faces) ), 2):
+            mutualHalfEdges = self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
+            if len(mutualHalfEdges) !=0 :
+                # note that even if two faces share more than one pair of twin half-edges,
+                # still there will be one connecting edge between the two.
+                connectivity.add_edges_from( [ (f1Idx,f2Idx, {'mutualHalfEdges': mutualHalfEdges}) ] )
+
+        return connectivity
+    
+    ############################################################################
+    def get_adjacency_graph(self):
+        '''
+        Subdivision class
+
+        subdiv.graph is the main graph. I contains all sub-graphs (disconnected).
+        subdiv.graph -> adjacency
+
+        why wouldn't this work?
+        adjacency = subdiv.graph.to_undirected()
+        because the correspondance between indices of the edges of the original graph
+        and the adjacency graph is missing, hence we don't know which edge in adjacency
+        corresponds to which face in the subdiv.decomposition.faces
+        '''
+
+
+        adjacency = nx.MultiGraph()
+        # adding edges will creat the nodes, so why do we add nodes first? redundant?
+        # yes, redundant. But if there is a non-connected node in the original graph
+        # it will be missed through adding edge process.
+        all_nodes_idx = [ [ idx, {} ] for idx in self.graph.nodes() ] 
+        adjacency.add_nodes_from( all_nodes_idx ) 
+        
+        all_halfedges_idx = [halfEdgeIdx for halfEdgeIdx in self.graph.edges(keys=True)]
+        while len(all_halfedges_idx) != 0:
+            (s,e,k) = all_halfedges_idx[-1]
+            (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
+            
+            edge = ( s, e, {'corresponding': [(s,e,k), (ts,te,tk)]} )
+            adjacency.add_edges_from([edge])
+            
+            all_halfedges_idx.pop( all_halfedges_idx.index((s,e,k)) )
+            all_halfedges_idx.pop( all_halfedges_idx.index((ts,te,tk)) )
+
+        return adjacency
+
+
+    ############################################################################
     def merge_faces(self, faceIdx=[]):
         '''
         Subdivision class

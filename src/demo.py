@@ -77,7 +77,7 @@ test_cases_key = [
 
 ]
 
-test_case_id = 8
+test_case_id = 30
 timing = False
 visualize = True
 
@@ -132,80 +132,37 @@ elif not(testing):
 ################################################################## visualization
 ################################################################################
 if visualize:
-    ############################### plotting
+    ############################### static plotting
     # myplt.plot_graph(subdiv.graph)
     # myplt.plot_decomposition_colored(subdiv,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
-    myplt.plot_decomposition(subdiv,
-                             interactive_onClick=False,
-                             interactive_onMove=False,
-                             plotNodes=True, printNodeLabels=True,
-                             plotEdges=True, printEdgeLabels=True)
+
+    # myplt.plot_decomposition(subdiv,
+    #                          interactive_onClick=False,
+    #                          interactive_onMove=False,
+    #                          plotNodes=True, printNodeLabels=True,
+    #                          plotEdges=True, printEdgeLabels=True)
     
     
-    ############################## animating
+    ############################## animated plotting
     # myplt.animate_halfEdges(subdiv, timeInterval = 1.*1000)
     myplt.animate_face_patches(subdiv, timeInterval = .5*1000)
+
+
+    ######################## plotting graphs
+    # myplt.plot_graph_pydot(subdiv.graph)
+    # myplt.plot_graph_pydot(subdiv.get_adjacency_graph())
+    # myplt.plot_graph_pydot(subdiv.get_connectivity_graph())
+    myplt.plot_multiple_graphs_pydot( [ subdiv.graph,
+                                        subdiv.get_adjacency_graph(),
+                                        subdiv.get_connectivity_graph() ] )
 
 
 ################################################################################
 ################################################################### testing area
 ################################################################################
 
-'''
->>> construct adjacency and connectivity:
-subdiv.graph is the main graph. I contains all sub-graphs (disconnected).
-subdiv.decomposition is the main decomposition. I contains all the faces.
-
-To construct adjacency and connectivity, just use:
-subdiv.graph -> adjacency
-subdiv.decomposition -> connectivity
-
-try to plot the conncetivity graphs on top of the subdivision, to do so, I could ignore the geometric incorrectness of the edges, but atleast I need geometric location of the nodes.
-
-'''
-
-
-TODO: plot using graphviz
-# http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
-
-
-for halfEdgeIdx in subdiv.graph.edges(keys=True):
-    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-    print (s,e,k), ': ', subdiv.graph[s][e][k]['obj'].attributes
-
-nx.draw_networkx(subdiv.graph)
-plt.show()
-
-print (len(subdiv.graph), len(subdiv.graph.edges(keys=True)))
-
-adjacency = subdiv.graph.to_undirected()
-for halfEdgeIdx in adjacency.edges(keys=True):
-    (s,e,k) = (startNodeIdx, endNodeIdx, path) = halfEdgeIdx
-    print (s,e,k), ': ', adjacency[s][e][k]['obj'].attributes
-
-nx.draw_networkx(adjacency)
-plt.show()
-
-print (len(adjacency), len(adjacency.edges(keys=True)) )
-
-
-connectivity = nx.MultiGraph()
-nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(subdiv.decomposition.faces)]
-connectivity.add_nodes_from( nodes )
-
-for (f1Idx,f2Idx) in itertools.combinations( range(len(subdiv.decomposition.faces) ), 2):
-    mutualsHalfEdges = subdiv.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
-    if len(mutualsHalfEdges) !=0 :
-        connectivity.add_edges_from( [ (f1Idx,f2Idx, {'mutualsHalfEdges': mutualsHalfEdges}) ] )
-
-nx.draw_networkx(connectivity)
-plt.show()
-
-
-
-    
 
 
 ################################################################################

@@ -26,9 +26,75 @@ import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.transforms
 
+import matplotlib.image as mpimg
+from cStringIO import StringIO
+
+
+################################################################################
+################################################################ plotting graphs
+################################################################################
+
+
+######################################## graph plot with matplotlib
+def plot_graph_networkx(graph):
+    f, axes = plt.subplots(1)
+    nx.draw(graph)
+    plt.show()
+
+######################################## graph plot with pydot
+def plot_graph_pydot(graph):
+    # http://stackoverflow.com/questions/10379448/plotting-directed-graphs-in-python-in-a-way-that-show-all-edges-separately
+    # http://stackoverflow.com/questions/1664861/how-to-create-an-image-from-a-string-in-python
+    
+    d = nx.to_pydot(graph) # d is a pydot graph object, dot options can be easily set
+    png_str = d.create_png()
+    sio = StringIO() # file-like string, appropriate for imread below
+    sio.write(png_str)
+    sio.seek(0)
+
+    f, axes = plt.subplots(1)
+    img = mpimg.imread(sio)
+    imgplot = plt.imshow(img)
+    plt.show()
+
+
+######################################## multi graph plot with pydot
+def plot_multiple_graphs_pydot(graphs):
+
+    f, axes = plt.subplots(len(graphs))
+
+    for i,g in enumerate(graphs):
+        d = nx.to_pydot(g) # d is a pydot graph object, dot options can be easily set
+        png_str = d.create_png()
+        sio = StringIO() # file-like string, appropriate for imread below
+        sio.write(png_str)
+        sio.seek(0)
+
+        img = mpimg.imread(sio)
+        imgplot = axes[i].imshow(img)
+
+        axes[i].set_xticks([])
+        axes[i].set_yticks([])
+
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.show()
+
+######################################## graph plot with pygraphviz
+def plot_graph_pygraphviz(graph):
+    # http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
+
+    # # write graph to a dot file
+    # nx.drawing.nx_pydot.write_dot(subdiv.graph,'multi.dot')
+    # !neato -T png multi.dot > multi.png
+    pass
+
+# agraph = nx.to_agraph(subdiv.graph)
 ################################################################################
 ########################################################## interactive functions
 ################################################################################
+
+##################################### interactive functions on click
 def onClick(event):
     xe, ye = event.xdata, event.ydata
     if xe and ye:
@@ -43,7 +109,7 @@ def onClick(event):
         pass
         # print 'clicked out of border'
 
-########################################
+##################################### interactive functions on move
 def onMove(event):
     xe, ye = event.xdata, event.ydata
 
@@ -63,12 +129,9 @@ def onMove(event):
         # print 'moving out of border'
 
 
-######################################## graph plot
-def plot_graph(graph):
-    f, axes = plt.subplots(1)
-    nx.draw(graph)
-    plt.show()
-
+################################################################################
+######################################################### plotting decomposition
+################################################################################
 
 ################################### plotting edges
 def plot_edges(axis, subdiv,
@@ -239,11 +302,46 @@ def plot_decomposition_colored (subdiv,
     plt.show()
 
 
+
+
+
 ################################################################################
-##################################################################### animations
+################################################## animatining face with patches
 ################################################################################
 
-######################################### face - patch
+
+######################################## 
+def animate_face_patches(subdivision, timeInterval=1000):
+
+    fig = plt.figure( figsize=(12, 12) )
+    ax = fig.add_subplot(111)
+
+    global subdiv
+    global face_counter
+    subdiv = subdivision
+    face_counter = -1
+
+    # Create a new timer object. 1000 is default
+    timer = fig.canvas.new_timer(interval=timeInterval)
+    # tell the timer what function should be called.
+    timer.add_callback(plot_new_face_with_patch, ax)
+    # start the timer
+    timer.start()
+    # timer.stop()
+
+    # set axes limit
+    bb = subdivision.decomposition.get_extents()
+    ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
+    ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
+    
+    # plot
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.show()
+    timer.stop()
+
+
+#########################################
 def plot_new_face_with_patch(axis, faceIdx=None):
     global subdiv
     
@@ -286,21 +384,30 @@ def plot_new_face_with_patch(axis, faceIdx=None):
 
     if False: plt.savefig('face #'+str(faceIdx)+'.png')
 
-########################################
-def animate_face_patches(subdivision, timeInterval=1000):
 
-    fig = plt.figure( figsize=(12, 12) )
+################################################################################
+######################################################### animatining Half-edges
+################################################################################
+
+
+########################################
+def animate_halfEdges(subdivision, timeInterval = .1*1000):
+
+    fig = plt.figure(figsize=(12,12))
     ax = fig.add_subplot(111)
 
     global subdiv
-    global face_counter
+    global halfEdge_counter
     subdiv = subdivision
-    face_counter = -1
+    halfEdge_counter = -1
+
+    # plotting nodes
+    plot_nodes (ax, subdiv, printLabels = True)
 
     # Create a new timer object. 1000 is default
     timer = fig.canvas.new_timer(interval=timeInterval)
     # tell the timer what function should be called.
-    timer.add_callback(plot_new_face_with_patch, ax)
+    timer.add_callback(plot_new_halfEdge, ax)
     # start the timer
     timer.start()
     # timer.stop()
@@ -309,7 +416,7 @@ def animate_face_patches(subdivision, timeInterval=1000):
     bb = subdivision.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
-    
+
     # plot
     plt.axis('equal')
     plt.tight_layout()
@@ -317,8 +424,6 @@ def animate_face_patches(subdivision, timeInterval=1000):
     timer.stop()
 
 
-
-######################################### Animating
 ######################################### half-edge plots
 def plot_new_halfEdge(axis):
 
@@ -401,36 +506,3 @@ def plot_new_halfEdge(axis):
     axis.figure.canvas.draw()
 
     if False: plt.savefig('half_edge #'+str(halfEdge_counter)+'.png')
-
-########################################
-def animate_halfEdges(subdivision, timeInterval = .1*1000):
-
-    fig = plt.figure(figsize=(12,12))
-    ax = fig.add_subplot(111)
-
-    global subdiv
-    global halfEdge_counter
-    subdiv = subdivision
-    halfEdge_counter = -1
-
-    # plotting nodes
-    plot_nodes (ax, subdiv, printLabels = True)
-
-    # Create a new timer object. 1000 is default
-    timer = fig.canvas.new_timer(interval=timeInterval)
-    # tell the timer what function should be called.
-    timer.add_callback(plot_new_halfEdge, ax)
-    # start the timer
-    timer.start()
-    # timer.stop()
-
-    # set axes limit
-    bb = subdivision.decomposition.get_extents()
-    ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
-    ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
-
-    # plot
-    plt.axis('equal')
-    plt.tight_layout()
-    plt.show()
-    timer.stop()
