@@ -112,8 +112,7 @@ class ArrangementTests(unittest.TestCase):
             # arrang.transform_sequence('SRT',
             #                           ((5,5), -np.pi/2, (-10,0), ),
             #                           ((0,0), (0,0),    (0,0), ) )
-            
-            
+   
 
 
 if __name__ == '__main__':
@@ -169,7 +168,7 @@ if __name__ == '__main__':
 
 #     assert he.sTVal == sTVal
 #     assert he.eTVal == eTVal
-
+# ########################################
 
 # ########################################
 # # test face construction
@@ -182,10 +181,6 @@ if __name__ == '__main__':
 # print (he)
 # myArrangement.find_successor_HalfEdge(he)
 # ########################################
-
-
-
-
 
 # ########################################
 # # testing the successor/twin assigment

@@ -1,4 +1,3 @@
-
 '''
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
@@ -43,7 +42,7 @@ def load_data_from_yaml(fileName=None):
     Arc = mSym.ArcModified
 
     result = {}
-    curves = []
+    traits = []
 
     if 'random' in fileName: # generate an almost random case 
 
@@ -54,14 +53,14 @@ def load_data_from_yaml(fileName=None):
         Y1 = np.random.random(nl)
         X2 = np.random.random(nl)
         Y2 = np.random.random(nl)
-        curves += [ Line( args=(Point(x1,y1), Point(x2,y2)) )
+        traits += [ Line( args=(Point(x1,y1), Point(x2,y2)) )
                    for (x1,y1,x2,y2) in zip(X1,Y1,X2,Y2) ]
 
         nc = 2
         Xc = np.random.random(nc)
         Yc = np.random.random(nc)
         Rc = np.random.random(nc) + .75
-        curves += [ Circle( args=(Point(xc,yc), rc) )
+        traits += [ Circle( args=(Point(xc,yc), rc) )
                    for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
 
 
@@ -77,7 +76,7 @@ def load_data_from_yaml(fileName=None):
         p1 = Point(-np.sqrt(1 - np.cos(a1)**2 ), np.cos(a1))
         p2 = Point(+np.sqrt(1 - np.cos(a1)**2 ), np.cos(a1))
         p3 = Point(0, -1)
-        curves = [ Line( args=(p1, 0) ),
+        traits = [ Line( args=(p1, 0) ),
                    Line( args=(p3, -np.tan(a1)) ),
                    Line( args=(p3, +np.tan(a1)) ),
                    Line( args=(p1, +np.tan(a2)) ),
@@ -96,7 +95,8 @@ def load_data_from_yaml(fileName=None):
         stream = open(fileName, 'r')
         data = yaml.load(stream)
 
-        result.update( {'dataset': data['dataset']} )
+        if 'dataset' in data.keys():
+            result.update( {'dataset': data['dataset']} )
 
         if 'testValues' in data.keys():
             result.update( data['testValues'][0] )
@@ -104,27 +104,27 @@ def load_data_from_yaml(fileName=None):
         if 'lines' in data.keys():
             for l in data['lines']:
                 if len(l) == 4: #[x1,y1,x2,y2]
-                    curves += [ Line( args=(Point(l[0],l[1]), Point(l[2],l[3]))) ]
+                    traits += [ Line( args=(Point(l[0],l[1]), Point(l[2],l[3]))) ]
                 elif len(l) == 3: #[x1,y1,slope]
-                    curves += [ Line( args=(Point(l[0],l[1]), l[2])) ]
+                    traits += [ Line( args=(Point(l[0],l[1]), l[2])) ]
 
         if 'segments' in data.keys():
             for s in data['segments']:
-                curves += [ Segment( args=(Point(s[0],s[1]), Point(s[2],s[3]))) ]
+                traits += [ Segment( args=(Point(s[0],s[1]), Point(s[2],s[3]))) ]
 
         if 'rays' in data.keys():
             for r in data['rays']:
-                curves += [ Ray( args=(Point(r[0],r[1]), Point(r[2],r[3]))) ]
+                traits += [ Ray( args=(Point(r[0],r[1]), Point(r[2],r[3]))) ]
 
 
         if 'circles' in data.keys():
             for c in data['circles']:
-                curves += [ Circle( args=(Point(c[0],c[1]), c[2]) ) ]
+                traits += [ Circle( args=(Point(c[0],c[1]), c[2]) ) ]
 
         if 'arcs' in data.keys():
             for a in data['arcs']:
-                curves += [ Arc( args=( Point(a[0],a[1]), a[2], (a[3],a[4])) ) ]
+                traits += [ Arc( args=( Point(a[0],a[1]), a[2], (a[3],a[4])) ) ]
 
-    result.update( {'curves': curves} )
+    result.update( {'traits': traits} )
 
     return result

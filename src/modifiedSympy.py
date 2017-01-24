@@ -495,7 +495,8 @@ class ArcModified(CircleModified):
         note that "ArcModified" is a subClass of "CircleModified"
         but the self.obj is aggregated from sym.Circle
 
-        theta \in [-pi/2, pi/2])
+        screw_up
+        theta \in [-pi, pi])
         so how to define an arc where (t1,t2)=(pi/2, 3pi/2)
         well, best is to allow any interval ([-pi, pi] or [0, 2pi])
         and always check the tvalues +2pi and -2pi to see if whether they are

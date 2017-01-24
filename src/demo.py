@@ -69,7 +69,7 @@ test_cases_key = [
     'example_07',                   # 23: door
     'example_08',                   # 24: 
     'example_09',                   # 25: 3x segment-> 2xNode-1xEdge-0xFace
-    'example_10',                   # 26: a square with a loost branch
+    'example_10',                   # 26: a square with a loose branch
     'example_11',                   # 27: 3 circle holes in one square
     'caisr',                        # 28: 
     'specialCase_11',               # 29: 
@@ -77,14 +77,27 @@ test_cases_key = [
 
 ]
 
-test_case_id = 30
+test_case_id = 15
 timing = False
 visualize = True
 
 file_name = 'testCases/'+test_cases_key[test_case_id]+'.yaml'
+file_name = 'intel-01-occ-05cmintel-01-occ-05cm.yaml'
+
+
+#### loading SVG files
+if 1:
+    import my_svg_parser as mSVGp
+    reload(mSVGp)
+    svg_file_name = 'testCases/rect_circ_poly_line.svg'
+    svg_file_name = 'testCases/circle_lines.svg'
+    svg_file_name = 'testCases/intel-01-occ-05cm.svg'
+    file_name = mSVGp.svg_to_ymal(svg_file_name)
+
+
 data = load_data_from_yaml( file_name )
-curves = data['curves']
-# curves += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
+traits = data['traits']
+# traits += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
 
 if 'number_of_nodes' in data.keys():
     testing = True
@@ -102,7 +115,7 @@ print( '\nstart decomposition:', test_cases_key[test_case_id])
 
 tic = time.time()
 config = {'multi_processing':4, 'end_point':False}
-arrang = arr.Arrangement(curves, config)
+arrang = arr.Arrangement(traits, config)
 if timing: print( 'Arrangement time:', time.time() - tic)
 
 ################################################################################
@@ -132,8 +145,8 @@ elif not(testing):
 ################################################################## visualization
 ################################################################################
 if visualize:
-    ############################### static plotting
-    # myplt.plot_graph(arrang.graph)
+    # # static plotting
+    # # myplt.plot_graph(arrang.graph)
     # myplt.plot_decomposition_colored(arrang,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
@@ -150,13 +163,13 @@ if visualize:
     myplt.animate_face_patches(arrang, timeInterval = .5*1000)
 
 
-    ######################## plotting graphs
-    # myplt.plot_graph_pydot(arrang.graph)
-    # myplt.plot_graph_pydot(arrang.get_adjacency_graph())
-    # myplt.plot_graph_pydot(arrang.get_connectivity_graph())
-    myplt.plot_multiple_graphs_pydot( [ arrang.graph,
-                                        arrang.get_adjacency_graph(),
-                                        arrang.get_connectivity_graph() ] )
+    # ######################## plotting graphs
+    # # myplt.plot_graph_pydot(arrang.graph)
+    # # myplt.plot_graph_pydot(arrang.get_adjacency_graph())
+    # # myplt.plot_graph_pydot(arrang.get_connectivity_graph())
+    # myplt.plot_multiple_graphs_pydot( [ arrang.graph,
+    #                                     arrang.get_adjacency_graph(),
+    #                                     arrang.get_connectivity_graph() ] )
 
 
 ################################################################################

@@ -1,5 +1,5 @@
->>> change naming:
-[ ] subdivision -> arrangement
+>>> add find_face example to the README.md
+
 
 >>> Dual graphs
 [ ] in the topological graphs, graphs of the holes are disconnected from the enclosing graphs.
@@ -29,6 +29,11 @@ Find Differences:
 
 >>> 
 [v] Pass Configuration as a dictionary {Multiprocessor, Endpoint_inclusion}
+
+
+
+>>> change naming:
+[v] subdivision -> arrangement
 
 
 
