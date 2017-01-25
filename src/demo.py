@@ -25,19 +25,22 @@ elif sys.version_info[0] == 2:
     pass
 
 import time
-import itertools 
+# import itertools 
 import numpy as np
 import sympy as sym
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 import arrangement as arr
-import plotting as myplt
-import modifiedSympy as mSym
 reload(arr)
+import plotting as myplt
 reload(myplt)
-reload(mSym)
+# import modifiedSympy as mSym
+# reload(mSym)
+
 from loadFromYaml import load_data_from_yaml
+from my_svg_parser import svg_to_ymal
 
 ################################################################################
 ################################################################# initialization
@@ -77,22 +80,20 @@ test_cases_key = [
 
 ]
 
-test_case_id = 15
+test_case_id = 23
+
 timing = False
 visualize = True
 
 file_name = 'testCases/'+test_cases_key[test_case_id]+'.yaml'
 file_name = 'intel-01-occ-05cmintel-01-occ-05cm.yaml'
 
-
-#### loading SVG files
+# loading SVG files
 if 1:
-    import my_svg_parser as mSVGp
-    reload(mSVGp)
     svg_file_name = 'testCases/rect_circ_poly_line.svg'
     svg_file_name = 'testCases/circle_lines.svg'
     svg_file_name = 'testCases/intel-01-occ-05cm.svg'
-    file_name = mSVGp.svg_to_ymal(svg_file_name)
+    file_name = svg_to_ymal(svg_file_name)
 
 
 data = load_data_from_yaml( file_name )
@@ -114,7 +115,7 @@ else:
 print( '\nstart decomposition:', test_cases_key[test_case_id])
 
 tic = time.time()
-config = {'multi_processing':4, 'end_point':False}
+config = {'multi_processing':4, 'end_point':False, 'timing':True}
 arrang = arr.Arrangement(traits, config)
 if timing: print( 'Arrangement time:', time.time() - tic)
 
@@ -157,11 +158,9 @@ if visualize:
     #                          plotNodes=True, printNodeLabels=True,
     #                          plotEdges=True, printEdgeLabels=True)
     
-    
     ############################## animated plotting
     # myplt.animate_halfEdges(arrang, timeInterval = 1.*1000)
     myplt.animate_face_patches(arrang, timeInterval = .5*1000)
-
 
     # ######################## plotting graphs
     # # myplt.plot_graph_pydot(arrang.graph)
@@ -171,10 +170,42 @@ if visualize:
     #                                     arrang.get_adjacency_graph(),
     #                                     arrang.get_connectivity_graph() ] )
 
-
 ################################################################################
 ################################################################### testing area
 ################################################################################
+''' switching from sympy to svg
+
+>>> advantages:
+1) higher speed for intersection procedure
+intersection is about 97% of arrangement computation time
+svgpathtools improves the intersection computation time 40 to 200 fold (depending on the trait type)
+
+2) it has a much richer set for trait representation
+
+
+
+>>> drawbacks
+0) svgpathtools seems to be the only package to support geometric manipulation
+specifically the intersection method!
+(although pyx does it too, but it is postScript, and haven't tried it, so don't know much about the speed)
+
+1) IDK how to get the univariate representation of the traits
+which is the core requirement for my arrangement algorithms
+so!
+
+2) requires dev time
+
+3) if use svgpathtools, it only offers Line, Arc, CubicBezier and QuadraticBezier
+this means to give-up rays and infinit lines, and represent circles with arcs
+
+
+>>> conclusion
+I will use only the intersection procedure for only line segments, arcs and circles
+line segments -> svgpathtools.Line
+arcs -> svgpathtools.Arc
+circles -> svgpathtools.Arc
+'''
+
 
 
 
@@ -187,3 +218,77 @@ if visualize:
 # updating superFace of _subDecompositions[2], does not update arrang.decomposition.faces[3]
 # if subgraphs of sebdecompositions are to be relevant, every update applied to self.graph must be applied to self.subDecompositions.graph too. Or, store halfEdges separately and refer to them in the graph structure.
 ##############################
+
+########################################
+# #########SVG intersection is much much faster than sympy
+########################################
+# N = 10000
+# ('sympy lxl time:\t', 10.229342937469482)
+# ('svgpathtools lxl time:\t', 0.05286216735839844)
+# ('sympy lxc time:\t', 182.2626440525055)
+# ('svgpathtools lxa time:\t', 5.15391993522644)
+
+# tic = time.time()
+# sym_i = [ sym.intersection( sym.Line((0,0), (1,1)),
+#                             sym.Line((0,0), (1,2)) )
+#           for i in range(N) ]
+# print( 'sympy lxl time:\t', time.time() - tic )
+
+# import svgpathtools
+# tic = time.time()
+# svg_i = [ svgpathtools.Line(0+0j, 1+1j).intersect( svgpathtools.Line(0+0j, 1+2j) )
+#           for i in range(N) ]
+# print( 'svgpathtools lxl time:\t', time.time() - tic )
+
+# tic = time.time()
+# sym_i = [ sym.intersection( sym.Line((0,0), (1,1)),
+#                             sym.Circle((1,0), 1) )
+#           for i in range(N) ]
+# print( 'sympy lxc time:\t', time.time() - tic )
+
+# import svgpathtools
+# tic = time.time()
+# svg_i = [ svgpathtools.Line(0+0j, 1+1j).intersect( svgpathtools.Arc(start=-1, radius=1+1j, rotation=0, large_arc=1, sweep=1, end=2) )
+#           for i in range(N) ]
+# print( 'svgpathtools lxa time:\t', time.time() - tic )
+########################################
+
+# N = 10000
+# x = np.arange(N)
+# y = np.arange(N)
+
+# tic = time.time()
+# res_np = np.sqrt( np.diff(x)**2 + np.diff(y)**2 )
+# print( 'np time:\t', time.time() - tic )
+
+# tic = time.time()
+# res_np_for = np.array([ np.sqrt( (x[idx]-x[idx+1])**2 + (y[idx]-y[idx+1])**2 )
+#                         for idx in range(len(x)-1) ])
+# print( 'np-for time:\t', time.time() - tic )
+
+
+# tic = time.time()
+# res_sym = np.array([ sym.sqrt( (x[idx]-x[idx+1])**2 + (y[idx]-y[idx+1])**2 )
+#                      for idx in range(len(x)-1) ])
+# print( 'np-for time:\t', time.time() - tic )
+
+
+# print any(res_np_for-res_sym)
+
+# print any(res_np_for-res_np)
+
+
+###### 
+# ips = np.array([[1,4],
+#                 [2,5],
+#                 [3,6]])
+
+# xh = np.repeat( [ips[:,0]], ips.shape[0], axis=0)
+# xv = np.repeat( [ips[:,0]], ips.shape[0], axis=0).T
+# dx = xh - xv
+
+# yh = np.repeat( [ips[:,1]], ips.shape[0], axis=0)
+# yv = np.repeat( [ips[:,1]], ips.shape[0], axis=0).T
+# dy = yh - yv
+
+# dis = np.sqrt( dx**2 + dx**2)

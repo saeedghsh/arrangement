@@ -17,7 +17,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import operator
 import itertools 
@@ -34,6 +34,8 @@ import matplotlib.path as mpath
 import matplotlib.transforms
 
 import time
+
+
 ################################################################################
 ###################################################### parallelization functions
 ################################################################################
@@ -43,46 +45,22 @@ def intersection_star(*args):
     obj1 = curves[idx1].obj
     obj2 = curves[idx2].obj
 
-    # Line-Line intersection - OK (speedwise)
-    if isinstance(obj1, sym.Line) and isinstance(obj2, sym.Line):
-        P1, P2 = obj1.p1 , obj1.p2
-        P3, P4 = obj2.p1 , obj2.p2
-        denom = (P1.x-P2.x)*(P3.y-P4.y) - (P1.y-P2.y)*(P3.x-P4.x)
-        if np.abs(denom) > np.spacing(1):
-            num_x = ((P1.x*P2.y)-(P1.y*P2.x))*(P3.x-P4.x) - (P1.x-P2.x)*((P3.x*P4.y)-(P3.y*P4.x))
-            num_y = ((P1.x*P2.y)-(P1.y*P2.x))*(P3.y-P4.y) - (P1.y-P2.y)*((P3.x*P4.y)-(P3.y*P4.x))
-            return [sym.Point(num_x/denom , num_y/denom)]
-        else:
-            return []
+    intersections = sym.intersection( obj1, obj2 )
+    # for arcs: check if intersections are in the interval
+    for curve in [curves[idx1], curves[idx2]]:
+        if isinstance(curve, mSym.ArcModified):
+            for i in range(len(intersections)-1,-1,-1):
+                tval = curve.IPE(intersections[i])
+                conditions = [ curve.t1 < tval < curve.t2 ,
+                               curve.t1 < tval+2*np.pi < curve.t2, 
+                               curve.t1 < tval-2*np.pi < curve.t2 ]
+                # if (curve.t1 < tval < curve.t2):
+                if any(conditions):
+                    pass
+                else:
+                    intersections.pop(i)
 
-    else:
-        # for arcs: check if intersections are in the interval
-        intersections = sym.intersection( obj1, obj2 )
-        for curve in [curves[idx1], curves[idx2]]:
-            if isinstance(curve, mSym.ArcModified):
-                for i in range(len(intersections)-1,-1,-1):
-                    tval = curve.IPE(intersections[i])
-                    conditions = [ curve.t1 < tval < curve.t2 ,
-                                   curve.t1 < tval+2*np.pi < curve.t2, 
-                                   curve.t1 < tval-2*np.pi < curve.t2 ]
-                    # if (curve.t1 < tval < curve.t2):
-                    if any(conditions):
-                        pass
-                    else:
-                        intersections.pop(i)
-
-        return intersections
-
-################################################################################
-def distance_star(*args):
-    global intersectionPoints
-    idx1, idx2 = args[0][0], args[0][1]
-
-    p1 = intersectionPoints[idx1]
-    p2 = intersectionPoints[idx2]
-    x1, y1 = p1.x, p1.y
-    x2, y2 = p2.x, p2.y
-    return sym.sqrt( (x1-x2)**2 + (y1-y2)**2 )
+    return intersections
 
 ################################################################################
 ###################################################### some other functions
@@ -572,8 +550,8 @@ class Arrangement:
         '''
         self._multi_processing = config['multi_processing'] if ('multi_processing' in config.keys()) else 0
         self._end_point = config['end_point'] if ('end_point' in config.keys()) else False
+        self._timing = config['timing'] if ('timing' in config.keys()) else False
 
-        timing = False
         ########## reject duplicated curves and store internally
         self.curves = []
         self._store_curves(curves)
@@ -582,22 +560,22 @@ class Arrangement:
         # TODO: I know I need a directional-multi-graph, explain why
         tic = time.time()
         self.graph = nx.MultiDiGraph()
-        if timing: print( 'Graphs:', time.time() - tic )
+        if self._timing: print( 'Graph construction time:\t', time.time() - tic )
 
         #### STAGE A: construct nodes
         tic = time.time()
         self._construct_nodes()
-        if timing: print( 'nodes:', time.time() - tic )
+        if self._timing: print( 'nodes construction time:\t', time.time() - tic )
 
         #### STAGE B: construct edges
         tic = time.time()
         self._construct_edges()
-        if timing: print( 'edges:', time.time() - tic )
+        if self._timing: print( 'edges construction time:\t', time.time() - tic )
 
         ########## decomposition
         tic = time.time()
         self._decompose()
-        if timing: print( 'decomposition:', time.time() - tic )
+        if self._timing: print( 'decomposition construction time:\t', time.time() - tic )
 
 
     ############################################################################
@@ -1020,49 +998,33 @@ class Arrangement:
         # duplicate: resulted of same curves intersection
         # collocated: resulted of different curves intersection
 
-        if self._multi_processing:
-            distances = [ [ 0
-                            for col in range(len(intersectionsFlat)) ]
-                          for row in range(len(intersectionsFlat)) ]
+        # ips = np.array([[1,4],
+        #                 [2,5],
+        #                 [3,6]])
+        
+        ips_ = np.array(intersectionsFlat, dtype=np.float)
+        
+        xh = np.repeat( [ips_[:,0]], ips_.shape[0], axis=0)
+        xv = np.repeat( [ips_[:,0]], ips_.shape[0], axis=0).T
+        dx = xh - xv
+        
+        yh = np.repeat( [ips_[:,1]], ips_.shape[0], axis=0)
+        yv = np.repeat( [ips_[:,1]], ips_.shape[0], axis=0).T
+        dy = yh - yv
 
-            ipsTuplesIdx = [ [row,col]
-                             for row in range(len(intersectionsFlat))
-                             for col in range(row) ]
+        distances = np.sqrt( dx**2 + dx**2)
+        
+        
+        for idx1 in range(len(intersectionsFlat)-1,-1,-1):
+            for idx2 in range(idx1):
+                if distances[idx1][idx2] < np.spacing(10**10): # == 0:
+                    intersectionsFlat.pop(idx1)
+                    s1 = set(ipsCurveIdx[idx1])
+                    s2 = set(ipsCurveIdx[idx2])
+                    ipsCurveIdx[idx2] = list(s1.union(s2)) 
+                    ipsCurveIdx.pop(idx1)
+                    break
 
-            global intersectionPoints
-            intersectionPoints = intersectionsFlat
-            with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
-                distancesFlat = p.map( distance_star, ipsTuplesIdx)
-            del intersectionPoints
-            
-            for (row,col),dis in zip (ipsTuplesIdx, distancesFlat):
-                dVal = dis.evalf()
-                distances[row][col] = dVal
-                distances[col][row] = dVal
-
-            for idx1 in range(len(intersectionsFlat)-1,-1,-1):
-                for idx2 in range(idx1):
-                    if distances[idx1][idx2] < np.spacing(10**10): # == 0:
-                        intersectionsFlat.pop(idx1)
-                        s1 = set(ipsCurveIdx[idx1])
-                        s2 = set(ipsCurveIdx[idx2])
-                        ipsCurveIdx[idx2] = list(s1.union(s2)) 
-                        ipsCurveIdx.pop(idx1)
-                        break
-
-        else:
-            # TODO: the distance_star is updated to reject invalid intersections
-            # resulting from arcs, if multi-processing is not used, this loop
-            # should be updated to reject those wrong intersections
-            for idx1 in range(len(intersectionsFlat)-1,-1,-1):
-                for idx2 in range(idx1):
-                    if intersectionsFlat[idx1].distance(intersectionsFlat[idx2]) < np.spacing(10**10): # == 0:
-                        s1 = set(ipsCurveIdx[idx2])
-                        s2 = set(ipsCurveIdx[idx1])
-                        ipsCurveIdx[idx2] = list(s1.union(s2)) 
-                        ipsCurveIdx.pop(idx1)
-                        intersectionsFlat.pop(idx1)
-                        break
 
         assert len(intersectionsFlat) == len(ipsCurveIdx)
 
@@ -1420,11 +1382,9 @@ class Arrangement:
                 subDec.update_face_path()
 
     ############################################################################
-    def save_to_image(self,  fileName, resolution=10.):
+    def save_faces_to_svg_path(self,  fileName, resolution=10.):
         ''' 
         Arrangement class
-
-        a color coded image of arrangement
         '''
         pass #TODO(saesha)
 
