@@ -1,3 +1,5 @@
+>>> re-structure the repo into a python package 
+
 >>> add find_face example to the README.md
 
 

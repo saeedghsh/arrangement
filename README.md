@@ -17,40 +17,44 @@ Dependencies and Download
 - Installing Dependencies
 ```shell
 % python2:
-apt-get install python-numpy python-matplotlib python-sympy
-pip install networkx pyyaml
+apt-get install python-pip
+pip install numpy sympy matplotlib networkx pyyaml
 
 % python3:
-apt-get install python3-matplotlib python3-pip
-pip3 install numpy sympy networkx pyyaml
+apt-get install python3-pip
+pip3 install install numpy sympy matplotlib networkx pyyaml 
 ```
 
 - Download
 ```shell
-git clone https://github.com/saeedghsh/arrangement/ && cd arrangement/src/
+git clone https://github.com/saeedghsh/arrangement/
 ```
 
+- Usage
+```python
+import sys
+sys.path.append('path_to_arrangement_repo')
+```
 
 Basic Use and API
 -----------------
 - Basic Use
 ```python
 # define curves:
-import modifiedSympy as mSym
-curves = [mSym.CircleModified( args=((i,i), 3) ) for i in range(4)]
-
+import arrangement.geometricTraits as trts
+curves = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
 
 # deploy arrangement
-import arrangement as arr
+import arrangement.arrangement as arr
 arrang = arr.Arrangement(curves, multiProcessing=4)
 
 # visualize the result
-import plotting as myplt
-myplt.animate_face_patches(arrang)
+import arrangement.plotting as aplt
+aplt.animate_face_patches(arrang)
 ```
-<!--- ![arrangement](https://github.com/saeedghsh/arrangement/blob/master/figures/arrangement.png)
-<arrangement src="https://github.com/saeedghsh/arrangement/blob/master/figures/arrangement.png" alt="none" width="200" height="200"> --->
-![animation](https://github.com/saeedghsh/arrangement/blob/master/figures/animation.gif)
+<!--- ![arrangement](https://github.com/saeedghsh/arrangement/blob/master/docs/arrangement.png)
+<arrangement src="https://github.com/saeedghsh/arrangement/blob/master/docs/arrangement.png" alt="none" width="200" height="200"> --->
+![animation](https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif)
 
 - Storing curves in a yaml file.
 A yaml file storing the curves should look like this:
@@ -68,18 +72,17 @@ arcs:
     - [center_x, center_y, radius, interval_lower , interval_upper]
 ```
 
-See examples of yaml files in [testCases](https://github.com/saeedghsh/arrangement/tree/master/src/testCases).
-Use the script [loadFromYaml.py](https://github.com/saeedghsh/arrangement/blob/master/src/loadFromYaml.py) to retrieve data from a yaml file as following:
+See examples of yaml files in [testCases](https://github.com/saeedghsh/arrangement/tree/master/tests/testCases).
+Use the script [utils.py](https://github.com/saeedghsh/arrangement/blob/master/arrangement/utils.py) to retrieve data from a yaml file as following:
 ```python
-from loadFromYaml import load_data_from_yaml
+from arrangement.utils import load_data_from_yaml
 data = load_data_from_yaml( address+fileName )
-curves = data['curves']
+traits = data['traits]
 ```
 
-
 - Arrangement class Hierarchy (the figure is created by [Pyreverse](https://www.logilab.org/blogentry/6883))
-![classes_arrangement](https://github.com/saeedghsh/arrangement/blob/master/figures/classes_arrangement.png)
-<!--- <classes_arrangement src="https://github.com/saeedghsh/arrangement/blob/master/figures/classes_arrangement.png" alt="none" width="50" height="50"> --->
+![classes_arrangement](https://github.com/saeedghsh/arrangement/blob/master/docs/classes_arrangement.png)
+<!--- <classes_arrangement src="https://github.com/saeedghsh/arrangement/blob/master/docs/classes_arrangement.png" alt="none" width="50" height="50"> --->
 
 - Accessing nodes, edges and faces
 ```python
@@ -96,17 +99,17 @@ for fIdx,face in enumerate(arrang.decomposition.faces):
 
 - Visualization, plotting nad animating
 ```python
-myplt.plot_decomposition(arrang,
-                         interactive_onClick=False, interactive_onMove=False,
-                         plotNodes=True, printNodeLabels=True,
-                         plotEdges=True, printEdgeLabels=True)
+aplt.plot_decomposition(arrang,
+                        interactive_onClick=False, interactive_onMove=False,
+                        plotNodes=True, printNodeLabels=True,
+                        plotEdges=True, printEdgeLabels=True)
 
-myplt.animate_face_patches(arrang, timeInterval = .5*1000)
+aplt.animate_face_patches(arrang, timeInterval = .5*1000)
 ```
-<!--- ![arrangement](https://github.com/saeedghsh/arrangement/blob/master/figures/arrangement.png)
-<arrangement src="https://github.com/saeedghsh/arrangement/blob/master/figures/arrangement.png" alt="none" width="50" height="50"> --->
+<!--- ![arrangement](https://github.com/saeedghsh/arrangement/blob/master/docs/arrangement.png)
+<arrangement src="https://github.com/saeedghsh/arrangement/blob/master/docs/arrangement.png" alt="none" width="50" height="50"> --->
 
-<!--- <animation src="https://github.com/saeedghsh/arrangement/blob/master/figures/animation.png" alt="none" width="50" height="50"> --->
+<!--- <animation src="https://github.com/saeedghsh/arrangement/blob/master/docs/animation.png" alt="none" width="50" height="50"> --->
 
 - Transformation example
 ```python
@@ -117,14 +120,14 @@ arrang.transform_sequence('S', ( (.2,.2), ), ( (0,0), ) )
 arrang.transform_sequence('SRT', ((5,5), -np.pi/2, (-10,0), ),
                                  ((0,0), (0,0),    (0,0), ) )
 ```
-<!--- ![translate](https://github.com/saeedghsh/arrangement/blob/master/figures/T.png)
-<translate src="https://github.com/saeedghsh/arrangement/blob/master/figures/T.png" alt="none" width="50" height="50">
-![rotate](https://github.com/saeedghsh/arrangement/blob/master/figures/R.png)
-<rotate src="https://github.com/saeedghsh/arrangement/blob/master/figures/R.png" alt="none" width="50" height="50">
-![scale](https://github.com/saeedghsh/arrangement/blob/master/figures/S.png)
-<scale src="https://github.com/saeedghsh/arrangement/blob/master/figures/S.png" alt="none" width="50" height="50">
-![SRT](https://github.com/saeedghsh/arrangement/blob/master/figures/SRT.png)
-<SRT src="https://github.com/saeedghsh/arrangement/blob/master/figures/SRT.png" alt="none" width="50" height="50"> --->
+<!--- ![translate](https://github.com/saeedghsh/arrangement/blob/master/docs/T.png)
+<translate src="https://github.com/saeedghsh/arrangement/blob/master/docs/T.png" alt="none" width="50" height="50">
+![rotate](https://github.com/saeedghsh/arrangement/blob/master/docs/R.png)
+<rotate src="https://github.com/saeedghsh/arrangement/blob/master/docs/R.png" alt="none" width="50" height="50">
+![scale](https://github.com/saeedghsh/arrangement/blob/master/docs/S.png)
+<scale src="https://github.com/saeedghsh/arrangement/blob/master/docs/S.png" alt="none" width="50" height="50">
+![SRT](https://github.com/saeedghsh/arrangement/blob/master/docs/SRT.png)
+<SRT src="https://github.com/saeedghsh/arrangement/blob/master/docs/SRT.png" alt="none" width="50" height="50"> --->
 
 <!---
 - Checking sundivisions' intersection
@@ -145,12 +148,12 @@ print arrang.decomposition.does_enclose(arrang_new.decomposition)
 ```python
 # arrang.merge_faces([face_indices,])
 arrang.merge_faces([2,3,4,5,6,7,8,9])
-myplt.animate_face_patches(arrang)
+aplt.animate_face_patches(arrang)
 ```
-![merge_faces](https://github.com/saeedghsh/arrangement/blob/master/figures/merge_faces.png)
-<!--- <merge_faces src="https://github.com/saeedghsh/arrangement/blob/master/figures/merge_faces.png" alt="none" width="50" height="50"> --->
+![merge_faces](https://github.com/saeedghsh/arrangement/blob/master/docs/merge_faces.png)
+<!--- <merge_faces src="https://github.com/saeedghsh/arrangement/blob/master/docs/merge_faces.png" alt="none" width="50" height="50"> --->
 
-For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/src/demo.py).
+For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/demo.py).
 
 <!--- 
 Limitations, Bugs and TODO

@@ -19,12 +19,16 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 from __future__ import print_function
 
 import os
+import sys
 import unittest
 
 import numpy as np
 
-import arrangement as arr
-from loadFromYaml import load_data_from_yaml
+if not( os.path.abspath('./../') in sys.path):
+    sys.path.append( os.path.abspath('./../') )
+
+import arrangement.arrangement as arr
+from arrangement.utils import load_data_from_yaml
 
 ################################################################################
 ################################################################## testing class
@@ -53,14 +57,15 @@ class ArrangementTests(unittest.TestCase):
         fileList = [ fileName
                      for fileName in os.listdir(address)
                      if (len(fileName)>5 and fileName[-5:]=='.yaml') ]
-
+        
+        
         for fileIdx, fileName in enumerate(sorted(fileList)):
-            
+            print (fileName)
             data = load_data_from_yaml( address+fileName )
             print('testing case: ' + data['dataset'] , '-\t', fileIdx+1, '/', len(fileList))
-            curves = data['curves']
+            traits = data['traits']
             config = {'multi_processing':4, 'end_point':False}
-            arrang = arr.Arrangement(curves, config)
+            arrang = arr.Arrangement(traits, config)
 
             # ########## testing twin assignment
             # self.assertEqual( self.test_twinAssignment(arrang), True,
@@ -134,12 +139,12 @@ if __name__ == '__main__':
 #     n_point = myArrangement.nodes[n_idx][1]['obj'].point
 #     assert(n_point.compare(p) == 0)
 
-# # are nodes assigned correctly to curves?
-# for c_idx, curve in enumerate(myArrangement.curves):
+# # are nodes assigned correctly to traits?
+# for c_idx, trait in enumerate(myArrangement.traits):
 #     for n_idx, node in enumerate(myArrangement.nodes):
 #         point = myArrangement.nodes[n_idx][1]['obj'].point
-#         if curve.obj.contains(point):
-#             if not( c_idx in myArrangement.ipsCurveIdx[n_idx] ):
+#         if trait.obj.contains(point):
+#             if not( c_idx in myArrangement.ipsTraitIdx[n_idx] ):
 #                 print( 'error' )
 # ########################################
 
@@ -158,8 +163,8 @@ if __name__ == '__main__':
 # for s,e,k in myArrangement.get_all_HalfEdge_indices():
 #     he = myArrangement.graph[s][e][k]['obj']
 
-#     sTVal = nodes[s].curveTval[nodes[s].curveIdx.index(he.cIdx)]
-#     eTVal = nodes[e].curveTval[nodes[e].curveIdx.index(he.cIdx)]
+#     sTVal = nodes[s].traitTval[nodes[s].traitIdx.index(he.cIdx)]
+#     eTVal = nodes[e].traitTval[nodes[e].traitIdx.index(he.cIdx)]
     
 #     if (he.direction=='positive') and not(sTVal < eTVal):
 #         eTVal += 2*np.pi

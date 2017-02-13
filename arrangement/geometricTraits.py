@@ -153,7 +153,7 @@ class LineModified:
         LineModified class
 
         although it is independant of the location of the point
-        we include for consistency with a general form of curves
+        we include for consistency with a general form of traits
         note: direction does not affect the 2nd derivative of a line
         '''
         return np.array([0. ,0.], float)
@@ -164,7 +164,7 @@ class LineModified:
         LineModified class
 
         although it is independant of the location of the point
-        we include for consistency with a general form of curves
+        we include for consistency with a general form of traits
 
         theta \in [0,2pi]
         '''
@@ -178,7 +178,7 @@ class LineModified:
         LineModified class
 
         although it is independant of the location of the point
-        we include for consistency with a general form of curves
+        we include for consistency with a general form of traits
         note: direction does not affect the curvature of a line
         '''
         return 0.
@@ -241,8 +241,8 @@ class RayModified(LineModified):
         '''
 
         # TODO: 
-        # this condition checking is a problem when the curve and a node on it are rotated,
-        # but after rotation, the node is slightly off the curve and this function would return False!
+        # this condition checking is a problem when the trait and a node on it are rotated,
+        # but after rotation, the node is slightly off the trait and this function would return False!
         # temporarily I disable this condition checking until later
 
         if True: #self.obj.contains(point):
@@ -314,8 +314,8 @@ class SegmentModified(LineModified):
         '''
 
         # TODO: 
-        # this condition checking is a problem when the curve and a node on it are rotated,
-        # but after rotation, the node is slightly off the curve and this function would return False!
+        # this condition checking is a problem when the trait and a node on it are rotated,
+        # but after rotation, the node is slightly off the trait and this function would return False!
         # temporarily I disable this condition checking until later
 
         if True: # self.obj.contains(point):
@@ -462,7 +462,7 @@ class CircleModified:
         CircleModified class
 
         although it is independant of the location of the point
-        we include for consistency with a general form of curves
+        we include for consistency with a general form of traits
 
         theta \in [0,2pi]
         '''
@@ -477,7 +477,7 @@ class CircleModified:
         CircleModified class
 
         although it is independant of the location of the point
-        we include for consistency with a general form of curves
+        we include for consistency with a general form of traits
         '''
         k = 1./self.obj.radius
         return k if direction == 'positive' else -1*k

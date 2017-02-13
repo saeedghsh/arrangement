@@ -15,17 +15,22 @@ PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
+import os
+import sys
 import numpy as np
 import sympy as sym
 import matplotlib.pyplot as plt
 
-import sys
-sys.path.append('../')
-import plotting as myplt
-import modifiedSympy as mSym
-reload(mSym)
-reload(myplt)
-from loadFromYaml import load_data_from_yaml
+if not( os.path.abspath('./../') in sys.path):
+    sys.path.append( os.path.abspath('./../') )
+
+from arrangement.utils import load_data_from_yaml
+import arrangement.geometricTraits as trts
+# reload(trts)
+
+sys.path.append('/home/saesha/Dropbox/myGits/dev/')
+import my_svg_parser_dev as mSVGp
+reload(mSVGp)
 
 ################################################################################
 ################################################################# initialization
@@ -65,26 +70,51 @@ test_cases_key = [
 ]
 
 ######################################## load data
-testNumber = 18
 timing = False
 
+if 1:
+    '''laoding yaml file'''    
+    testNumber = 18
+    file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
+    
+else:
+    
+    '''laoding svg file (+ converting 2 yaml)'''
+    
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/circle_lines.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/intel-01-occ-05cm.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/svg_test_case_complete.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/svg_test_case.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/rect_circ_poly_line.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/long_straight_path.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/hfab_110-001-06-0501.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/arrangement/src/testCases/svg_files/islab_01.svg'
+    svg_file_name = '/home/saesha/Dropbox/myGits/arrangement/src/testCases/svg_files/islab_01_with_image (copy).svg'
+    
+    # yaml_file_name = svg_to_ymal(dir_addr + svg_file_name)
+    yaml_file_name = mSVGp.svg_to_ymal(svg_file_name)
 
-file_name = '../testCases/'+test_cases_key[testNumber]+'.yaml'
+    file_name = yaml_file_name
+    print file_name
+
+
+# laoding yaml file
 data = load_data_from_yaml( file_name )
-curves = data['traits']
+traits = data['traits']
+
 
 
 ### find a bounding box
 x,y = [], []
-for idx, curve in enumerate(curves):
-    if isinstance( curve.obj, sym.Circle ):
+for idx, trait in enumerate(traits):
+    if isinstance( trait.obj, sym.Circle ):
         theta = np.linspace(0, 2*np.pi, 4, endpoint=False)
-        xc,yc,rc = curve.obj.center.x, curve.obj.center.y, curve.obj.radius
+        xc,yc,rc = trait.obj.center.x, trait.obj.center.y, trait.obj.radius
         x.extend( xc + rc * np.cos(theta) )
         y.extend( yc + rc * np.sin(theta) )
-    elif isinstance( curve.obj, sym.Line ):
-        x.extend( [curve.obj.p1.x, curve.obj.p2.x] )
-        y.extend( [curve.obj.p1.y, curve.obj.p2.y] )
+    elif isinstance( trait.obj, sym.Line ):
+        x.extend( [trait.obj.p1.x, trait.obj.p2.x] )
+        y.extend( [trait.obj.p1.y, trait.obj.p2.y] )
 
 if len(x)!=0:
     xMin = np.float(min([x_.evalf() for x_ in x]))
@@ -105,37 +135,37 @@ axis = fig.add_subplot(111)
 clrs = {'cir':'b', 'arc':'b', 'lin':'r', 'seg':'g', 'ray':'g'}
 alph = {'cir': 1., 'arc': 1., 'lin': 1., 'seg': 1., 'ray': 1.}
 
-for idx, curve in enumerate(curves):
+for idx, trait in enumerate(traits):
 
     # note: order of the conditions matter since arcModified is subclass of CircleModified
-    if isinstance( curve, mSym.ArcModified ):
-        t1,t2 = curve.t1 , curve.t2
+    if isinstance( trait, trts.ArcModified ):
+        t1,t2 = trait.t1 , trait.t2
         tStep = max( [np.float(np.abs(t2-t1)*(180/np.pi)) ,2])
         theta = np.linspace(np.float(t1), np.float(t2), tStep, endpoint=True)
-        xc, yc, rc = curve.obj.center.x , curve.obj.center.y , curve.obj.radius
+        xc, yc, rc = trait.obj.center.x , trait.obj.center.y , trait.obj.radius
         x = xc + rc * np.cos(theta)
         y = yc + rc * np.sin(theta)
         axis.plot (x, y, clrs['arc'], alpha=alph['arc'])
 
-    elif isinstance( curve, mSym.CircleModified ):
+    elif isinstance( trait, trts.CircleModified ):
         tStep = 360
         theta = np.linspace(0, 2*np.pi, tStep, endpoint=True)
 
-        xc,yc,rc = curve.obj.center.x, curve.obj.center.y, curve.obj.radius
+        xc,yc,rc = trait.obj.center.x, trait.obj.center.y, trait.obj.radius
         x = xc + rc * np.cos(theta)
         y = yc + rc * np.sin(theta)
         axis.plot (x, y, clrs['cir'], alpha=alph['cir'])
 
-    elif isinstance( curve, mSym.SegmentModified ):
-        x = [curve.obj.p1.x, curve.obj.p2.x]
-        y = [curve.obj.p1.y, curve.obj.p2.y]
+    elif isinstance( trait, trts.SegmentModified ):
+        x = [trait.obj.p1.x, trait.obj.p2.x]
+        y = [trait.obj.p1.y, trait.obj.p2.y]
         axis.plot (x, y, clrs['seg'], alpha=alph['seg'])
 
-    elif isinstance( curve, mSym.RayModified ):
+    elif isinstance( trait, trts.RayModified ):
         # find the ending point on one of the bLines
         ips = []
         for bl in bLines:
-            ips.extend( sym.intersection(curve.obj, bl) )
+            ips.extend( sym.intersection(trait.obj, bl) )
         for i in range(len(ips)-1,-1,-1):
             if not isinstance(ips[i], sym.Point):
                 ips.pop(i)
@@ -143,20 +173,20 @@ for idx, curve in enumerate(curves):
                 ips.pop(i)
 
         # plot the ray
-        x = np.float(curve.obj.p1.x.evalf())
-        y = np.float(curve.obj.p1.y.evalf())
-        dx = np.float(ips[0].x.evalf()) - np.float(curve.obj.p1.x.evalf())
-        dy = np.float(ips[0].y.evalf()) - np.float(curve.obj.p1.y.evalf())
+        x = np.float(trait.obj.p1.x.evalf())
+        y = np.float(trait.obj.p1.y.evalf())
+        dx = np.float(ips[0].x.evalf()) - np.float(trait.obj.p1.x.evalf())
+        dy = np.float(ips[0].y.evalf()) - np.float(trait.obj.p1.y.evalf())
         axis.arrow( np.float(x),np.float(y),
                     np.float(dx),np.float(dy), # shape='right',
                     # linewidth = 1, head_width = 0.1, head_length = 0.2,
                     fc = clrs['ray'], ec = clrs['ray'], alpha=alph['ray'])
 
-    elif isinstance( curve, mSym.LineModified ):
+    elif isinstance( trait, trts.LineModified ):
         # find the ending points on the bLines
         ips = []
         for bl in bLines:
-            ips.extend( sym.intersection(curve.obj, bl) )
+            ips.extend( sym.intersection(trait.obj, bl) )
 
         for i in range(len(ips)-1,-1,-1):
             if not isinstance(ips[i], sym.Point):
@@ -170,7 +200,7 @@ for idx, curve in enumerate(curves):
         axis.plot (x, y, clrs['lin'], alpha=alph['lin'])
 
     else:
-        print 'curve n#', str(idx), 'unknown'
+        print 'trait n#', str(idx), 'unknown'
 
 plt.axis('equal')
 plt.tight_layout()

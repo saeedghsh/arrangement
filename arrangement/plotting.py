@@ -149,12 +149,12 @@ def plot_edges(axis, arrang,
     for (start, end, k) in halfEdgeList:
         
         he_obj = arrang.graph[start][end][k]['obj']
-        curve_obj = arrang.curves[he_obj.curveIdx].obj
+        trait_obj = arrang.traits[he_obj.traitIdx].obj
         
         thei =  he_obj.twinIdx
-        sTVal, eTVal = he_obj.get_tvals(arrang.curves, arrang.graph.node)
+        sTVal, eTVal = he_obj.get_tvals(arrang.traits, arrang.graph.node)
 
-        if isinstance(curve_obj, (sym.Line, sym.Segment, sym.Ray) ):
+        if isinstance(trait_obj, (sym.Line, sym.Segment, sym.Ray) ):
             if sTVal!=sym.oo and sTVal!=-sym.oo and eTVal!=sym.oo and eTVal!=-sym.oo:
                 p1 = arrang.graph.node[start]['obj'].point
                 p2 = arrang.graph.node[end]['obj'].point
@@ -180,11 +180,11 @@ def plot_edges(axis, arrang,
                                    'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                    fontdict={'color':col,  'size': 10})
 
-        elif isinstance(curve_obj, sym.Circle):
+        elif isinstance(trait_obj, sym.Circle):
             tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
             theta = np.linspace(np.float(sTVal), np.float(eTVal),
                                 tStep, endpoint=True)
-            xc, yc, rc = curve_obj.center.x , curve_obj.center.y , curve_obj.radius
+            xc, yc, rc = trait_obj.center.x , trait_obj.center.y , trait_obj.radius
             x = xc + rc * np.cos(theta)
             y = yc + rc * np.sin(theta)
 
@@ -239,6 +239,7 @@ def plot_nodes (axis, arrang, nodes=None,
 
 ######################################## plot decomposition, no faces 
 def plot_decomposition(arrangement,
+                       invert_axis = [],# ['x','y']
                        interactive_onClick=False,
                        interactive_onMove=False,
                        plotNodes=False, printNodeLabels=False,
@@ -267,6 +268,9 @@ def plot_decomposition(arrangement,
     bb = arrang.decomposition.get_extents()
     ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
     ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
+
+    if 'x' in invert_axis: ax.invert_xaxis()
+    if 'y' in invert_axis: ax.invert_yaxis()
 
     plt.axis('equal')
     plt.tight_layout()
@@ -321,7 +325,7 @@ def animate_face_patches(arrangement, timeInterval=1000):
     face_counter = -1
 
     # Create a new timer object. 1000 is default
-    timer = fig.canvas.new_timer(interval=timeInterval)
+    timer = fig.canvas.new_timer(interval= int(timeInterval))
     # tell the timer what function should be called.
     timer.add_callback(plot_new_face_with_patch, ax)
     # start the timer
@@ -468,7 +472,7 @@ def plot_new_halfEdge(axis):
     #     px, py = p1.x.evalf() , p1.y.evalf()
     #     he_obj = arrang.graph[start][end][k]['obj']
 
-    #     # Blue: 1st derivative - tangent to the curve
+    #     # Blue: 1st derivative - tangent to the trait
     #     dx,dy = he_obj.s1stDer
     #     axis.arrow(px,py, dx,dy,
     #                length_includes_head = True,

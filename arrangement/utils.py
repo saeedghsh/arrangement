@@ -26,8 +26,8 @@ elif sys.version_info[0] == 2:
 import yaml
 import sympy as sym
 import numpy as np
-import modifiedSympy as mSym
-reload(mSym)
+from . import geometricTraits as trts
+reload(trts)
 
 ################################################################################
 ################################################################################
@@ -35,11 +35,11 @@ reload(mSym)
 def load_data_from_yaml(fileName=None):
 
     Point = sym.Point
-    Line = mSym.LineModified
-    Ray = mSym.RayModified
-    Segment = mSym.SegmentModified
-    Circle = mSym.CircleModified
-    Arc = mSym.ArcModified
+    Line = trts.LineModified
+    Ray = trts.RayModified
+    Segment = trts.SegmentModified
+    Circle = trts.CircleModified
+    Arc = trts.ArcModified
 
     result = {}
     traits = []
@@ -110,7 +110,9 @@ def load_data_from_yaml(fileName=None):
 
         if 'segments' in data.keys():
             for s in data['segments']:
-                traits += [ Segment( args=(Point(s[0],s[1]), Point(s[2],s[3]))) ]
+                seg = Segment( args=(Point(s[0],s[1]), Point(s[2],s[3])))
+                if isinstance(seg.obj, sym.Segment): # not(isinstance(seg.obj, sym.Point))
+                    traits += [ seg ]
 
         if 'rays' in data.keys():
             for r in data['rays']:

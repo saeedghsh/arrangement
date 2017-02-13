@@ -1,0 +1,6 @@
+###### Requirements with Version Specifiers ######
+numpy >= 1.10.2
+sympy >= 1.0
+networkx >= 1.10
+matplotlib >= 1.4.3
+yaml >= 3.10

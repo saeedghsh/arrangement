@@ -16,15 +16,14 @@ You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
-
 from __future__ import print_function, division
 
+import time
 import operator
 import itertools 
 
 import numpy as np
 import sympy as sym
-import modifiedSympy as mSym
 import networkx as nx
 
 import multiprocessing as mp
@@ -33,28 +32,29 @@ import contextlib as ctx
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-import time
+from . import geometricTraits as trts
 
+# import svgpathtools
 
 ################################################################################
 ###################################################### parallelization functions
 ################################################################################
 def intersection_star(*args):
-    global curves
+    global traits
     idx1, idx2 = args[0][0], args[0][1]
-    obj1 = curves[idx1].obj
-    obj2 = curves[idx2].obj
+    obj1 = traits[idx1].obj
+    obj2 = traits[idx2].obj
 
     intersections = sym.intersection( obj1, obj2 )
     # for arcs: check if intersections are in the interval
-    for curve in [curves[idx1], curves[idx2]]:
-        if isinstance(curve, mSym.ArcModified):
+    for trait in [traits[idx1], traits[idx2]]:
+        if isinstance(trait, trts.ArcModified):
             for i in range(len(intersections)-1,-1,-1):
-                tval = curve.IPE(intersections[i])
-                conditions = [ curve.t1 < tval < curve.t2 ,
-                               curve.t1 < tval+2*np.pi < curve.t2, 
-                               curve.t1 < tval-2*np.pi < curve.t2 ]
-                # if (curve.t1 < tval < curve.t2):
+                tval = trait.IPE(intersections[i])
+                conditions = [ trait.t1 < tval < trait.t2 ,
+                               trait.t1 < tval+2*np.pi < trait.t2, 
+                               trait.t1 < tval-2*np.pi < trait.t2 ]
+                # if (trait.t1 < tval < trait.t2):
                 if any(conditions):
                     pass
                 else:
@@ -66,11 +66,11 @@ def intersection_star(*args):
 ###################################################### some other functions
 ################################################################################
 ################################### converting face to mpl.path
-def edgeList_2_mplPath (edgeList, graph, curves):
+def edgeList_2_mplPath (edgeList, graph, traits):
     '''
     important note:
     this works only if the edgeList is sorted
-    and the sequence of edges shall represent a simple closed curve (path)
+    and the sequence of edges shall represent a simple closed trait (path)
     '''
     
     # step1: initialization - openning the path
@@ -86,18 +86,18 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 
         (start, end, k) = halfEdge
         halfEdge_obj = graph[start][end][k]['obj']
-        cIdx = halfEdge_obj.curveIdx
-        sTVal, eTVal = halfEdge_obj.get_tvals(curves, graph.node)
+        cIdx = halfEdge_obj.traitIdx
+        sTVal, eTVal = halfEdge_obj.get_tvals(traits, graph.node)
 
 
-        if isinstance(curves[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
+        if isinstance(traits[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
             p2 = graph.node[end]['obj'].point
             x, y = p2.x.evalf(), p2.y.evalf()
             verts.append( (x,y) )
             codes.append( mpath.Path.LINETO )
 
-        elif isinstance(curves[cIdx].obj, sym.Circle):
-            circ = curves[cIdx].obj
+        elif isinstance(traits[cIdx].obj, sym.Circle):
+            circ = traits[cIdx].obj
             xc, yc, rc = circ.center.x , circ.center.y , circ.radius
             
             # create an arc 
@@ -154,20 +154,20 @@ def edgeList_2_mplPath (edgeList, graph, curves):
 ################################################################# Face
 ################################################################################
 class Node:
-    def __init__ (self, selfIdx, point, curveIdx, curves):
+    def __init__ (self, selfIdx, point, traitIdx, traits):
         '''
         '''
 
         self.attributes = {}
         self.selfIdx = selfIdx   # self-index
         self.point = point
-        self._curveIdx = curveIdx
-        self._curveTval = []
-        self.update_tval(curves)
+        self._traitIdx = traitIdx
+        self._traitTval = []
+        self.update_tval(traits)
 
 
     ####################################
-    def transform_sequence(self, operTypes, operVals, operRefs, curves):
+    def transform_sequence(self, operTypes, operVals, operRefs, traits):
         '''
         Node class
 
@@ -205,43 +205,53 @@ class Node:
                 ref = operRefs[opIdx]
                 self.point = self.point.scale(sx,sy,ref)
 
-        # updating self._curveTval after transforming the self.point
-        self.update_tval(curves)
+        # updating self._traitTval after transforming the self.point
+        self.update_tval(traits)
 
     ####################################
-    def update_tval (self, curves):
+    def update_tval (self, traits):
         '''
         Node class
         '''
-        self._curveTval = [curves[cIdx].IPE(self.point) for cIdx in self._curveIdx]
+        self._traitTval = [traits[cIdx].IPE(self.point) for cIdx in self._traitIdx]
             
 
 ################################################################################
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
-                  curveIdx, direction):
+                  traitIdx, direction):
         '''
         '''
         self.attributes = {}
         self.selfIdx = selfIdx   # self-index (startNodeIdx, endNodeIdx, pathIdx)
         self.twinIdx = twinIdx   # index to the twin half-edge
-        self.succIdx = None # index to the successor half-edge
+        self.succIdx = None      # index to the successor half-edge
 
-        # half edge Curve's attributes:
-        self.curveIdx = curveIdx           # Index of the curve creating the edge
-        self.direction = direction # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
+        # half edge Trait's attributes:
+        self.traitIdx = traitIdx    # Index of the trait creating the edge
+        self.direction = direction  # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
 
     ####################################
-    def get_tvals(self, curves, nodes):
+    def get_tvals(self, traits, nodes):
         '''
         HalfEdge class
+
+        usage: (sTVal, eTVal) = halfedge.get_tvals (traits, nodes)
+
+        traits: traits stored in the arrangment (arrangment.traits)
+        nodes: nodes of the main graph of the arrangment (arrangment.graph.node)
+
+        sTVal: t-value of the trait corresponding to the starting node of the half-edge
+        eTVal: t-value of the trait corresponding to the ending node of the half-edge
+
+        trait.DPE(TVal) = node.point
         '''
         (s,e,k) = self.selfIdx
 
-        sTVal = nodes[s]['obj']._curveTval[nodes[s]['obj']._curveIdx.index(self.curveIdx)]
-        eTVal = nodes[e]['obj']._curveTval[nodes[e]['obj']._curveIdx.index(self.curveIdx)]
+        sTVal = nodes[s]['obj']._traitTval[nodes[s]['obj']._traitIdx.index(self.traitIdx)]
+        eTVal = nodes[e]['obj']._traitTval[nodes[e]['obj']._traitIdx.index(self.traitIdx)]
 
         # for the case of circles and the half-edge that crosses the theta=0=2pi
         if (self.direction=='positive') and not(sTVal < eTVal):
@@ -273,14 +283,14 @@ class Face:
                 for heIdx in hole.halfEdges ]  + self.halfEdges
         
     ####################################
-    def update_path(self, graph, curves):
+    def update_path(self, graph, traits):
         '''
         Face class
         '''
-        self.path = edgeList_2_mplPath (self.halfEdges, graph, curves)
+        self.path = edgeList_2_mplPath (self.halfEdges, graph, traits)
 
         for hole in self.holes:
-            hole.path = edgeList_2_mplPath (hole.halfEdges, graph, curves)
+            hole.path = edgeList_2_mplPath (hole.halfEdges, graph, traits)
 
     ####################################
     def get_area(self, considerHoles=True):
@@ -288,7 +298,7 @@ class Face:
         Face class
 
         Be aware that path.to_polygons() is an approximation of the face,
-        if it contains curves, consequently the area would be approximated
+        if it contains traits, consequently the area would be approximated
 
         Green's theorem could provide an accurate measure of the area
         '''
@@ -376,11 +386,11 @@ class Face:
         
 ################################################################################
 class Decomposition:
-    def __init__ (self, graph, curves, faces, superFaceIdx=None):
+    def __init__ (self, graph, traits, faces, superFaceIdx=None):
         '''
         '''
         self.graph = graph
-        self.curves = curves
+        self.traits = traits
 
         if superFaceIdx is not None:
             f = list(faces)
@@ -528,10 +538,10 @@ class Decomposition:
         Decomposition class
         '''
         for face in self.faces:
-            face.update_path(self.graph, self.curves)
+            face.update_path(self.graph, self.traits)
 
         if self.superFace != None:
-            self.superFace.update_path(self.graph, self.curves)
+            self.superFace.update_path(self.graph, self.traits)
 
         
 ################################################################################
@@ -540,9 +550,9 @@ class Decomposition:
 ################################################################################
 class Arrangement:
     ############################################################################
-    def __init__ (self, curves , config):
+    def __init__ (self, traits , config):
         '''
-        curves are aggregated instances of sympy's geometric module
+        traits are aggregated instances of sympy's geometric module
         (e.g. LineModified, CircleModified, ...)
 
         multiProcessing=0 -> no multi-processing
@@ -552,9 +562,9 @@ class Arrangement:
         self._end_point = config['end_point'] if ('end_point' in config.keys()) else False
         self._timing = config['timing'] if ('timing' in config.keys()) else False
 
-        ########## reject duplicated curves and store internally
-        self.curves = []
-        self._store_curves(curves)
+        ########## reject duplicated traits and store internally
+        self.traits = []
+        self._store_traits(traits)
 
         ########## construct the base graph
         # TODO: I know I need a directional-multi-graph, explain why
@@ -578,63 +588,71 @@ class Arrangement:
         if self._timing: print( 'decomposition construction time:\t', time.time() - tic )
 
 
-    ############################################################################
-    def get_connectivity_graph(self):
-        '''
-        Arrangement class
-        
-        arrang.decomposition is the main decomposition. I contains all the faces.
-        arrang.decomposition -> connectivity
-        '''
-        
-        connectivity = nx.MultiGraph()
-        nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(self.decomposition.faces)]
-        connectivity.add_nodes_from( nodes )
 
-        for (f1Idx,f2Idx) in itertools.combinations( range(len(self.decomposition.faces) ), 2):
-            mutualHalfEdges = self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
-            if len(mutualHalfEdges) !=0 :
-                # note that even if two faces share more than one pair of twin half-edges,
-                # still there will be one connecting edge between the two.
-                connectivity.add_edges_from( [ (f1Idx,f2Idx, {'mutualHalfEdges': mutualHalfEdges}) ] )
-
-        return connectivity
-    
     ############################################################################
-    def get_adjacency_graph(self):
+    def get_prime_graph(self):
         '''
         Arrangement class
 
-        arrang.graph is the main graph. I contains all sub-graphs (disconnected).
-        arrang.graph -> adjacency
+        arrang.graph is the main graph. It contains all sub-graphs (disconnected).
+        arrang.graph -> prime
 
         why wouldn't this work?
-        adjacency = arrang.graph.to_undirected()
+        prime = arrang.graph.to_undirected()
         because the correspondance between indices of the edges of the original graph
-        and the adjacency graph is missing, hence we don't know which edge in adjacency
+        and the prime graph is missing, hence we don't know which edge in prime
         corresponds to which face in the arrang.decomposition.faces
         '''
 
-
-        adjacency = nx.MultiGraph()
+        prime = nx.MultiGraph()
         # adding edges will creat the nodes, so why do we add nodes first? redundant?
         # yes, redundant. But if there is a non-connected node in the original graph
         # it will be missed through adding edge process.
         all_nodes_idx = [ [ idx, {} ] for idx in self.graph.nodes() ] 
-        adjacency.add_nodes_from( all_nodes_idx ) 
+        prime.add_nodes_from( all_nodes_idx ) 
         
+
         all_halfedges_idx = [halfEdgeIdx for halfEdgeIdx in self.graph.edges(keys=True)]
         while len(all_halfedges_idx) != 0:
             (s,e,k) = all_halfedges_idx[-1]
             (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
             
-            edge = ( s, e, {'corresponding': [(s,e,k), (ts,te,tk)]} )
-            adjacency.add_edges_from([edge])
+            edge = ( s, e, {'corresponding_halfedges_idx': [(s,e,k), (ts,te,tk)]} )
+            prime.add_edges_from([edge])
             
             all_halfedges_idx.pop( all_halfedges_idx.index((s,e,k)) )
             all_halfedges_idx.pop( all_halfedges_idx.index((ts,te,tk)) )
 
-        return adjacency
+        return prime
+
+
+    ############################################################################
+    def get_dual_graph(self):
+        '''
+        Arrangement class\
+        
+        arrang.decomposition is the main decomposition. I contains all the faces.
+        arrang.decomposition -> dual
+        '''
+        
+        dual = nx.MultiGraph()
+
+        # per each face, a node is created in the dual graph
+        # nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(self.decomposition.faces)]
+        nodes = [ [fIdx, {}] for fIdx,face in enumerate(self.decomposition.faces)]
+        dual.add_nodes_from( nodes )
+
+        # for every pair of faces an edge is added to the dual graph if they are neighbours
+        for (f1Idx,f2Idx) in itertools.combinations( range(len(self.decomposition.faces) ), 2):
+            mutualHalfEdges = self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
+            if len(mutualHalfEdges) !=0 :
+                # note that even if two faces share more than one pair of twin half-edges,
+                # still there will be one connecting edge between the two.
+                dual.add_edges_from( [ (f1Idx,f2Idx, {}) ] )
+                # dual.add_edges_from( [ (f1Idx,f2Idx, {'mutualHalfEdges': mutualHalfEdges}) ] )
+
+        return dual
+    
 
 
     ############################################################################
@@ -709,15 +727,15 @@ class Arrangement:
                                 # ta: twin's departure angle
                                 (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
                                 twin = self.graph[ts][te][tk]['obj']
-                                curve = self.curves[twin.curveIdx]
-                                ta = curve.tangentAngle( self.graph.node[ts]['obj'].point,
+                                trait = self.traits[twin.traitIdx]
+                                ta = trait.tangentAngle( self.graph.node[ts]['obj'].point,
                                                          twin.direction)
                                 
                                 # sa: successor's departure angle
                                 (ss,se,sk) = self.graph[s][e][k]['obj'].succIdx
                                 succ = self.graph[ss][se][sk]['obj']
-                                curve = self.curves[succ.curveIdx]
-                                sa = curve.tangentAngle( self.graph.node[ss]['obj'].point,
+                                trait = self.traits[succ.traitIdx]
+                                sa = trait.tangentAngle( self.graph.node[ss]['obj'].point,
                                                          succ.direction)
                                 
                                 # sa, ta in [0,2pi]
@@ -740,7 +758,7 @@ class Arrangement:
                     facesArea = [face.get_area() for face in faces]
                     superFaceIdx = facesArea.index(max(facesArea))
                     
-            subDecompositions.append( Decomposition(sg, self.curves,
+            subDecompositions.append( Decomposition(sg, self.traits,
                                                     faces, superFaceIdx) )
 
         #### STAGE B: find holes of subDecompositions and punch holes
@@ -760,7 +778,7 @@ class Arrangement:
                 # b) should superfaces be a list of all superFaces, or should we combine them?
                 # class.method make_compound_path(*args) Make a compound path from a list of Path objects.
 
-        self.decomposition = Decomposition(self.graph, self.curves,
+        self.decomposition = Decomposition(self.graph, self.traits,
                                            allFaces, superFaceIdx=None)
 
 
@@ -793,54 +811,57 @@ class Arrangement:
         #                     subDecompositions[idx1].faces[fIdx].punch_hole ( sd2.superFace )
 
     ############################################################################
-    def _store_curves(self, curves):
+    def _store_traits(self, traits):
         '''
         Arrangement class
 
-        discard overlapping and invalid curves
+        discard overlapping and invalid traits
 
-        note that if two curves are ovelapping, the one with 
-        higher index in the list "curves" will be rejected
+        note that if two traits are ovelapping, the one with 
+        higher index in the list "traits" will be rejected
 
-        invalid curves are:    circles/arcs, where radius <= 0
+        invalid traits are:    circles/arcs, where radius <= 0
         '''
         epsilon = np.spacing(10**10)
 
-        for cIdx1 in range(len(curves)-1,-1,-1):
-            obj1 = curves[cIdx1].obj
-            obj1IsCirc = isinstance(curves[cIdx1], mSym.CircleModified)
-            obj1IsArc = isinstance(curves[cIdx1], mSym.ArcModified)
+        for cIdx1 in range(len(traits)-1,-1,-1):
+            obj1 = traits[cIdx1].obj
+            obj1IsCirc = isinstance(traits[cIdx1], trts.CircleModified)
+            obj1IsArc = isinstance(traits[cIdx1], trts.ArcModified)
             # note that a an arc both obj1IsCirc and obj1IsArc are True
            
-            if obj1IsCirc and curves[cIdx1].obj.radius<=0:
+            if obj1IsCirc and traits[cIdx1].obj.radius<=0:
                 # rejecting circles (and arcs) with (radius <= 0)
-                curves.pop(cIdx1)
+                traits.pop(cIdx1)
+
+            elif isinstance(traits[cIdx1].obj, sym.Point):
+                # if two ends of a segment are collocated, it's a point
+                traits.pop(cIdx1)
 
             else:
-                # rejecting overlapping curves
+                # rejecting overlapping traits
                 for cIdx2 in range(cIdx1):
-                    obj2 = curves[cIdx2].obj
-                    obj2IsArc = isinstance(curves[cIdx2], mSym.ArcModified)
+                    obj2 = traits[cIdx2].obj
+                    obj2IsArc = isinstance(traits[cIdx2], trts.ArcModified)
                     
                     if obj1.contains(obj2) or obj2.contains(obj1):
                         if obj1IsArc and obj2IsArc:
                             # TODO: here here check containment
                             # assuming all the angles are in [-pi,2pi]                            
-                            # arc1t1 = curves[cIdx1].t1
-                            # arc1t2 = curves[cIdx1].t2
-                            # arc2t1 = curves[cIdx2].t1
-                            # arc2t2 = curves[cIdx2].t2
+                            # arc1t1 = traits[cIdx1].t1
+                            # arc1t2 = traits[cIdx1].t2
+                            # arc2t1 = traits[cIdx2].t1
+                            # arc2t2 = traits[cIdx2].t2
                             # if t1dis < epsilon and t2dis < epsilon:
-                            #     curves.pop(cIdx1)
+                            #     traits.pop(cIdx1)
                             #     break
                             pass
                         else:
                             # circles, lines, segments and rays are handled here
-                            curves.pop(cIdx1)
+                            traits.pop(cIdx1)
                             break
 
-        self.curves = curves
-
+        self.traits = traits
 
     ############################################################################
     def _construct_nodes(self):
@@ -850,74 +871,83 @@ class Arrangement:
         |STAGE A| of Graph construction: node construction
         first we need a list of all intersections,
         while we can retrieve informations about each intersection point,
-        such as which curves are intersecting at that point and what
-        are the corresponding t-value of each curve's parametric expression
+        such as which traits are intersecting at that point and what
+        are the corresponding t-value of each trait's parametric expression
         at that intersection point.
         these informations are important to construct the nodes:
 
         intersectionsFlat ( <- intersections )
-        ipsCurveIdx : curve indices of each ips/node
-        ipsCurveTVal : ips/node's tValue over each assigned curve
+        ipsTraitIdx : trait indices of each ips/node
+        ipsTraitTVal : ips/node's tValue over each assigned trait
 
         # step 1: finding all intersections
         # step 2: reject an intersection if it is not a point
-        # step 3: handling non-intersecting curves
+        # step 3: handling non-intersecting traits
         # step 4: flattening the intersections [list-of-lists-of-lists] -> [list of lists]
         # step 5: adding two virtual intersection points at the -oo and +oo
-        # step 6: find indeces of curves corresponding to each intersection point
+        # step 6: find indeces of traits corresponding to each intersection point
         # step 7: merge collocated intersection points
-        # step 8: find the t-value of each curve at the intersection
+        # step 8: find the t-value of each trait at the intersection
         # step 9: creating nodes from >intersection points<
 
         intersections
         this variable is a 2d matrix (list of lists) where each element at
         intersections[row][col] is itself a list of intersection points between
-        two curves self.curves[row] and self.curves[col].
+        two traits self.traits[row] and self.traits[col].
         '''
 
         intersections = [] # 2D array storage of intersection points
 
         # the indices to all following 3 lists are the same, i.e. ips_idx
         intersectionsFlat = []   # 1D array storage of intersection points
-        ipsCurveIdx = []         # ipsCurveIdx[i]: idx of curves on nodes[i]
-        ipsCurveTVal = []        # t-value of each node at assigned curves
+        ipsTraitIdx = []         # ipsTraitIdx[i]: idx of traits on nodes[i]
+        ipsTraitTVal = []        # t-value of each node at assigned traits
 
 
         ########################################
         # step 1: finding all intersections
         intersections = [ [ []
-                            for col in range(len(self.curves)) ]
-                          for row in range(len(self.curves)) ]
+                            for col in range(len(self.traits)) ]
+                          for row in range(len(self.traits)) ]
 
         if self._multi_processing: # with multi_processing
-            curvesTuplesIdx = [ [row,col]
-                                for row in range(len(self.curves))
+            traitsTuplesIdx = [ [row,col]
+                                for row in range(len(self.traits))
                                 for col in range(row) ]
 
-            global curves
-            curves = self.curves
+            global traits
+            traits = self.traits
             with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
-                intersections_tmp = p.map( intersection_star, curvesTuplesIdx)
-            del curves, p
+                intersections_tmp = p.map( intersection_star, traitsTuplesIdx)
+            del traits, p
             
-            for (row,col),ips in zip (curvesTuplesIdx, intersections_tmp):
+
+            
+            for (row,col),ips in zip (traitsTuplesIdx, intersections_tmp):
                 intersections[row][col] = ips
                 intersections[col][row] = ips
             del col,row, ips
                 
         else:  # without multi_processing
-            for row in range(len(self.curves)):
+            for row in range(len(self.traits)):
                 for col in range(row):
-                    obj1 = self.curves[row].obj
-                    obj2 = self.curves[col].obj
+                    obj1 = self.traits[row].obj
+                    obj2 = self.traits[col].obj
                     ip_tmp = sym.intersection(obj1,obj2)
                     intersections[row][col] = ip_tmp
                     intersections[col][row] = ip_tmp
             del col, row, ip_tmp
 
+
+        ######################################## TO DELETE    
+        # self.all_intersection_points = intersections
+        # print ('np.shape(intersections):', np.shape(intersections))
+        ######################################## TO DELETE
+
+
         ########################################
         # step 2: reject an intersection if it is not a point
-        for row in range(len(self.curves)):
+        for row in range(len(self.traits)):
             for col in range(row):
                 ips = intersections[row][col]
                 if len(ips)>0 and isinstance(ips[0], sym.Point):
@@ -928,34 +958,34 @@ class Arrangement:
         del col,row, ips
 
         ########################################
-        # step 3: handling non-intersecting Curves
-        # It would be problematic if a Curve does not intersect with any other
-        # curves. The problem is that the construcion of the nodes relies on
+        # step 3: handling non-intersecting Traits
+        # It would be problematic if a Trait does not intersect with any other
+        # traits. The problem is that the construcion of the nodes relies on
         # the detection of the intersection points. Also the construction of
-        # edges relies on the intersection points lying on each Curve.
-        # No edge would result from a Curve without any intersection.
-        # Consequently that Curves, not be presented by any edges, would the
+        # edges relies on the intersection points lying on each Trait.
+        # No edge would result from a Trait without any intersection.
+        # Consequently that Traits, not be presented by any edges, would the
         # be missed through the decomposition method (which relies on the edges)
-        # >> This won't happen for unbounded curves (e.g. infinit
+        # >> This won't happen for unbounded traits (e.g. infinit
         # lines), since the -oo and +oo are assigned to them as intersection
-        # points, however, this is a potential risk for bounded curves (e.g.
+        # points, however, this is a potential risk for bounded traits (e.g.
         # circles).        
         # >> To avoid this problem we can assign an arbitrary point on the
-        # level-curve of the Curves, as a self-intersection point. This
+        # level-trait of the Traits, as a self-intersection point. This
         # self-intersection point won't mess the later stages even in case of
-        # curves that already intesect with other curves. Hencefore for
+        # traits that already intesect with other traits. Hencefore for
         # the sake of simplicity, we add a self-intersection point to all
-        # bounded curves.
+        # bounded traits.
 
         t = sym.Symbol('t')
-        for row in range(len(self.curves)):
-            curveIsCircle = isinstance(self.curves[row], mSym.CircleModified)
-            curveIsCircle = curveIsCircle and not(isinstance(self.curves[row], mSym.ArcModified))
-            if curveIsCircle:
+        for row in range(len(self.traits)):
+            traitIsCircle = isinstance(self.traits[row], trts.CircleModified)
+            traitIsCircle = traitIsCircle and not(isinstance(self.traits[row], trts.ArcModified))
+            if traitIsCircle:
                 ips_n = np.sum( [ len(intersections[row][col])
-                                  for col in range(len(self.curves)) ] )
+                                  for col in range(len(self.traits)) ] )
                 if ips_n==0:
-                    p = self.curves[row].obj.arbitrary_point(t)
+                    p = self.traits[row].obj.arbitrary_point(t)
                     intersections[row][row] = [ p.subs([(t,0)]).evalf() ]
 
         ########################################
@@ -963,40 +993,40 @@ class Arrangement:
         t = sym.Symbol('t')
         if self._end_point == True:
 
-            for row in range(len(self.curves)):
-                # curve is arc
-                if isinstance(self.curves[row], mSym.ArcModified):
-                    p = self.curves[row].obj.arbitrary_point(t)
-                    intersections[row][row] += [ p.subs([(t, self.curves[row].t1)]).evalf(),
-                                                 p.subs([(t, self.curves[row].t2)]).evalf()]
-                # curve is segment
-                elif isinstance(self.curves[row], mSym.SegmentModified):
-                    intersections[row][row] += [ self.curves[row].obj.p1,
-                                                 self.curves[row].obj.p2]
+            for row in range(len(self.traits)):
+                # trait is arc
+                if isinstance(self.traits[row], trts.ArcModified):
+                    p = self.traits[row].obj.arbitrary_point(t)
+                    intersections[row][row] += [ p.subs([(t, self.traits[row].t1)]).evalf(),
+                                                 p.subs([(t, self.traits[row].t2)]).evalf()]
+                # trait is segment
+                elif isinstance(self.traits[row], trts.SegmentModified):
+                    intersections[row][row] += [ self.traits[row].obj.p1,
+                                                 self.traits[row].obj.p2]
 
-                # curve is Ray
-                elif isinstance(self.curves[row], mSym.RayModified):
-                    intersections[row][row] += [ self.curves[row].obj.p1 ]
+                # trait is Ray
+                elif isinstance(self.traits[row], trts.RayModified):
+                    intersections[row][row] += [ self.traits[row].obj.p1 ]
             
 
         ########################################
         # step 4: flattening the intersections list-of-lists-of-lists
         intersectionsFlat = [p
-                             for row in range(len(self.curves))
+                             for row in range(len(self.traits))
                              for col in range(row+1) # for self-intersection
                              for p in intersections[row][col] ]
 
         ########################################
-        # step 6: find indeces of curves corresponding to each intersection point
-        ipsCurveIdx = [list(set([row,col]))
-                       for row in range(len(self.curves))
+        # step 6: find indeces of traits corresponding to each intersection point
+        ipsTraitIdx = [list(set([row,col]))
+                       for row in range(len(self.traits))
                        for col in range(row+1) # for self-intersection 
                        for p in intersections[row][col] ]
 
         ########################################
         # step 7: merge collocated intersection points
-        # duplicate: resulted of same curves intersection
-        # collocated: resulted of different curves intersection
+        # duplicate: resulted of same traits intersection
+        # collocated: resulted of different traits intersection
 
         # ips = np.array([[1,4],
         #                 [2,5],
@@ -1012,30 +1042,29 @@ class Arrangement:
         yv = np.repeat( [ips_[:,1]], ips_.shape[0], axis=0).T
         dy = yh - yv
 
-        distances = np.sqrt( dx**2 + dx**2)
-        
+        distances = np.sqrt( dx**2 + dy**2)
         
         for idx1 in range(len(intersectionsFlat)-1,-1,-1):
             for idx2 in range(idx1):
                 if distances[idx1][idx2] < np.spacing(10**10): # == 0:
                     intersectionsFlat.pop(idx1)
-                    s1 = set(ipsCurveIdx[idx1])
-                    s2 = set(ipsCurveIdx[idx2])
-                    ipsCurveIdx[idx2] = list(s1.union(s2)) 
-                    ipsCurveIdx.pop(idx1)
+                    s1 = set(ipsTraitIdx[idx1])
+                    s2 = set(ipsTraitIdx[idx2])
+                    ipsTraitIdx[idx2] = list(s1.union(s2)) 
+                    ipsTraitIdx.pop(idx1)
+                    # print ('I\'m poping:' , idx1, '\T distance was: ', distances[idx1][idx2])
                     break
 
-
-        assert len(intersectionsFlat) == len(ipsCurveIdx)
+        assert len(intersectionsFlat) == len(ipsTraitIdx)
 
         ########################################
         # step 9: creating nodes from >intersection points<
         '''
         pIdx: intersection point's index
-        cIdx: intersecting curves' indices
-        tVal: intersecting curves' t-value at the intersection point
+        cIdx: intersecting traits' indices
+        tVal: intersecting traits' t-value at the intersection point
         '''
-        nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx], ipsCurveIdx[pIdx], self.curves)} ]
+        nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx], ipsTraitIdx[pIdx], self.traits)} ]
                   for pIdx in range(len(intersectionsFlat)) ]
         
         ########################################
@@ -1052,41 +1081,41 @@ class Arrangement:
 
         |STAGE B| of Graph construction: edge construction
         to create edges, we need to list all the nodes
-        located on each Curve, along with the t-value of the Curve
-        at each node to sort nodes over the curve and segment the
-        curve into edges according to the sorted nodes
+        located on each Trait, along with the t-value of the Trait
+        at each node to sort nodes over the trait and segment the
+        trait into edges according to the sorted nodes
         '''
 
         ########################################
-        # step 1_a: find intersection points of curves
-        # indeces of intersection points corresponding to each curves
-        curveIpsIdx = [[] for i in range(len(self.curves))]
-        curveIpsTVal = [[] for i in range(len(self.curves))]
+        # step 1_a: find intersection points of traits
+        # indeces of intersection points corresponding to each traits
+        traitIpsIdx = [[] for i in range(len(self.traits))]
+        traitIpsTVal = [[] for i in range(len(self.traits))]
 
         for nodeIdx in self.graph.nodes():
-            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['obj']._curveTval,
-                                   self.graph.node[nodeIdx]['obj']._curveIdx) :
-                curveIpsIdx[cIdx].append(nodeIdx)
-                curveIpsTVal[cIdx].append(tVal)
+            for (tVal,cIdx) in zip(self.graph.node[nodeIdx]['obj']._traitTval,
+                                   self.graph.node[nodeIdx]['obj']._traitIdx) :
+                traitIpsIdx[cIdx].append(nodeIdx)
+                traitIpsTVal[cIdx].append(tVal)
 
-        # step 1_b: sort intersection points over curves
+        # step 1_b: sort intersection points over traits
         # sorting iptersection points, according to corresponding tVal
-        for cIdx in range(len(self.curves)):
-            tmp = sorted(zip( curveIpsTVal[cIdx], curveIpsIdx[cIdx] ))
-            curveIpsIdx[cIdx] = [pIdx for (tVal,pIdx) in tmp]
-            curveIpsTVal[cIdx].sort()
+        for cIdx in range(len(self.traits)):
+            tmp = sorted(zip( traitIpsTVal[cIdx], traitIpsIdx[cIdx] ))
+            traitIpsIdx[cIdx] = [pIdx for (tVal,pIdx) in tmp]
+            traitIpsTVal[cIdx].sort()
 
 
         # ########################################
         # step 3: half-edge construction
-        for (cIdx,curve) in enumerate(self.curves):
+        for (cIdx,trait) in enumerate(self.traits):
 
-            ipsIdx = curveIpsIdx[cIdx]
-            tvals = curveIpsTVal[cIdx]
+            ipsIdx = traitIpsIdx[cIdx]
+            tvals = traitIpsTVal[cIdx]
 
             # step a:
-            # for each curve, create all edges (half-edges) located on it
-            if isinstance(curve.obj, ( sym.Line, sym.Segment, sym.Ray) ):
+            # for each trait, create all edges (half-edges) located on it
+            if isinstance(trait.obj, ( sym.Line, sym.Segment, sym.Ray) ):
 
                 startIdxList = ipsIdx[:-1]
                 startTValList = tvals[:-1]
@@ -1094,13 +1123,13 @@ class Arrangement:
                 endIdxList = ipsIdx[1:]
                 endTValList = tvals[1:]
 
-            elif isinstance(curve, mSym.ArcModified): # and isinstance(curve.obj, sym.Circ)
+            elif isinstance(trait, trts.ArcModified): # and isinstance(trait.obj, sym.Circ)
 
                 # Important note: The order of elif matters...
-                # isinstance(circle, mSym.ArcModified) - > False
-                # isinstance(circle, mSym.CircleModified) - > True
-                # isinstance(arc, mSym.ArcModified) - > True
-                # isinstance(arc, mSym.CircleModified) - > True
+                # isinstance(circle, trts.ArcModified) - > False
+                # isinstance(circle, trts.CircleModified) - > True
+                # isinstance(arc, trts.ArcModified) - > True
+                # isinstance(arc, trts.CircleModified) - > True
                 # this is why I first check the arc and then circle
 
                 #TODO:  double-check
@@ -1110,7 +1139,7 @@ class Arrangement:
                 endIdxList = ipsIdx[1:]
                 endTValList = tvals[1:]
                 
-            elif isinstance(curve, mSym.CircleModified): # and isinstance(curve.obj, sym.Circle)
+            elif isinstance(trait, trts.CircleModified): # and isinstance(trait.obj, sym.Circle)
                 # this case duplicaties the first point at the end of list
 
                 startIdxList = ipsIdx
@@ -1228,10 +1257,10 @@ class Arrangement:
 
             # sorting values of the reference (twin of the current half-edge)
             # 1stKey: alpha - 2ndkey: beta
-            refObjCurve = self.curves[refObj.curveIdx]
+            refObjTrait = self.traits[refObj.traitIdx]
             sPoint = self.graph.node[tStart]['obj'].point
-            refAlpha = refObjCurve.tangentAngle(sPoint, refObj.direction)
-            refBeta = refObjCurve.curvature(sPoint, refObj.direction)
+            refAlpha = refObjTrait.tangentAngle(sPoint, refObj.direction)
+            refBeta = refObjTrait.curvature(sPoint, refObj.direction)
 
             # sorting values: candidates
             canAlpha = []
@@ -1239,9 +1268,9 @@ class Arrangement:
             for candidateIdx in candidateEdges:
                 (cStart, cEnd, ck) = allHalfEdgeIdx[candidateIdx]
                 canObj = self.graph[cStart][cEnd][ck]['obj']
-                canObjCurve = self.curves[canObj.curveIdx]
-                canAlpha.append( canObjCurve.tangentAngle(sPoint, canObj.direction) )
-                canBeta.append( canObjCurve.curvature(sPoint, canObj.direction) )
+                canObjTrait = self.traits[canObj.traitIdx]
+                canAlpha.append( canObjTrait.tangentAngle(sPoint, canObj.direction) )
+                canBeta.append( canObjTrait.curvature(sPoint, canObj.direction) )
 
             # sorting
             fullList  = zip( canAlpha, canBeta, candidateEdges )
@@ -1354,7 +1383,7 @@ class Arrangement:
 
 
         return tuple( Face( edgeList,
-                            edgeList_2_mplPath(edgeList, self.graph, self.curves ) )
+                            edgeList_2_mplPath(edgeList, self.graph, self.traits ) )
                       for edgeList in faces )
 
     ############################################################################
@@ -1362,13 +1391,13 @@ class Arrangement:
         '''
         Arrangement class
         '''      
-        # update arrangement.curves
-        for curve in self.curves:
-            curve.transform_sequence(operTypes, operVals, operRefs)
+        # update arrangement.traits
+        for trait in self.traits:
+            trait.transform_sequence(operTypes, operVals, operRefs)
       
         # update arrangement.graph (nodes)
         for nIdx in self.graph.nodes():
-            self.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.curves)
+            self.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.traits)
         
         # update arrangement.decomposition.faces
         self.decomposition.update_face_path()
@@ -1378,7 +1407,7 @@ class Arrangement:
         if subDecompositions==True:
             for subDec in self.subDecompositions:
                 for nIdx in subDec.graph.nodes():
-                    subDec.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.curves)
+                    subDec.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.traits)
                 subDec.update_face_path()
 
     ############################################################################
@@ -1389,7 +1418,7 @@ class Arrangement:
         pass #TODO(saesha)
 
     ############################################################################
-    def add_new_curves(self, curves=[]):
+    def add_new_traits(self, traits=[]):
         '''
         Arrangement class
         '''

@@ -18,6 +18,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 
 from __future__ import print_function
 
+import os
 import sys
 if sys.version_info[0] == 3:
     from importlib import reload
@@ -31,16 +32,19 @@ import sympy as sym
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
-import arrangement as arr
+import arrangement.arrangement as arr
 reload(arr)
-import plotting as myplt
-reload(myplt)
-# import modifiedSympy as mSym
-# reload(mSym)
+import arrangement.plotting as aplt
+reload(aplt)
+import arrangement.utils as utls
+reload(utls)
 
-from loadFromYaml import load_data_from_yaml
-from my_svg_parser import svg_to_ymal
+
+if not( os.path.abspath('./../dev/') in sys.path):
+    sys.path.append( os.path.abspath('./../dev/') )
+    
+import my_svg_parser_dev as mSGVp
+reload(mSGVp)
 
 ################################################################################
 ################################################################# initialization
@@ -77,26 +81,33 @@ test_cases_key = [
     'caisr',                        # 28: 
     'specialCase_11',               # 29: 
     'example_12',                   # 30: 3 circle holes in one square, + 1xArc
-
 ]
 
+# loading a test case
 test_case_id = 23
+file_name = 'tests/testCases/'+test_cases_key[test_case_id]+'.yaml'
 
-timing = False
-visualize = True
+# laoding a yaml file directly
+# file_name = 'testCases/intel-01-occ-05cmintel-01-occ-05cm.yaml'
 
-file_name = 'testCases/'+test_cases_key[test_case_id]+'.yaml'
-file_name = 'intel-01-occ-05cmintel-01-occ-05cm.yaml'
+# loading yaml from svg
+# file_name = 'testCases/svg_files/rect_circ_poly_line.svg' # fialed - result
+# file_name = 'testCases/svg_files/rect_circ_poly_line_rotated.svg' # fialed - result
+# file_name = 'testCases/svg_files/circle_lines.svg' # fialed - result
+# file_name = 'testCases/svg_files/intel-01-occ-05cm.svg' # passed
+# file_name = 'testCases/svg_files/hfab_110-001-06-0501.svg' # fialed - result
+# file_name = 'testCases/svg_files/hfab_110-001-06-0501_rotated.svg' # xxx
+# file_name = 'testCases/svg_files/hfab_110-001-06-0501_simplified.svg' # fialed - running
+# file_name = 'testCases/svg_files/hfab_110-001-06-0501_simplified_rotated.svg' # fialed - running
+# file_name = 'testCases/svg_files/islab_01.svg' # passed
+# file_name = 'testCases/svg_files/islab_01_rotated.svg' # passed
+# file_name = 'testCases/svg_files/islab_02.svg' # passed
+# file_name = 'testCases/svg_files/islab_02_rotated.svg' # passed
 
-# loading SVG files
-if 1:
-    svg_file_name = 'testCases/rect_circ_poly_line.svg'
-    svg_file_name = 'testCases/circle_lines.svg'
-    svg_file_name = 'testCases/intel-01-occ-05cm.svg'
-    file_name = svg_to_ymal(svg_file_name)
+if file_name.split('.')[-1] == 'svg':
+    file_name = mSGVp.svg_to_ymal(file_name, convert_segment_2_infinite_line=True)
 
-
-data = load_data_from_yaml( file_name )
+data = utls.load_data_from_yaml( file_name )
 traits = data['traits']
 # traits += [mSym.ArcModified( args=( (4,4), 3 , (np.pi/10, 19*np.pi/10 ) ) )]
 
@@ -112,10 +123,13 @@ else:
 ################################################################################
 ###################################### deploying arrangement (and decomposition)
 ################################################################################
-print( '\nstart decomposition:', test_cases_key[test_case_id])
+timing = False
+visualize = True
+
+print( '\nstart decomposition:', file_name)
 
 tic = time.time()
-config = {'multi_processing':4, 'end_point':False, 'timing':True}
+config = {'multi_processing':4, 'end_point':False, 'timing':timing}
 arrang = arr.Arrangement(traits, config)
 if timing: print( 'Arrangement time:', time.time() - tic)
 
@@ -146,32 +160,78 @@ elif not(testing):
 ################################################################## visualization
 ################################################################################
 if visualize:
+
     # # static plotting
-    # # myplt.plot_graph(arrang.graph)
-    # myplt.plot_decomposition_colored(arrang,
+    # aplt.plot_graph(arrang.graph)
+    # aplt.plot_decomposition_colored(arrang,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
 
-    # myplt.plot_decomposition(arrang,
+    # aplt.plot_decomposition(arrang,
+    #                          invert_axis = ('y'),
     #                          interactive_onClick=False,
     #                          interactive_onMove=False,
     #                          plotNodes=True, printNodeLabels=True,
     #                          plotEdges=True, printEdgeLabels=True)
     
     ############################## animated plotting
-    # myplt.animate_halfEdges(arrang, timeInterval = 1.*1000)
-    myplt.animate_face_patches(arrang, timeInterval = .5*1000)
-
-    # ######################## plotting graphs
-    # # myplt.plot_graph_pydot(arrang.graph)
-    # # myplt.plot_graph_pydot(arrang.get_adjacency_graph())
-    # # myplt.plot_graph_pydot(arrang.get_connectivity_graph())
-    # myplt.plot_multiple_graphs_pydot( [ arrang.graph,
-    #                                     arrang.get_adjacency_graph(),
-    #                                     arrang.get_connectivity_graph() ] )
+    # aplt.animate_halfEdges(arrang, timeInterval = 1.*1000)
+    aplt.animate_face_patches(arrang, timeInterval = .5* 1000)
 
 ################################################################################
 ################################################################### testing area
+################################################################################
+
+prime = arrang.get_prime_graph()
+dual  = arrang.get_dual_graph()
+
+######################## plotting graphs
+# myplt.plot_graph_pydot(arrang.graph)
+# myplt.plot_graph_pydot(arrang.get_adjacency_graph())
+# myplt.plot_graph_pydot(arrang.get_connectivity_graph())
+aplt.plot_multiple_graphs_pydot( [ arrang.graph ,
+                                   arrang.get_prime_graph(),
+                                   arrang.get_dual_graph() ] )
+
+
+plot_traits_from_file = True
+
+# if plot_traits_from_file:
+    
+#     fig = plt.figure( figsize=(12, 12) )
+#     ax = fig.add_subplot(111)
+#     for t in traits: #arrang.curves:
+#         ax.plot( [t.obj.p1.x, t.obj.p2.x], [t.obj.p1.y, t.obj.p2.y], 'b'  )
+    
+#     # for nodeIdx in arrang.graph.nodes():
+#     #     p = arrang.graph.node[nodeIdx]['obj'].point
+#     #     ax.plot( p.x, p.y, 'r*'  )
+
+#     # ips = arrang.all_intersection_points
+#     # for r in range(np.shape(ips)[0]):
+#     #     for c in range(np.shape(ips)[1]):
+#     #         for p in ips[r][c]:
+#     #             if isinstance(p, sym.Point):
+#     #                 ax.plot( p.x, p.y, 'r*')
+
+
+#     for nodeIdx in arrang.graph.nodes():
+#         p = arrang.graph.node[nodeIdx]['obj'].point
+#         ax.plot( p.x, p.y, 'g^'  )
+                    
+#     # ax.plot( [488.65163,88.820421] , [4.6972099 ,31.62276] , 'r-.'  )
+#     plt.axis('equal')
+#     plt.tight_layout()
+#     ax.invert_yaxis()    
+#     plt.show()
+
+
+
+
+
+
+################################################################################
+########################################################################### Dump
 ################################################################################
 ''' switching from sympy to svg
 
@@ -204,14 +264,12 @@ I will use only the intersection procedure for only line segments, arcs and circ
 line segments -> svgpathtools.Line
 arcs -> svgpathtools.Arc
 circles -> svgpathtools.Arc
+
+
 '''
 
 
 
-
-################################################################################
-########################################################################### Dump
-################################################################################
 
 ##############################
 # the connected_component_subgraphs are not references to the other original graph, but to 
