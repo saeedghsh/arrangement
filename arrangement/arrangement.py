@@ -33,6 +33,7 @@ import matplotlib.path as mpath
 import matplotlib.transforms
 
 from . import geometricTraits as trts
+from . import utils as utls
 
 # import svgpathtools
 
@@ -557,6 +558,8 @@ class Arrangement:
 
         multiProcessing=0 -> no multi-processing
         multiProcessing=n -> n: number of processes
+        
+        self._end_point: adding end points of Ray, Segment and Arc as nodes
         '''
         self._multi_processing = config['multi_processing'] if ('multi_processing' in config.keys()) else 0
         self._end_point = config['end_point'] if ('end_point' in config.keys()) else False
@@ -660,6 +663,9 @@ class Arrangement:
         '''
         Arrangement class
         '''
+
+        # to reject duplication
+        faceIdx = list(set(faceIdx))
         
         halfEdge2Remove = []
 

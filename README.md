@@ -70,6 +70,9 @@ circles:
     - [center_x, center_y, radius]
 arcs:
     - [center_x, center_y, radius, interval_lower , interval_upper]
+
+boundary:
+	- [xMin, yMin, xMax, yMax]
 ```
 
 See examples of yaml files in [testCases](https://github.com/saeedghsh/arrangement/tree/master/tests/testCases).

@@ -134,11 +134,13 @@ def onMove(event):
 
 ################################### plotting edges
 def plot_edges(axis, arrang,
-               alp=0.2, col='b',
+               alp=1., col='b',
                halfEdgeIdx=None,
                withArrow=False,
                printLabels=False):
 
+
+    edge_plot_instances = []
     if halfEdgeIdx==None:
         halfEdgeList = arrang.graph.edges(keys=True) # arrang.get_all_HalfEdge_indices()
         
@@ -168,7 +170,7 @@ def plot_edges(axis, arrang,
                                 linewidth = 1, head_width = 0.1, head_length = 0.2,
                                 fc = col, ec = col, alpha=alp)
                 else:
-                    axis.plot ([x,x+dx], [y,y+dy], col, alpha=alp)
+                    edge_plot_instances += [axis.plot ([x,x+dx], [y,y+dy], col, alpha=alp)[0]]
 
                 if printLabels:
                     if he_obj.direction == 'positive':
@@ -189,7 +191,7 @@ def plot_edges(axis, arrang,
             y = yc + rc * np.sin(theta)
 
             if not withArrow:
-                axis.plot (x, y, col, alpha=alp)
+                edge_plot_instances += [axis.plot (x, y, col, alpha=alp)[0]]
 
             elif withArrow:
                 axis.plot (x[:-1], y[:-1], col, alpha=alp)
@@ -214,19 +216,22 @@ def plot_edges(axis, arrang,
                               yp - (yc-yp)/10. ,
                                'e#'+str(start)+'-'+str(end)+'-'+str(k),
                                fontdict={'color':col,  'size': 10})
+    
+    return edge_plot_instances
 
 
 ################################### plotting nodes
 def plot_nodes (axis, arrang, nodes=None,
-               alp = 0.5, col = 'k',
+               alp = 1., col = 'r',
                printLabels = False):
 
     if nodes==None:  nodes = arrang.graph.nodes()
     points = [arrang.graph.node[idx]['obj'].point for idx in nodes]
-        
+    
+    node_plot_instances = []
     nx = [p.x for p in points]
     ny = [p.y for p in points]
-    axis.plot (nx,ny, col+'o', alpha= alp)
+    node_plot_instances = axis.plot (nx,ny, col+'o', alpha= alp)
 
     if printLabels:
         font = {'color':col, 'size': 10}
@@ -234,6 +239,8 @@ def plot_nodes (axis, arrang, nodes=None,
             axis.text(arrang.graph.node[idx]['obj'].point.x,
                       arrang.graph.node[idx]['obj'].point.y,
                       'n#'+str(idx))
+
+    return node_plot_instances
 
 
 

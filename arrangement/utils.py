@@ -130,3 +130,45 @@ def load_data_from_yaml(fileName=None):
     result.update( {'traits': traits} )
 
     return result
+
+################################################################################
+def unbound_traits(trait_list):
+    '''
+    this method takes a list of traits and converts them as follow:
+    ray -> line
+    segment -> line
+    line -> line
+    arc -> circle
+    circle -> circle
+    '''
+
+    for idx in range(len(trait_list)):
+
+        # the trait before adjustment
+        trait = trait_list[idx]
+        
+        if isinstance(trait, (trts.SegmentModified, trts.RayModified) ):
+            # if the trait is (ray v segment) convert to line 
+            trait = trts.LineModified( args=(trait.obj.p1,
+                                             trait.obj.p2) )
+            
+        elif isinstance(trait, trts.ArcModified):
+            # if the trait is (arc) convert to circle
+            trait = trts.Circle( args=(trait.obj.center,
+                                       trait.obj.radius) )
+        
+        else:
+            # the trait is either line or circle
+            # no need to adjustment the trait
+            pass
+
+        # insertig the corrected trait back in the list
+        trait_list[idx] = trait
+
+    return trait_list
+
+def bound_traits(trait_list, boundary_list):
+    '''
+    this method takes a list of traits and bounds them to boundary.
+    '''
+    return trait_list

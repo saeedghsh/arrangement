@@ -25,9 +25,48 @@ import sympy as sym
 ################################################# Modified Circle
 ################################################################################
 
+note_on_isinstance = '''
+Important note:
+---------------
+isinstance(circle, ArcModified) - > False
+isinstance(circle, CircleModified) - > True
+
+isinstance(arc, ArcModified) - > True
+isinstance(arc, CircleModified) - > True
+
+This is also true for the cases with arc, segment and line
+isinstance(segment, SegmentModified) - > True
+isinstance(segment, RayModified) - > False
+isinstance(segment, LineModified) - > True
+
+isinstance(ray, SegmentModified) - > False
+isinstance(ray, RayModified) - > True
+isinstance(ray, LineModified) - > True
+
+isinstance(line, SegmentModified) - > False
+isinstance(line, RayModified) - > False
+isinstance(line, LineModified) - > True
+'''
 
 ################################################################################
 class LineModified:
+
+    __doc__ = '''
+    This class is to represent infinit line objects
+    It is aggregated from sympy.Line class, hence the name.
+    The sympy.Line is stored in self.obj
+    It doesn't have any aditional parameter, but extra methods.
+
+    usage:
+    lm = LineModified( args= (X) )
+    X is anything that could be passed to sympy.Line:
+    X = ((x1,y1),(x2,y2))
+    X = (sym.Point(x1,y1),sym.Point(x2,y2))
+    X = ((x1,y1),slope)
+    X = (sym.point(x1,y1),slope)
+
+    {:s}
+    '''.format(note_on_isinstance)
 
     ####################################
     def __init__ (self, args):
@@ -188,6 +227,30 @@ class LineModified:
 ################################################################################
 #TODO:saesha
 class RayModified(LineModified):
+
+    __doc__ = '''
+    This class is to represent a Ray objects (half-line)
+    It is aggregated from sympy.Ray class, hence the name.
+    It doesn't have any aditional parameter, but extra methods.
+
+    note:
+    -----
+    that "RayModified" is a subClass of "LineModified"
+    but the self.obj is aggregated from sym.Ray
+
+    usage:
+    ------
+    rm = RayModified( args= (X) )
+    X is anything that could be passed to sympy.Ray:
+    X = ((x1,y1),(x2,y2))
+    X = (sym.Point(x1,y1),sym.Point(x2,y2))
+    X = ((x1,y1),slope)
+    X = (sym.point(x1,y1),slope)
+    Note that for sym.Ray, (x1,y1) is always the starting point of the ray
+
+    {:s}
+    '''.format(note_on_isinstance)
+
     ####################################
     def __init__ (self, args):
         '''
@@ -262,13 +325,35 @@ class RayModified(LineModified):
 ################################################################################
 #TODO:saesha
 class SegmentModified(LineModified):
+
+    __doc__ = '''
+    This class is to represent a Segment objects (line-segment)
+    It is aggregated from sympy.Segment class, hence the name.
+    It doesn't have any aditional parameter, but extra methods.
+
+    note:
+    -----
+    that "SegmentModified" is a subClass of "LineModified"
+    but the self.obj is aggregated from sym.Segment
+
+    usage:
+    ------
+    sm = SegmentModified( args= (X) )
+    X is anything that could be passed to sympy.Segment:
+    X = ((x1,y1),(x2,y2))
+    X = (sym.Point(x1,y1),sym.Point(x2,y2))
+    X = ((x1,y1),slope)
+    X = (sym.point(x1,y1),slope)
+
+    {:s}
+    '''.format(note_on_isinstance)
+
     ####################################
     def __init__ (self, args):
         '''
         SegmentModified class 
 
-        note that "SegmentModified" is a subClass of "LineModified"
-        but the self.obj is aggregated from sym.Segment
+
 
         '''
         self.obj = sym.Segment( *args )
@@ -333,6 +418,21 @@ class SegmentModified(LineModified):
 
 ################################################################################
 class CircleModified:
+
+    __doc__ = '''
+    This class is to represent circle objects
+    It is aggregated from sympy.Circle class, hence the name.
+    The sympy.Circle is stored in self.obj
+    It doesn't have any aditional parameter, but extra methods.
+
+    usage:
+    lm = CircleModified( args= (X) )
+    X is anything that could be passed to sympy.Circle:
+    X = ((xc,yc),r)
+    
+    {:s}
+    '''.format(note_on_isinstance)
+
 
     ####################################
     def __init__ (self, args):
@@ -487,23 +587,45 @@ class CircleModified:
 
 ################################################################################
 class ArcModified(CircleModified):
+
+
+    __doc__ = '''
+    This class is to represent circle objects
+    It is aggregated from sympy.Circle class, hence the name.
+    The sympy.Circle is stored in self.obj
+    It has two aditional parameters, and extra methods.
+    additional parameters are:
+    t1: the stating angle of the arc
+    t2; the ending angle of the arc
+
+    potential screw_up
+    theta \in [-pi, pi])
+    so how to define an arc where (t1,t2)=(pi/2, 3pi/2)
+    well, best is to allow any interval ([-pi, pi] or [0, 2pi])
+    and always check the tvalues +2pi and -2pi to see if whether they are
+    in the range
+    
+    note:
+    -----
+    note that "ArcModified" is a subClass of "CircleModified"
+    but the self.obj is aggregated from sym.Circle
+
+    usage:
+    ------
+    pc, rc, interval =  (0,0), 1, (0,numpy.pi)
+    am =  mSym.ArcModified( args=( pc, rc, interval )  )
+    
+    {:s}
+    '''.format(note_on_isinstance)
+
     ####################################
     def __init__ (self, args):
         '''
         ArcModified class
 
-        note that "ArcModified" is a subClass of "CircleModified"
-        but the self.obj is aggregated from sym.Circle
 
-        screw_up
-        theta \in [-pi, pi])
-        so how to define an arc where (t1,t2)=(pi/2, 3pi/2)
-        well, best is to allow any interval ([-pi, pi] or [0, 2pi])
-        and always check the tvalues +2pi and -2pi to see if whether they are
-        in the range
 
-        pc, rc, interval =  (0,0), 1, (0,numpy.pi)
-        arc =  mSym.ArcModified( args=( pc, rc, interval )  )
+
         '''
         
         self.obj = sym.Circle( *args[:2] )
