@@ -25,6 +25,11 @@ import sympy as sym
 ################################################# Modified Circle
 ################################################################################
 
+note_on_DPE='''
+It doesn't work for segment, and I guess Ray too.
+I think It's because of the "contain" test, but not sure/.
+''' 
+
 note_on_isinstance = '''
 Important note:
 ---------------
@@ -66,7 +71,9 @@ class LineModified:
     X = (sym.point(x1,y1),slope)
 
     {:s}
-    '''.format(note_on_isinstance)
+
+    {:s}
+    '''.format(note_on_isinstance, note_on_DPE)
 
     ####################################
     def __init__ (self, args):
@@ -378,7 +385,7 @@ class SegmentModified(LineModified):
             point =  sym.Point(self.obj.p1.x, self.obj.p1.y + t)
         else:
             a = sym.sqrt(self.obj.slope**2 + 1) / (self.obj.slope**2 + 1)
-            b =  a * self.slope #TODO:saesha, shouldn't this be a * self.obj.slope
+            b =  a * self.obj.slope #TODO:saesha, shouldn't this be a * self.obj.slope
             point =  sym.Point(self.obj.p1.x + a.evalf()*t,
                                self.obj.p1.y + b.evalf()*t)
         
@@ -692,4 +699,3 @@ class ArcModified(CircleModified):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.scale(sx,sy,ref)
-

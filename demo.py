@@ -32,6 +32,8 @@ import sympy as sym
 import networkx as nx
 import matplotlib.pyplot as plt
 
+import arrangement.geometricTraits as trts
+reload(trts)
 import arrangement.arrangement as arr
 reload(arr)
 import arrangement.plotting as aplt
@@ -130,7 +132,7 @@ print( '\nstart decomposition:', file_name)
 
 tic = time.time()
 config = {'multi_processing':4, 'end_point':False, 'timing':timing}
-arrang = arr.Arrangement(traits, config)
+arrange = arr.Arrangement(traits, config)
 if timing: print( 'Arrangement time:', time.time() - tic)
 
 ################################################################################
@@ -138,22 +140,22 @@ if timing: print( 'Arrangement time:', time.time() - tic)
 ################################################################################
 if testing:
     cond =[]
-    cond += [ len(arrang.graph.nodes()) == n_nodes ]
-    cond += [ len(arrang.graph.edges()) == n_edges ]
-    cond += [ len(arrang.decomposition.faces) == n_faces ]
-    cond += [ len(arrang._subDecompositions) == n_subGraphs ]
+    cond += [ len(arrange.graph.nodes()) == n_nodes ]
+    cond += [ len(arrange.graph.edges()) == n_edges ]
+    cond += [ len(arrange.decomposition.faces) == n_faces ]
+    cond += [ len(arrange._subDecompositions) == n_subGraphs ]
     print( 'pass' if all(cond) else 'fail' )
 
-    print( 'nodes:\t\t', len(arrang.graph.nodes()), '\t expected:', n_nodes )
-    print( 'edges:\t\t', len(arrang.graph.edges()), '\t expected:', n_edges )
-    print( 'faces:\t\t', len(arrang.decomposition.faces), '\t expected:', n_faces )
-    print( 'subGraphs:\t', len(arrang._subDecompositions), '\t expected:', n_subGraphs )
+    print( 'nodes:\t\t', len(arrange.graph.nodes()), '\t expected:', n_nodes )
+    print( 'edges:\t\t', len(arrange.graph.edges()), '\t expected:', n_edges )
+    print( 'faces:\t\t', len(arrange.decomposition.faces), '\t expected:', n_faces )
+    print( 'subGraphs:\t', len(arrange._subDecompositions), '\t expected:', n_subGraphs )
 
 elif not(testing):
-    print( 'nodes:\t\t', len(arrang.graph.nodes()) )
-    print( 'edges:\t\t', len(arrang.graph.edges()) )
-    print( 'faces:\t\t', len(arrang.decomposition.faces) )
-    print( 'subGraphs:\t', len(arrang._subDecompositions) )
+    print( 'nodes:\t\t', len(arrange.graph.nodes()) )
+    print( 'edges:\t\t', len(arrange.graph.edges()) )
+    print( 'faces:\t\t', len(arrange.decomposition.faces) )
+    print( 'subGraphs:\t', len(arrange._subDecompositions) )
 
 
 ################################################################################
@@ -162,12 +164,12 @@ elif not(testing):
 if visualize:
 
     # # static plotting
-    # aplt.plot_graph(arrang.graph)
-    # aplt.plot_decomposition_colored(arrang,
+    # aplt.plot_graph(arrange.graph)
+    # aplt.plot_decomposition_colored(arrange,
     #                                  printNodeLabels=False,
     #                                  printEdgeLabels=False)
 
-    # aplt.plot_decomposition(arrang,
+    # aplt.plot_decomposition(arrange,
     #                          invert_axis = ('y'),
     #                          interactive_onClick=False,
     #                          interactive_onMove=False,
@@ -175,39 +177,45 @@ if visualize:
     #                          plotEdges=True, printEdgeLabels=True)
     
     ############################## animated plotting
-    # aplt.animate_halfEdges(arrang, timeInterval = 1.*1000)
-    aplt.animate_face_patches(arrang, timeInterval = .5* 1000)
+    # aplt.animate_halfEdges(arrange, timeInterval = 1.*1000)
+    aplt.animate_face_patches(arrange, timeInterval = .5* 1000)
 
 ################################################################################
 ################################################################### testing area
 ################################################################################
 
-prime = arrang.get_prime_graph()
-dual  = arrang.get_dual_graph()
+# prime = arrange.get_prime_graph()
+# dual  = arrange.get_dual_graph()
+
 
 ######################## plotting graphs
-# myplt.plot_graph_pydot(arrang.graph)
-# myplt.plot_graph_pydot(arrang.get_adjacency_graph())
-# myplt.plot_graph_pydot(arrang.get_connectivity_graph())
-aplt.plot_multiple_graphs_pydot( [ arrang.graph ,
-                                   arrang.get_prime_graph(),
-                                   arrang.get_dual_graph() ] )
+# myplt.plot_graph_pydot(arrange.graph)
+# myplt.plot_graph_pydot(arrange.get_adjacency_graph())
+# myplt.plot_graph_pydot(arrange.get_connectivity_graph())
+# aplt.plot_multiple_graphs_pydot( [ arrange.graph ,
+#                                    arrange.get_prime_graph(),
+#                                    arrange.get_dual_graph() ] )
 
 
-plot_traits_from_file = True
 
+
+
+
+
+
+# plot_traits_from_file = True
 # if plot_traits_from_file:
     
 #     fig = plt.figure( figsize=(12, 12) )
 #     ax = fig.add_subplot(111)
-#     for t in traits: #arrang.curves:
+#     for t in traits: #arrange.curves:
 #         ax.plot( [t.obj.p1.x, t.obj.p2.x], [t.obj.p1.y, t.obj.p2.y], 'b'  )
     
-#     # for nodeIdx in arrang.graph.nodes():
-#     #     p = arrang.graph.node[nodeIdx]['obj'].point
+#     # for nodeIdx in arrange.graph.nodes():
+#     #     p = arrange.graph.node[nodeIdx]['obj'].point
 #     #     ax.plot( p.x, p.y, 'r*'  )
 
-#     # ips = arrang.all_intersection_points
+#     # ips = arrange.all_intersection_points
 #     # for r in range(np.shape(ips)[0]):
 #     #     for c in range(np.shape(ips)[1]):
 #     #         for p in ips[r][c]:
@@ -215,8 +223,8 @@ plot_traits_from_file = True
 #     #                 ax.plot( p.x, p.y, 'r*')
 
 
-#     for nodeIdx in arrang.graph.nodes():
-#         p = arrang.graph.node[nodeIdx]['obj'].point
+#     for nodeIdx in arrange.graph.nodes():
+#         p = arrange.graph.node[nodeIdx]['obj'].point
 #         ax.plot( p.x, p.y, 'g^'  )
                     
 #     # ax.plot( [488.65163,88.820421] , [4.6972099 ,31.62276] , 'r-.'  )
@@ -273,7 +281,7 @@ circles -> svgpathtools.Arc
 
 ##############################
 # the connected_component_subgraphs are not references to the other original graph, but to 
-# updating superFace of _subDecompositions[2], does not update arrang.decomposition.faces[3]
+# updating superFace of _subDecompositions[2], does not update arrange.decomposition.faces[3]
 # if subgraphs of sebdecompositions are to be relevant, every update applied to self.graph must be applied to self.subDecompositions.graph too. Or, store halfEdges separately and refer to them in the graph structure.
 ##############################
 

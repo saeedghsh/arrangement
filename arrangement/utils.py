@@ -26,8 +26,9 @@ elif sys.version_info[0] == 2:
 import yaml
 import sympy as sym
 import numpy as np
+import skimage.transform
 from . import geometricTraits as trts
-reload(trts)
+# reload(trts)
 
 ################################################################################
 ################################################################################
@@ -126,6 +127,11 @@ def load_data_from_yaml(fileName=None):
         if 'arcs' in data.keys():
             for a in data['arcs']:
                 traits += [ Arc( args=( Point(a[0],a[1]), a[2], (a[3],a[4])) ) ]
+                
+        if 'boundary' in data.keys():
+            result.update( {'boundary':  data['boundary']} )
+        else:
+            print ('\t WARNING boundary info not available in yaml WARNING ')
 
     result.update( {'traits': traits} )
 
@@ -159,7 +165,7 @@ def unbound_traits(trait_list):
         
         else:
             # the trait is either line or circle
-            # no need to adjustment the trait
+            # no need to adjust the trait
             pass
 
         # insertig the corrected trait back in the list
@@ -167,8 +173,204 @@ def unbound_traits(trait_list):
 
     return trait_list
 
-def bound_traits(trait_list, boundary_list):
+################################################################################
+def bound_traits(trait_list, boundary):
     '''
     this method takes a list of traits and bounds them to boundary.
+    line -> segment
+
+    note:
+    it only supports boundary [xMin, yMin, xMax, yMax] form. this means,
+    the region of interest (ROI) is always rectangle (parallel to x/y axes)
+    it could be extended to support any kind of region of interest by define
+    the region with a path (e.g. matplotlib) and check if the intersection
+    points are in bound.
+    Since I don't need that genralization, I stick to this simple version
     '''
+    xMin, yMin, xMax, yMax = boundary
+
+    b_lines  = [ sym.Line( (xMin,yMin), (xMax,yMin) ),
+                 sym.Line( (xMax,yMin), (xMax,yMax) ),
+                 sym.Line( (xMax,yMax), (xMin,yMax) ),
+                 sym.Line( (xMin,yMax), (xMin,yMin) ) ]
+
+
+
+    for t_idx in range(len(trait_list)-1,-1,-1):
+
+        # the trait before adjustment
+        trait = trait_list[t_idx]
+        
+        if isinstance(trait, (trts.LineModified) ):            
+
+            # finding all intersections between trait and boundary lines
+            # the "if" condition is to reject lines:
+            # sym.intersection would return a sym.Line if one of the traits
+            # is the same as one of the boundary lines
+            points = [ p
+                       for b_line in b_lines
+                       for p in sym.intersection( trait.obj, b_line )
+                       if isinstance(p, sym.Point)]
+
+            for p_idx in range(len(points)-1,-1,-1):
+                # checking which points are out of bound wrt. RIO
+                inbound_x = (xMin <= points[p_idx].x <= xMax)
+                inbound_y = (yMin <= points[p_idx].y <= yMax)
+                if not(inbound_x) or not(inbound_y):
+                    points.pop(p_idx)
+            
+            if len(points)>2:
+                # this means some points are coinciding on one corner
+                for p_idx_1 in range(len(points)-1,-1,-1):
+                    for p_idx_2 in range(p_idx_1): 
+                        if points[p_idx_1].distance(points[p_idx_2])<np.spacing(10**10):
+                            points.pop(p_idx_1)
+                            break
+
+            if len(points) == 2:
+                # in case a trait does not pass through the RIO
+                # insertig the corrected trait back in the list
+                trait = trts.SegmentModified( args=(points[0],points[1]) )
+                trait_list[t_idx] = trait
+            else:
+                trait_list.pop(t_idx)
+
+        else:
+            # the trait is either arc or circle
+            # no need to adjust the trait
+            pass
+
     return trait_list
+
+################################################################################
+def match_face_shape(face1, face2,
+                     include_angle=False,
+                     reject_size_mismatch=True):
+    '''
+    This method takes two faces and compares their shape.
+    The comparison is a regex match by rolling (to left) the edge_type of the
+    face1, and results a list of integers, each indicating steps of roll (to 
+    left) that would match two faces.
+
+    Input
+    -----
+    face1 (src), face2 (dst): instances of arrangement.face
+
+    Parameter
+    ---------
+    include_angle: Boolean (default:False)
+    reject_size_mismatch: Boolean (default:True)
+    at the moment they are not functional
+
+    Output
+    ------
+    matches: list of integer
+    the number of steps of roll to left that would match two faces
+    
+    Note
+    ----
+    face1 and face2 do not belong to the same arrangement.
+    since we don't need any information beyond face.attributes,
+    no need to pass the arrangments.
+    But the face attrribute['edge_type'] must be set before calling
+    this method
+
+    TODO:
+    adopt the code to consider "include_angle"   
+    '''
+
+    print (' TODO: adopt the code to consider "include_angle"')   
+    match = []
+
+    attr1 = face1.attributes
+    attr2 = face2.attributes
+
+    edge_type1 = attr1['edge_type']
+    edge_type2 = attr2['edge_type']
+    
+    if reject_size_mismatch and (len(edge_type1)!=len(edge_type2)):
+        return match # returns an empty list
+
+    for roll in range(len(edge_type1)):
+        # rolling to left
+        if edge_type2 == edge_type1[roll:]+edge_type1[:roll]:
+            match += [roll]
+
+    return match
+
+
+################################################################################
+def align_faces(arrangement1, arrangement2,
+                f1Idx, f2Idx,
+                tform_type='similarity' ):
+    '''
+    This method returns a list rigid transformation (+scale) that would aligne
+    input faces.
+    Matches from the "match_face_shape" method indicate rolling steps to the left.
+    In numpy terms, it corresponds to np.roll(array, -roll_step, axis=0)
+
+    Parameter
+    ---------
+    tform_type - {'similarity', 'affine', 'piecewise-affine', 'projective', 'polynomial'}
+    types of transformation (default 'similarity')
+    similarity: shape-preserving transformations
+    affine: translation, scaling, homothety, reflection, rotation, shear mapping, and compositions
+    see "print skimage.transform.estimate_transform.__doc__" for more details.
+
+    Output
+    ------
+    alignments - dictionary
+    Keys in the dictionary correspond to steps of rolls for match
+    And the field to each key is the "GeometricTransform" object.
+    see "print skimage.transform.estimate_transform.__doc__ for more details"
+
+    Note
+    ----
+    src = face1 , dst = face2
+    so the result is a transformation from face1 to face2    
+
+    Note
+    ----
+    face1 and face2 do not belong to the same arrangement
+    and since we need any node informations, we pass the arrangments too
+
+    todo
+    ----
+    Could this happen?
+    make sure sx == sy and sx>0
+    note that sx <0 could happen, indicating a mirror
+    for instance two quadrant of a circle could be aligned with rotation or flip
+
+    '''
+
+    alignments = {}
+    f1 = arrangement1.decomposition.faces[f1Idx]
+    f2 = arrangement2.decomposition.faces[f2Idx]
+    matches = match_face_shape(f1,f2)    
+
+    nodes1 = arrangement1.graph.node
+    nodes2 = arrangement2.graph.node
+    
+    src = np.array( [(nodes1[n_idx]['obj'].point.x,
+                      nodes1[n_idx]['obj'].point.y)
+                     for n_idx in f1.attributes['edge_node_idx'] ],
+                    dtype=np.float)
+
+    dst = np.array( [(nodes2[n_idx]['obj'].point.x,
+                      nodes2[n_idx]['obj'].point.y)
+                     for n_idx in f2.attributes['edge_node_idx'] ],
+                    dtype=np.float)
+
+    if np.shape(src)[0] < 3:
+        print( 'a face could have only one edge and one node! fix this ...' )
+        return alignment # returning an empty list
+
+
+    for roll in matches:
+        tform = skimage.transform.estimate_transform( tform_type,
+                                                      np.roll(src,-roll,axis=0),
+                                                      dst )
+
+        alignments[roll] = tform
+    
+    return alignments

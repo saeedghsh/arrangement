@@ -141,12 +141,11 @@ def plot_edges(axis, arrang,
 
 
     edge_plot_instances = []
-    if halfEdgeIdx==None:
+    if halfEdgeIdx is None:
         halfEdgeList = arrang.graph.edges(keys=True) # arrang.get_all_HalfEdge_indices()
         
     else:
         halfEdgeList = halfEdgeIdx
-
 
     for (start, end, k) in halfEdgeList:
         
@@ -288,6 +287,7 @@ def plot_decomposition(arrangement,
 def plot_decomposition_colored (arrang,
                                 printNodeLabels=True,
                                 printEdgeLabels=False,
+                                printFaceLabels=False,
                                 fCol='b', eCol='r'):
 
     # with plt.xkcd():
@@ -297,10 +297,19 @@ def plot_decomposition_colored (arrang,
     plot_edges (ax, arrang, printLabels=printEdgeLabels)
     plot_nodes (ax, arrang, nodes=None, printLabels=printNodeLabels)
 
-    for face in arrang.decomposition.faces:
+    # colors = plt.cm.Spectral(np.linspace(0, 1, len(arrang.decomposition.faces)))
+    colors = plt.cm.gist_ncar(np.linspace(0, 1, len(arrang.decomposition.faces)))
+    
+    for f_idx,face in enumerate(arrang.decomposition.faces):
         patch = mpatches.PathPatch(face.get_punched_path(),
-                                   facecolor=fCol, edgecolor=eCol, alpha=0.5)
+                                   facecolor=colors[f_idx][0:3], #fCol
+                                   edgecolor=None, #eCol
+                                   alpha=0.5)
         ax.add_patch(patch)
+
+        if printFaceLabels:
+            pass
+            
 
     # set axes limit
     bb = arrang.decomposition.get_extents()

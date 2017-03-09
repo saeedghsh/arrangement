@@ -76,11 +76,10 @@ if 1:
     '''laoding yaml file'''    
     testNumber = 18
     file_name = 'testCases/'+test_cases_key[testNumber]+'.yaml'
+    file_name = '/home/saesha/Dropbox/myGits/sample_data/HH/HIH_03.yaml'
     
-else:
-    
-    '''laoding svg file (+ converting 2 yaml)'''
-    
+else:    
+    '''laoding svg file (+ converting 2 yaml)'''    
     svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/circle_lines.svg'
     svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/intel-01-occ-05cm.svg'
     svg_file_name = '/home/saesha/Dropbox/myGits/sample_image/svg_samples/svg_test_case_complete.svg'
@@ -97,11 +96,9 @@ else:
     file_name = yaml_file_name
     print file_name
 
-
 # laoding yaml file
 data = load_data_from_yaml( file_name )
 traits = data['traits']
-
 
 
 ### find a bounding box

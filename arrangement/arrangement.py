@@ -21,13 +21,15 @@ from __future__ import print_function, division
 import time
 import operator
 import itertools 
+import re
+
+import multiprocessing as mp
+import contextlib as ctx
+from functools import partial
 
 import numpy as np
 import sympy as sym
 import networkx as nx
-
-import multiprocessing as mp
-import contextlib as ctx
 
 import matplotlib.path as mpath
 import matplotlib.transforms
@@ -40,9 +42,10 @@ from . import utils as utls
 ################################################################################
 ###################################################### parallelization functions
 ################################################################################
-def intersection_star(*args):
-    global traits
-    idx1, idx2 = args[0][0], args[0][1]
+
+def intersection_star(idx, traits):
+    ''''''
+    idx1, idx2 = idx[0], idx[1]
     obj1 = traits[idx1].obj
     obj2 = traits[idx2].obj
 
@@ -89,7 +92,6 @@ def edgeList_2_mplPath (edgeList, graph, traits):
         halfEdge_obj = graph[start][end][k]['obj']
         cIdx = halfEdge_obj.traitIdx
         sTVal, eTVal = halfEdge_obj.get_tvals(traits, graph.node)
-
 
         if isinstance(traits[cIdx].obj, ( sym.Line, sym.Segment, sym.Ray) ):
             p2 = graph.node[end]['obj'].point
@@ -250,7 +252,7 @@ class HalfEdge:
         trait.DPE(TVal) = node.point
         '''
         (s,e,k) = self.selfIdx
-
+        
         sTVal = nodes[s]['obj']._traitTval[nodes[s]['obj']._traitIdx.index(self.traitIdx)]
         eTVal = nodes[e]['obj']._traitTval[nodes[e]['obj']._traitIdx.index(self.traitIdx)]
 
@@ -282,6 +284,20 @@ class Face:
         return [heIdx
                 for hole in self.holes
                 for heIdx in hole.halfEdges ]  + self.halfEdges
+
+    ####################################
+    def get_all_nodes_Idx(self):
+        '''
+        Face class
+        '''
+        # starting nodes of every half-edge
+        hole_nodes_idx = [ heIdx[0] 
+                           for hole in self.holes
+                           for heIdx in hole.halfEdges ]
+        self_node_idx = [ heIdx[0]
+                           for heIdx in self.halfEdges ]
+
+        return hole_nodes_idx + self_node_idx
         
     ####################################
     def update_path(self, graph, traits):
@@ -383,6 +399,156 @@ class Face:
             codes = np.append( codes, hole.path.codes)
 
         return mpath.Path(verts, codes)
+
+
+    ####################################
+    def set_shape_descriptor(self, arrangement, remove_redundant_lines=True):
+        '''
+        Face class
+
+        This method returns a descriptor for the shape of the input face:
+        
+        usage
+        -----
+        (edge_type, edge_turn, edge_start_node_idx) = shape_descriptor(arrangement, face)
+        
+        
+        input
+        -----
+        arrangement: an instance of arrangement.arrangement
+        face: an instance of arrangement.face
+        
+        Parameter
+        ---------
+        The parameter "remove_redundant_lines" removes straight lines that:
+        > follow another line, and do turn wrt previous line
+        
+        output
+        ------
+        a tuple of lists
+        The descriptor is defined by on ordered sequenced of edges:
+        > edge_type [string] - the edge type
+        > edge_turn [np.array] - the turning angle of the edge at the begining,
+        > edge_node_idx [list] - the starting point of the edge
+        
+        
+        Note
+        ----
+        A face is identified by indices to half-edges that bounds it.
+        Therefore, the arrangement object, to which face belong is required for:
+        > accessing the objects of half-edges, nodes and traits that define a face.
+        '''
+        # area = face.get_area()
+    
+        # get the idx:(start,end,key) of all halfedges surrounding the face
+        # note that this list includes the outer half_edges of the holes
+        all_halfedges_idx = self.get_all_halfEdges_Idx()
+        
+        # remove half_edges belonging to the holes
+        holes_halfedges_idx = []
+        for hole in self.holes:        
+            holes_halfedges_idx.append( hole.get_all_halfEdges_Idx() ) 
+            for (s,e,k) in holes_halfedges_idx[-1]:
+                all_halfedges_idx.pop( all_halfedges_idx.index((s,e,k)) )
+
+        # at this point:
+        # all_halfedges_idx -> a list of face's half-edges, except for the holes
+        # holes_halfedges_idx -> contians a list half-edge per each hole
+        # --> for hole[0] -> halfedges_idx = holes_halfedges_idx[0] = [(s,e,k), ...]
+    
+        # check if the order of edges is correct
+        # I'm pretty sure the half-edges must be in order, since decomposition point
+        # unless the are altered somewhere, which is unlikely!
+        for idx in range(len(all_halfedges_idx)):
+            s = all_halfedges_idx[idx][0]
+            e = all_halfedges_idx[idx-1][1]
+            if s!=e:
+                raise (NameError('half-edges are not in order... '))
+                
+
+        # enumerate over the list of half-edges and store their description
+        edge_type = '' # types could be L:Line, or C:Circle
+        edge_angle = [] # (ds,de) direction of the trait at start and end (radian)
+        edge_node_idx = [] # index to STARTING node of the edge
+
+        for (s,e,k) in all_halfedges_idx:
+            
+            half_edge = arrangement.graph[s][e][k]['obj']
+            edge_node_idx += [s]
+            
+            # storing the type
+            trait = arrangement.traits[ half_edge.traitIdx ]
+            L = isinstance( trait.obj, (sym.Line, sym.Segment, sym.Ray) )
+            C = isinstance( trait.obj, sym.Circle )
+            edge_type += 'L' if L else 'C'
+
+            # storing the direction ( angle )
+            start_point = arrangement.graph.node[s]['obj'].point
+            start_angle = trait.tangentAngle(start_point, half_edge.direction)
+            end_point = arrangement.graph.node[e]['obj'].point
+            end_angle = trait.tangentAngle(end_point, half_edge.direction)
+        
+            edge_angle += [(start_angle, end_angle)]
+
+        # computing the turning angles of the edge at their starting node
+        # turn[i] =  angle_end[i-1] - angle_start[i]
+        starting_angles = np.array([s for (s,e) in edge_angle])
+        ending_angles = np.array([e for (s,e) in edge_angle])
+        ending_angles = np.roll(ending_angles, 1)
+        
+        # turn -> exterior angle
+        # the following stuff fixes this: 
+        # t2 = pi-epsilon,  t1 = -pi+epsilon
+        # turn = -2x espilon, but t2-t1= 2x(pi-epsilon)
+        
+        # mvoing all the angle to [0,2pi]
+        starting_angles = np.mod(starting_angles, 2*np.pi)
+        ending_angles = np.mod(ending_angles, 2*np.pi)
+        # moving the ending angles + and - 2*pi, to assure finding minimum distance
+        sa = starting_angles
+        ea = np.array([ending_angles ,
+                       ending_angles +2*np.pi,
+                       ending_angles -2*np.pi])
+    
+        edge_turn = list( np.min(np.abs(ea-sa),axis=0) )
+
+        # dumping all Ls, that are followed by other Ls without a turn
+        if remove_redundant_lines:
+            
+            # finding all matches,
+            # by extending the edge_type with edge_type[0], we check tial-haed too
+            regex, sub = edge_type+edge_type[0], 'LL'
+            match_idx = np.array([ match.start()
+                                   for match in re.finditer('(?={:s})'.format(sub), regex) ])
+            
+            # match_idx shows indices to starting point of the pattern (i.e. first line)
+            # we want to remove the line that follows another (i.e. second line)
+            match_idx += 1 # getting the index of the second line
+            match_idx = np.mod(match_idx, len(edge_type)) # bringing all indices in range
+                        
+            # sortin indices in reverse order, for poping
+            match_idx = list(match_idx)
+            match_idx.sort(reverse=True)
+            
+            edge_turn = list(edge_turn)
+            edge_type = list(edge_type)
+            edge_node_idx = list(edge_node_idx)
+                        
+            for idx in match_idx:
+                # indexing with np.mod, in case a match happens at tail-head
+                # for which we have to remove the first element!
+                # but that will change 
+                if edge_turn[idx] == 0:
+                    edge_turn.pop(idx)
+                    edge_type.pop(idx)
+                    edge_node_idx.pop(idx)
+
+
+        assert len(edge_turn) == len(edge_type) == len(edge_node_idx)
+
+        self.attributes = {'edge_type': ''.join(edge_type),
+                           'edge_turn': edge_turn,
+                           'edge_node_idx': edge_node_idx}
 
         
 ################################################################################
@@ -573,23 +739,85 @@ class Arrangement:
         # TODO: I know I need a directional-multi-graph, explain why
         tic = time.time()
         self.graph = nx.MultiDiGraph()
-        if self._timing: print( 'Graph construction time:\t', time.time() - tic )
+        if self._timing: print( '\t arrangement - graph construction time:\t', time.time() - tic )
 
         #### STAGE A: construct nodes
         tic = time.time()
         self._construct_nodes()
-        if self._timing: print( 'nodes construction time:\t', time.time() - tic )
+        if self._timing: print( '\t arrangement - nodes construction time:\t', time.time() - tic )
 
         #### STAGE B: construct edges
         tic = time.time()
         self._construct_edges()
-        if self._timing: print( 'edges construction time:\t', time.time() - tic )
+        if self._timing: print( '\t arrangement - edges construction time:\t', time.time() - tic )
 
         ########## decomposition
         tic = time.time()
         self._decompose()
-        if self._timing: print( 'decomposition construction time:\t', time.time() - tic )
+        if self._timing: print( '\t arrangement - decomposition construction time:\t', time.time() - tic )
 
+
+    ############################################################################
+    def get_boundary_halfedges(self):
+        '''
+        This method returns a list of all halfedges of the arrangement that
+        represent the outer boundary.
+
+        The list contains the halfedges of superfaces of all independent sub_decompositions.
+        Independent sub_decompositions are those who are not enlcosed by any other sub_decomposition.
+        '''
+        idx = []
+        for sf in self._get_independent_superfaces():
+            idx.extend( sf.get_all_halfEdges_Idx() )
+
+        # a half_edge can not be in two faces, therefor the idx list is unique
+        # idx = np.vstack({row for row in idx})
+            
+        return idx
+
+    ############################################################################
+    def _get_independent_superfaces(self):
+        '''
+        This method returns a list of superfaces of all independent sub_decompositions.
+        Independent sub_decompositions are those who are not enlcosed by any other sub_decomposition.
+        
+        This list could be used to fetch the half-edges of the arrangement that 
+        represent the outer boundary.
+
+        Note that, every sub_decomposition has a superface, but if the sub_decomposition
+        is contained by another sub_decomposition, it's superFace is only a hole
+        in the latter sub_decomposition.
+        '''
+        superFaces = [ self._subDecompositions[idx].superFace
+                       for idx in self._get_independent_subdecompositions_idx() ]
+        
+        return superFaces
+
+    ############################################################################
+    def _get_independent_subdecompositions_idx(self):
+        '''
+        This method returns a list of indices to independent sub_decompositions.
+        Independent sub_decompositions are those who are not enlcosed by any other sub_decomposition.
+        
+        This list could be used to fetch the superFaces of independent sub_decompositions.
+        These superFace represent the outer boundaries of the arrangement.
+        '''
+        
+        idx = [ sd1_idx
+                for sd1_idx in range(len(self._subDecompositions))
+                if not(any([ self._subDecompositions[sd2_idx].does_enclose(self._subDecompositions[sd1_idx])
+                             for sd2_idx in range(len(self._subDecompositions)) ])) ]
+                
+        # idx = []
+        # for sd1_idx in range(len(arrang._subDecompositions)):
+        #     # a decomposition does not enclose itself
+        #     # decomposition.does_enclose(decomposition) = False
+        #     is_separate = not(any([ arrang._subDecompositions[sd2_idx].does_enclose(arrang._subDecompositions[sd1_idx])
+        #                             for sd2_idx in range(len(arrang._subDecompositions)) ]))
+        #     if is_separate:
+        #         idx += [sd1_idx]
+
+        return idx
 
 
     ############################################################################
@@ -637,7 +865,7 @@ class Arrangement:
         arrang.decomposition is the main decomposition. I contains all the faces.
         arrang.decomposition -> dual
         '''
-        
+
         dual = nx.MultiGraph()
 
         # per each face, a node is created in the dual graph
@@ -657,35 +885,121 @@ class Arrangement:
         return dual
     
 
-
     ############################################################################
-    def merge_faces(self, faceIdx=[]):
+    def merge_faces(self, faces_idx=[], loose_degree=2):
         '''
         Arrangement class
         '''
 
         # to reject duplication
-        faceIdx = list(set(faceIdx))
+        faceIdx = list(set(faces_idx))
         
         halfEdge2Remove = []
 
-        for (f1Idx,f2Idx) in itertools.combinations(faceIdx, 2):
+        for (f1Idx,f2Idx) in itertools.combinations(faces_idx, 2):
             # f1 = self.decomposition.faces[f1Idx]
             # f2 = self.decomposition.faces[f2Idx]
 
             halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
+        
+        # The self.remove_edges will:
+        # 1. removes the halfedges
+        # 2. calls self.remove_nodes, which removes the loose nodes
+        # self.remove_nodes in turns calls the self._decompose to recompute the decomposition        
+        self.remove_edges( list(set(halfEdge2Remove)), loose_degree=loose_degree)
 
-        # remove all halfEdges, that separate the iput faces, from the graph
-        self.graph.remove_edges_from( list(set(halfEdge2Remove)) )
 
-        # check if any node is loose and not connected
-        nodeDegrees = self.graph.degree(self.graph.nodes())
-        self.graph.remove_nodes_from( [k
-                                       for k in nodeDegrees.keys()
-                                       if nodeDegrees[k] == 0 ] )
+    ############################################################################
+    def remove_edges(self, edges_idx=[], loose_degree=2):
+        '''
+        Arrangement class
+
+        Input
+        -----
+        edges_idx: [(s,e,k), ...]
+        a list of halfedge idx to be removed from the arrangement
+
+        Parameter:
+        ----------
+        loose_degree:
+        This parameter will be passed to self.remove_nodes for loose node removal
+        Any node with adegree less than or equal to this parameter will be removed
+        loose_degree=0 -> only disconnectend nodes
+        loose_degree=2 -> disconnected nodes, or nodes at the end of a branch
+        loose_degree=-1 -> no node is considered loose        
+
+        Note:
+        -----
+        if the nodes_idx list is empty, this method will call remove_nodes
+        which in turn will only remove "loose" nodes.
+        see arrangement.remove_nodes.__doc__ for more details
+        '''        
+        self.graph.remove_edges_from( edges_idx )
+
+        # the following method will remove loose nodes
+        # and more importantly will call the self._decompose() 
+
+        self.remove_nodes(nodes_idx=[], loose_degree=loose_degree)
+        
+
+    ############################################################################
+    def remove_nodes(self, nodes_idx=[], loose_degree=2):
+        '''
+        Arrangement class
+
+        Input
+        -----
+        nodes_idx:
+        a list of node keys to be removed from the arrangement
+
+        Parameter
+        ---------
+        loose_degree:
+        any node with adegree less than or equal to this parameter will be removed
+        loose_degree=0 -> only disconnectend nodes
+        loose_degree=2 -> disconnected nodes, or nodes at the end of a branch
+        loose_degree=-1 -> no node is considered loose        
+
+        Note
+        ----
+        if the nodes_idx list is empty, this method will only remove "loose" nodes
+
+        Note
+        ----
+        Node degrees in the graph of the arragement are always even numbers.
+        This is due to half-edges where every "edge" between two neighboring nodes,
+        is actually a pair of half-edges
+        '''
+
+        # to reject duplication
+        nodes_idx = list(set(nodes_idx))
+        
+        # Removes the nodes and all adjacent edges.
+        # If a node in the container is not in the graph it is silently ignored.
+        self.graph.remove_nodes_from( nodes_idx )
+
+        ################ clean_loose_nodes
+        nodes_degree = self.graph.degree()
+        loose_nodes = [k
+                       for k in nodes_degree.keys()
+                       if nodes_degree[k] <= loose_degree ]
+
+        # the reason for the while-loop
+        # if ther exist a branch with few nodes on it, removing one "node at the end"
+        # would make the next node in the branch the "node at the end"
+        # I can't find braches and remove them all together instead of this while loop
+        # this is because nodes on a branch are connected by a pairs of halfedges
+        while len(loose_nodes)>0:
+            self.graph.remove_nodes_from( loose_nodes )
+
+            nodes_degree = self.graph.degree()
+            loose_nodes = [k
+                           for k in nodes_degree.keys()
+                           if nodes_degree[k] <= loose_degree ]
         
         # recompute the decomposition
         self._decompose()
+
 
     ############################################################################
     def _decompose(self):
@@ -921,13 +1235,12 @@ class Arrangement:
                                 for row in range(len(self.traits))
                                 for col in range(row) ]
 
-            global traits
-            traits = self.traits
-            with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
-                intersections_tmp = p.map( intersection_star, traitsTuplesIdx)
-            del traits, p
-            
+            intersection_star_par = partial(intersection_star,
+                                            traits = self.traits)
 
+            with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
+                intersections_tmp = p.map( intersection_star_par, traitsTuplesIdx)
+            
             
             for (row,col),ips in zip (traitsTuplesIdx, intersections_tmp):
                 intersections[row][col] = ips
@@ -945,11 +1258,10 @@ class Arrangement:
             del col, row, ip_tmp
 
 
-        ######################################## TO DELETE    
+        ######################################## debugging- mode    
         # self.all_intersection_points = intersections
         # print ('np.shape(intersections):', np.shape(intersections))
-        ######################################## TO DELETE
-
+        ######################################## debugging- mode
 
         ########################################
         # step 2: reject an intersection if it is not a point
