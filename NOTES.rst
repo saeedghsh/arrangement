@@ -1,15 +1,45 @@
->>> re-structure the repo into a python package 
+face.halfEdges does not contain halfedges of the holes.
+face.get_all_halfEdges_Idx() return the list of face.halfEdges and holes.halfEdges
 
->>> add find_face example to the README.md
+
+New case (all segment): is the inside triangle a hole?
+[(0,0),(3,1)]
+[(3,1),(3,3)]
+[(3,3),(0,3)]
+[(0,3),(0,0)]
+[(0,0),(2,1)]
+[(2,1),(1,2)]
+[(1,2),(0,0)]
+
+
+New test case (all segments):
+[(-1,2),(1,2)]
+[(-1,1),(1,1)]
+[(-1,0),(1,0)]
+[(-1,-1),(1,-1)]
+[(-1,-2),(1,-2)]
+[(0,-3),(0,3)]
+[(1,-2),(1,-1)]
+[(1,1),(1,2)]
+[(-1,-2),(-1,-1)]
+[(-1,1),(-1,2)]
+
+
+- [x] re-structure the repo into a python package 
+
+- [ ] add find_face(point) example to the README.md
+- [ ] add decomposition.find_neighbours example to the README.md
+
 
 
 >>> Dual graphs
 [ ] in the topological graphs, graphs of the holes are disconnected from the enclosing graphs.
 [ ] how to facilitate the correspondency between dual graphs?
+[ ] geometric connectivity graph -> ???? is it possible ????
 [v] topological adjacency graph -> subdiv.graph
 [v] geometric adjacency graph -> subdiv.graph + half-edges
 [v] topological connectivity graph -> subdiv.decomposition.faces
-[ ] geometric connectivity graph -> ???? is it possible ????
+
 
 >>> [subdivision:tool]
 curves = extract_curves_from(map/image)

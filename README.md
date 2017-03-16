@@ -172,11 +172,12 @@ For more examples and details see the [demo.py](https://github.com/saeedghsh/arr
 
 Limitations, Bugs and TODO
 --------------------------
-- [ ] fix known bug
-- [ ] performance issues
-- [ ] make the code python3 compatible
 - [ ] documentation
 - [ ] full test suite
+- [ ] fix known bug
+- [ ] setup.py
+- [ ] make the code python3 compatible
+- [ ] performance issues
 
 <!--- 
 Limitations, Bugs and TODO

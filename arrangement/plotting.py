@@ -138,7 +138,11 @@ def plot_edges(axis, arrang,
                halfEdgeIdx=None,
                withArrow=False,
                printLabels=False):
-
+    '''
+    halfEdgeIdx
+    a list of half-edge indices to plot.
+    If None, all will be plotted.
+    '''
 
     edge_plot_instances = []
     if halfEdgeIdx is None:
