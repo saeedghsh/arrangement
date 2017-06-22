@@ -5,8 +5,8 @@ import codecs
 import os
 
 # Get the long description from the README file
-here = os.path.abspath(path.dirname(__file__))
-with codecs.open(path.join(here, 'README.md'), encoding='utf-8') as f:
+here = os.path.abspath(os.path.dirname(__file__))
+with codecs.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='arrangement',

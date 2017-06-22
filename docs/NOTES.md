@@ -1,4 +1,5 @@
-https://www.j-raedler.de/projects/polygon/
+Replace matplotlib.Path with [Polygon](https://www.j-raedler.de/projects/polygon/) package?
+
 
 why this fails?
 file_name = 'tests/testCases/curved_checkerboard_square.yaml'
@@ -15,7 +16,6 @@ New case (all segment): is the inside triangle a hole?
 [(0,0),(2,1)]
 [(2,1),(1,2)]
 [(1,2),(0,0)]
-
 
 New test case (all segments):
 [(-1,2),(1,2)]
@@ -34,7 +34,6 @@ New test case (all segments):
 
 - [ ] add find_face(point) example to the README.md
 - [ ] add decomposition.find_neighbours example to the README.md
-
 
 
 >>> Dual graphs
@@ -77,9 +76,9 @@ Find Differences:
 --------------------------------------------------------------------------------
 Debugging:
 ----------
-[v] graphs are stored in the decomposistion class, do we need to store them separately?
+- [x] graphs are stored in the decomposistion class, do we need to store them separately?
 - [x] remove: self.MDG ( is included in self.decomposition )
-  [v] remove: self.subGraphs ( are included in self.subDecomposition )
+- [x] remove: self.subGraphs ( are included in self.subDecomposition )
 
 
 
@@ -88,26 +87,26 @@ it happens to be genuinely a degenerate case, that is to say the peoblem
 happens when the angles of tangent to two tangent half-edge differ after
 the 7th digit of the fractional part
 
-[vx] the angle restriction in arc description
+- [x] the angle restriction in arc description
 
-[vx] if a bunch of curves intersect in a way that there are more than one nodes, it will result in at least one half-edge. consequently the face identification will initiate, but if there is no face, it will become problematic.
+- [x] if a bunch of curves intersect in a way that there are more than one nodes, it will result in at least one half-edge. consequently the face identification will initiate, but if there is no face, it will become problematic.
 TODO: Of each subgraph construct a graph, only of positive half edges, start face identification only if there is a close path in it.
 What I Have Done: added the following to the find_successor_...
 if len(candidateEdges) == 0: return allHalfEdgeIdx.index(twinIdx)
 this unforunately will result in a having faces with null area
 for instance, if a subgraph contains no cycle (i.e. a tree)
 
-[v] decomposition.find_neighbours()
+- [x] decomposition.find_neighbours()
 does not check the holes in both direction
 
-[v] test_cases_key[23]
+- [x] test_cases_key[23]
 the superFace is not identified correctly!
 hypothesis:
 when a subdivision returns only two face, of which one is superFace
 the sum of the internal angles of superFace is always bigger than 
 the corresponding value of the inner face.
 
-[v] test_cases_key[23]
+- [x] test_cases_key[23]
 what I define as the side of the half-edge, is actually the direction of
 the half-edge with respect to the theta value of the underlying curve
 Using it as side, casued a big trouble in finding the superFace,
@@ -130,62 +129,62 @@ the superFace: ['positive', 'positive', 'negative', 'negative']
 the face: ['positive', 'positive', 'positive', 'negative']
 the superFace: ['positive', 'negative', 'negative', 'negative']
 
-[v] fix the sorting bug
+- [x] fix the sorting bug
 - test_cases_key[2]
   test_cases_key[9]
 
-[v] fix the concentric circles problem:
+- [x] fix the concentric circles problem:
 - test_cases_key[7]
   the problem is that two holes are inside each other
   although it won't affect the point_in_face operation,
   it does mess up the visulization.
   it was due to the nested holes
 
-[v] the wrong while loop condition - update subdivision over comments from Slawomir
+- [x] the wrong while loop condition - update subdivision over comments from Slawomir
 
-[v] do we still have to start with all lines and then circles?
+- [x] do we still have to start with all lines and then circles?
     or was it a constraint of the first approach?
     it's important to figure out as it would allow the update with any given
     function? otherwise with new lines everything should be computed from scratch!
     - the answer is it doesn't matter
 
-[v] how to include those unbounded regions (oo, -oo) - should we?
+- [x] how to include those unbounded regions (oo, -oo) - should we?
 a region unbounded to infinity is a degenerate case for pointInPolygone!
 I think if i want to include the whole space, ie. faces unbounded to infinity
 there should be infinity points oneach line, not only two and shared.
 - the answer is treat all exterior region as one,
   so if a point is not in any face, it outside!
   
-[v] move "face_2_path" to classmethod of subdivision
+- [x] move "face_2_path" to classmethod of subdivision
 
-[v] decomposition problems:
+- [x] decomposition problems:
 
-[v]  problem #1
+- [x]  problem #1
 should I remove the infinity points?
 NO! they are not the problem! because the values to identify the next half-edge
 comes from the functions at the intersection points, has nothing to do with infinity
 we actually need them, because such faces will be rejected based on that
 actually yes! I had to remove 
 
-[v] problem#2
+- [x] problem#2
 is this related to the second key that I compute? (cross/project)
 it seems there is something fishy there. check out the mode=1/2
 
-[v] problem#3
+- [x] problem#3
 the calculation of the first derivative on the line class is wrong,
 not anymore, hopefuly
 
-[v] remove infinity points/node
+- [x] remove infinity points/node
 they overcomplicate things are not useful any way
 and makes the update of the subdivision with new function way messy
 remove and test with only lines.
 
-[v] find_face_of_point doesn't work properly, why?
+- [x] find_face_of_point doesn't work properly, why?
 because we include the superFace, it returns the superFace in most cases
 a crossing at an intersection of multiple half edges will be counted as multiple crossing!
 I'm gonna most likely use the matplolib anyway
 
-[v] how to detect the superFace? -step four
+- [x] how to detect the superFace? -step four
 for now I decided to prevent its creation, instead of detection
 but, half-edges connected to infinity nodes are not listed in "allhalfEdgeIdx"
 therefore step one of decompose() practically does nothing!
@@ -194,7 +193,7 @@ it was due to isinstance(f, sym.Line) instead of (f.obj, sym.Line)
 in the "find_functions_of_intersectionPoints()"
 at this point there is no superFace
 
-[v] Stand Alone Functions: handling the non-intersecting circles (in: decompose)
+- [x] Stand Alone Functions: handling the non-intersecting circles (in: decompose)
 unbounded functions are connected to nodes in infinity,
 so they will be handles otherwise.
 Flag functions of bounded class (e.g. circles) that do not intersect
@@ -202,21 +201,21 @@ with any other functions. Those that are augmented with an arbitrary
 point instead of an intersection. Through the decomposition process
 skip those flagged.
 
-[v] circle with r = 0 is problematic! look into that.
+- [x] circle with r = 0 is problematic! look into that.
 
-[v] be careful with r<0, sympy accepts it and things get messy!
+- [x] be careful with r<0, sympy accepts it and things get messy!
 
-[v] I think 2ndDer does not need change of direction, only 1stDer.
+- [x] I think 2ndDer does not need change of direction, only 1stDer.
 be careful, the angles between 1st and 2nd derivatives of inside half-edges
 are pi/2, but the same angles for outside half-edges are -pi/2
 
-[v] fix the __class__ problem in modilfied geometric instances
+- [x] fix the __class__ problem in modilfied geometric instances
 (inheritance -> aggregation)
 
-[v] floatting point problem for the tangent intersection point, not rejected!
+- [x] floatting point problem for the tangent intersection point, not rejected!
 (in: merge_collocated_intersectionPoints)
 
-[v] plotting: the problem of pathes-pathces
+- [x] plotting: the problem of pathes-pathces
 it seems to be related to the ordering of the starting and ending point of the arc
 
 --------------------------------------------------------------------------------
@@ -224,11 +223,11 @@ Developement
 ------------
 
 [ ] testing unit
-- [v] create test cases for the improved cases, i.e. ray, segment, arc	
+- - [x] create test cases for the improved cases, i.e. ray, segment, arc	
   [] use suite() so it runs all tests, even if one fails
   [] bring all "asserts" from subdivision.py to test.py
 
-[v] merging and splitting faces locally.
+- [x] merging and splitting faces locally.
 
 [ ] should I have used  "geometric_graph"?
 
@@ -248,21 +247,21 @@ subdivision.graphs['A'].mdg (based on functions from [H,M,L] priority lists)
 
 [ ] https://www.toptal.com/python/computational-geometry-in-python-from-theory-to-implementation
 
-[v] decomposition.does_intersect() (for agents tracking)
+- [x] decomposition.does_intersect() (for agents tracking)
 just check their superface, to see whether they intersect or not!
 
 
-[v] Subdivision.transform()
-- [v] modify LineModified (to update: self.obj) --> RayModified and SegmentModified should inherit
-  [v] CircleModified (to update: self.obj)
-  [v] ArcModified (to update: self.obj / self.t1, self.t2)
-  [v] update decomposition.faces (to update: self.path / self.holes[i].path)
-  [v] update subdivision.curves --> should propagate to decomposition.curves
-  [v] update subdivision.graph (nodes)  --> should propagate to decomposition.graph
+- [x] Subdivision.transform()
+- - [x] modify LineModified (to update: self.obj) --> RayModified and SegmentModified should inherit
+  - [x] CircleModified (to update: self.obj)
+  - [x] ArcModified (to update: self.obj / self.t1, self.t2)
+  - [x] update decomposition.faces (to update: self.path / self.holes[i].path)
+  - [x] update subdivision.curves --> should propagate to decomposition.curves
+  - [x] update subdivision.graph (nodes)  --> should propagate to decomposition.graph
 
-[v] visualize the test cases without deploying subdivision
+- [x] visualize the test cases without deploying subdivision
 
-[v] arc
+- [x] arc
 the challenge in handling the Arc is due to the fact that Arc is not
 native to sympy. I have to use circle class for the internal object
 in aggregation. for instance following methods of sympy would not work!
@@ -288,7 +287,7 @@ in aggregation. for instance following methods of sympy would not work!
 	 - edgeList_2_mplPath
 	   fortunately path.arc() exists :) stupid sympy!
 
-[v] add line segments and rays
+- [x] add line segments and rays
 procedure to modify the code:
 add segment type to where ever I use "isinstance"
 - construct_edges
@@ -297,24 +296,24 @@ add segment type to where ever I use "isinstance"
   fortunately path.arc() exists :) stupid sympy!
 
 
-[v] Decomposition.find_neighbours(),
+- [x] Decomposition.find_neighbours(),
 don't forget to include half-edges from holes.
 for this actually we need to make sure there is no redundancy in holes!
 
-[v] Subdivision.csvParser
+- [x] Subdivision.csvParser
 
-[v] punch hole
+- [x] punch hole
 
-[v] plot faces with patches
+- [x] plot faces with patches
 
-[v] remove infinity points
+- [x] remove infinity points
 
-[v] detect the superFace of the subgraph:
+- [x] detect the superFace of the subgraph:
 find convex hull of all points in the subgraph - sym.convex_hull()
 start from one of the points in the convex hull,
 and follow the same procedure of face finding, with inverse sorting.      
 
-[v] should I use mpl.path?
+- [x] should I use mpl.path?
 path.arc()                      # of a unit circle
 path.circle()                   # 
 path.intersects_bbox()          # 
@@ -357,9 +356,9 @@ This is the official Python convention for 'internal' symbols;
 [ ] from sympy.geometry import Curve
 
 [ ] half edge attributes:
-- [v] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
-- [v] 1stDer, 2ndDer removed.
-- [v] TVal  needed? - something is wrong in visualization! I don't know what!
+- - [x] sIdx, eIdx are redundant, they should be the same as selfIdx[0], selfIdx[1]
+- - [x] 1stDer, 2ndDer removed.
+- - [x] TVal  needed? - something is wrong in visualization! I don't know what!
   -> I don't have to use IPE for eTVal and sTVal, just need to fetch them from the node!
   
 [ ] pycuda?
@@ -381,56 +380,56 @@ at least delet every temporarly varibale right after it's done its job
 
 
 
-[v] remove self.MDG and self.subGraphs
-[v] do I need the subdivision class? YES!
+- [x] remove self.MDG and self.subGraphs
+- [x] do I need the subdivision class? YES!
 
-[v] get away from the spaghetti style - don't store self.variables
-- [v] self.intersectionsFlat
-  [v] self.intersections
-  [v] self.ipsCurveTVal
-  [v] self.ipsCurveIdx
-  [v] self.curveIpsTVal
-  [v] self.curveIpsIdx
-  [v] self.edges
-  [v] standAloneCurvesIdx
+- [x] get away from the spaghetti style - don't store self.variables
+  - [x] self.intersectionsFlat
+  - [x] self.intersections
+  - [x] self.ipsCurveTVal
+  - [x] self.ipsCurveIdx
+  - [x] self.curveIpsTVal
+  - [x] self.curveIpsIdx
+  - [x] self.edges
+  - [x] standAloneCurvesIdx
 
-[v] do we need the Node class? [I actually had to bring the Node class back!]
+- [x] do we need the Node class? [I actually had to bring the Node class back!]
 isn't the dictionary of the MDG.node[0]
 to write:
 point = subdiv.MDG.node[nodeIdx]['point']
 instead of:
 point = subdiv.MDG.node[nodeIdx]['obj'].point
 
-[v] nodes[idx] = (idx,nodeObject)
+- [x] nodes[idx] = (idx,nodeObject)
 	I had this format of tuple, because it was required by the networkX
 	TODO: 
-	- [v] remove self.nodes[idx]
-	  [v] subdiv.nodes[idx][1]['obj'] -> subdiv.MDG.node[idx]['obj']
+	- [x] remove self.nodes[idx]
+	- [x] subdiv.nodes[idx][1]['obj'] -> subdiv.MDG.node[idx]['obj']
 
-[v] remove derivatives
+- [x] remove derivatives
 since we use tangent and curvature for sorting, there is no longer a need for 
 the derivatives. remove all related values from subdivision class
 
-[v] inheritance VS. aggregation - Modified Geometry Instances
+- [x] inheritance VS. aggregation - Modified Geometry Instances
 
-[v] inheritance VS. aggregation - Subdivision
+- [x] inheritance VS. aggregation - Subdivision
 
-[v] instantiation
+- [x] instantiation
 examine all the internal variables of the subdivision class,
 and see whether if they should belong to a class of their own.
-- [v] nodes
-  [v] edges
-  [v] faces
+- [x] nodes
+- [x] edges
+- [x] faces
 
-[v] multi-processing
+- [x] multi-processing
 
 
 --------------------------------------------------------------------------------
 Documentation
 -------------
-      [ ] add parser's manual to the readMe file
+- [ ] add parser's manual to the readMe file
 
-      [ ] API documentation
+- [ ] API documentation
 	$ cd Dropbox/myGits/dev/subdivision/
 	$ pyreverse -o svg -p arrangement src/*.py
 	$ pyreverse -o svg -p modifiedSympy src/modifiedSympy.py
@@ -456,36 +455,28 @@ Documentation
 	- what is the relation between indices of different lists,
 	  e.g. nodes vs ips vs edges ...
 
-      [ ] update report over
-	- comments from Adam and Slawomir
-	- sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
+- [ ] update report over
+  - comments from Adam and Slawomir
+  - sorting procedure 1st-2nd derivatives -> tangentAngle and curvature
 
+- [ ] doc-tool:
+  - https://readthedocs.org/
+  - https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
+  - https://docs.python.org/devguide/documenting.html
+  - http://docutils.sourceforge.net/
+  - http://docutils.sourceforge.net/rst.html
+  - http://www.sphinx-doc.org/en/stable/
 
-https://readthedocs.org/
+- [x] examples
 
-[ ] doc-tool:
-- https://github.com/networkx/networkx/blob/master/networkx/classes/digraph.py
-  https://docs.python.org/devguide/documenting.html
-  http://docutils.sourceforge.net/
-  http://docutils.sourceforge.net/rst.html
-  http://www.sphinx-doc.org/en/stable/
-
-[ ] examples
-
-[ ] GUI?
-- Load file / interactive drawings / manual entering
-  Support animation
-
-[ ] subdivision.io
-https://upload.wikimedia.org/wikipedia/commons/8/88/Doubling_time_vs_half_life.svg
-
-  
-[v] animation
-- https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
-  https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
-  http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
-[gif] convert -delay 10 -loop 0 *.png animation.gif
-[mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
+- [ ] GUI? (Load file / interactive drawings / manual entering / Support animation)
+ 
+- [x] animation
+  - https://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
+  - https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+  - http://jakevdp.github.io/blog/2013/05/19/a-javascript-viewer-for-matplotlib-animations/
+	[gif] convert -delay 10 -loop 0 *.png animation.gif
+	[mov] ffmpeg -framerate 1/2 -i img%04d.png -c:v libx264 -r 30 out.mp4
   
 
 

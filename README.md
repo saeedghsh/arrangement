@@ -11,37 +11,27 @@ However, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-s
 
 Dependencies and Download
 -------------------------
-- Installing Dependencies
+- Download, installing dependencies, and install package
 ```shell
-pip install -r requirements.txt
-```
-<!-- ```shell -->
-<!-- % python2: -->
-<!-- apt-get install python-pip -->
-<!-- pip install numpy sympy matplotlib networkx scikit-image pyyaml -->
-
-<!-- % python3: -->
-<!-- apt-get install python3-pip -->
-<!-- pip3 install numpy sympy matplotlib networkx scikit-image pyyaml -->
-<!-- ``` -->
-<!-- or -->
-
-
-- Download
-```shell
+# Download
 git clone https://github.com/saeedghsh/arrangement/
-```
-- Installing the package
-```shell
-python setup.py install
-```
+cd arrangement
 
+# Install dependencies
+pip install -r requirements.txt
+pip3 install -r requirements.txt
+
+# Install the package
+python setup.py install
+python3 setup.py install
+```
 
 - Demo
 ```shell
 python demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
 python3 demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
 ```
+
 
 Basic Use and API
 -----------------
