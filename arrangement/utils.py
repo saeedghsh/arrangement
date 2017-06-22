@@ -15,12 +15,7 @@ PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
-
-import sys
-if sys.version_info[0] == 3:
-    from importlib import reload
-elif sys.version_info[0] == 2:
-    pass
+from __future__ import print_function, division
 
 import re
 import yaml
@@ -28,85 +23,20 @@ import sympy as sym
 import numpy as np
 import skimage.transform
 import matplotlib.path as mpath
+import matplotlib.transforms
 
 from . import geometricTraits as trts
-from . import arrangement as arr
-# reload(trts)
+# from . import arrangement as arr
+
+# svg parsing
+import xml.etree.ElementTree as ET
+import svgpathtools
+import yaml
 
 ################################################################################
 ################################################################################
 ################################################################################
 
-
-################################################################################
-def merge_faces_on_fly(arrangement, f1_idx, f2_idx):
-    '''
-    Note: this is still not a complete solution.
-    If the merging of face create a holes, which [almost certainly] will happen
-    if share mutual halfedge in places topologically distinct, the list of
-    halfedges will contain more than one disjoint pathes.
-    If there is more than one path, one chain of halfedge list will complete
-    and eventhough the bank is not empty,it can not find a successor to the
-    last halfedge.
-    The raise will avoid infinite loop, but obviously it fails!
-    For now I return None in such cases, but should find a smarter solution
-    '''
-
-    f1 = arrangement.decomposition.faces[f1_idx]
-    f2 = arrangement.decomposition.faces[f2_idx]
-
-    # finding mutual_halfedge (mut_he), all_halfedge (all_he)
-    # and creating a bank of halfedges that contains all halfedges from both
-    # faces, except for the halfedge in the mutual_halfedge 
-    mut_he = arrangement.decomposition.find_mutual_halfEdges(f1_idx,f2_idx)
-    all_he = f1.halfEdges + f2.halfEdges
-    bank = [he for he in all_he if he not in mut_he]
-
-    if len(mut_he)==0:
-        # just in case if I forget to check faces' neighborhood before calling
-        # this method
-        return None
-
-    # creating a new list of halfedges (new_he), in correct order
-    new_he = [bank.pop(0)]
-    while len(bank)>0:
-        
-        # find the successor halfedge
-        # to the last item in the last sequence of new_he
-        next_node_idx = new_he[-1][1]
-        next_idx = [idx for idx,he in enumerate(bank) if he[0] == next_node_idx]
-
-        if len(next_idx)==0:
-            return None
-            raise( NameError( 'there are disjoint chains of halfedges' ) )
-            # probably [almost certainly] only one chain is the face and the
-            # rest are holes
-
-        elif len(next_idx)==1:
-            # still in the same path, proceed
-            next_idx = next_idx[0]
-            new_he.append( bank.pop(next_idx) )
-
-        elif len(next_idx) >1:
-            # raise( NameError( 'more than one halfedge to follow...' ) )
-            
-            # e.g. concentric squares connected with a pair of twin halfedges
-            # e.g. a polygon inside another polygon, sharing one node  
-            # the following will take care of the first example 
-            
-            # print ('have to discard pairs of twin halfedges')
-            twins_idx_in_bank = [idx
-                                 for idx, (s,e,k) in enumerate(bank)
-                                 if arrangement.graph[s][e][k]['obj'].twinIdx in bank]
-            twins_idx_in_bank.sort(reverse=True)
-            for idx in twins_idx_in_bank:
-                bank.pop(idx)
-            
-    # creating a path from the new list of halfedges
-    new_path = edgeList_2_mplPath(new_he, arrangement.graph, arrangement.traits )
-
-    # creating and returning a Face instance for the merged face
-    return arr.Face(new_he, new_path)
 
 ################################### converting face to mpl.path
 def edgeList_2_mplPath (edgeList, graph, traits):
@@ -411,8 +341,8 @@ def get_shape_descriptor(face, arrangement,
     
     input
     -----
-    face: index to target face of the arrangment 
-    arrangement: an instance of arrangement.arrangement
+    face: an instance of arrangement.Face
+    arrangement: an instance of arrangement.Arrangement
     
     Parameter
     ---------
@@ -704,3 +634,179 @@ def align_faces(arrangement1, arrangement2,
     
     return alignments
 
+
+################################################################################
+#################################################################### SVG parsing
+################################################################################
+def xml_tree_parser_to_svg_elements(tree):
+    '''
+    this function takes the xml tree of an SVG file
+    parses, detects and returns elements of interest
+    '''
+
+    keys = ['path', 'circle', 'ellipse', 'rect', 'polyline', 'polygon', 'line']
+    elements_dict = { key: [] for key in keys}
+    for element in tree.iter():
+        tag = element.tag.split('}')[-1]
+        if tag in keys:
+            # only storing and returning relevant elements
+            elements_dict[tag].append(element)
+
+        elif tag == 'g':
+            # check if the svg file contains transformation
+            if 'transform' in element.attrib.keys():
+                msg  = '\t WARNING the SVG drawing has group transformation WARNING\n'
+                msg += '\t {:s} \n'.format(element.attrib['transform'])
+                msg += '\t to solve, ungroup in inkscape! maybe works!\n'
+                print (msg)
+
+        elif tag == 'svg':
+            # storing the dimension of the svg canvas
+            height = element.attrib['height']
+            width = element.attrib['width']
+
+    assert 'height' in locals()
+    assert 'width' in locals()
+    elements_dict['height'] = np.float(height)
+    elements_dict['width'] = np.float(width)
+
+    return elements_dict
+
+########################################
+def svg_parser_line_element(element):
+    '''
+    https://www.w3.org/TR/SVG/shapes.html#LineElement    
+    '''
+    x1 = float(element.attrib['x1'])
+    y1 = float(element.attrib['y1'])
+    x2 = float(element.attrib['x2'])
+    y2 = float(element.attrib['y2'])
+    segments = [ [[x1, y1], [x2, y2]] ]
+    # ndmin is set to 3 to match the rect and polyline/polgon functiosn
+    return np.array(segments, dtype=float, ndmin=3)
+
+########################################
+def svg_parser_rect_element(element):
+    '''
+    https://www.w3.org/TR/SVG/shapes.html#RectElement    
+    '''
+    x = float(element.attrib['x'])
+    y = float(element.attrib['y'])
+    w = float(element.attrib['width'])
+    h = float(element.attrib['height'])
+    segments = [ [[x, y],     [x+w, y]],
+                 [[x+w, y],   [x+w, y+h]],
+                 [[x+w, y+h], [x, y+h]],
+                 [[x, y+h],   [x, y]] ]
+    return np.array(segments, dtype=float, ndmin=3)
+
+########################################
+def svg_parser_polyline_polygon_element(element):
+    '''
+    https://www.w3.org/TR/SVG/shapes.html#PolylineElement
+    https://www.w3.org/TR/SVG/shapes.html#PolygonElement
+    '''
+    # replacing all ',' with ' ' and splitting
+    pts_str = element.attrib['points'].replace(',',' ').split(' ')
+
+    # pairing points in the list and constructing the list of coordinates
+    pts = [  [float(pts_str[idx]), float(pts_str[idx+1])]
+             for idx in range(0, len(pts_str), 2) ]
+    
+    # constructing line segments from points
+    segments = [ [pts[idx], pts[idx+1]]
+                 for idx in range(len(pts)-1) ]
+
+    return np.array(segments, dtype=float, ndmin=3)
+
+
+########################################
+def svg_parser_circle_element(element):
+    '''
+    https://www.w3.org/TR/SVG/shapes.html#CircleElement    
+    '''
+    cx = element.attrib['cx']
+    cy = element.attrib['cy']
+    r = element.attrib['r']
+    return np.array([cx, cy, r ], dtype=float)
+
+########################################
+def svg_parser_ellipse_element(element):
+    '''
+    https://www.w3.org/TR/SVG/shapes.html#EllipseElement    
+    '''
+    cx = element.attrib['cx']
+    cy = element.attrib['cy']
+    rx = element.attrib['rx']
+    ry = element.attrib['ry']
+    return np.array([cx, cy, rx, ry], dtype=float)
+
+################################################################################
+def svg_to_ymal(svg_file_name):
+    ''' '''
+    data = { 'lines': [], #[x1,y1,x2,y2]
+                   'segments': [], #[x1,y1,x2,y2]
+                   'rays': [], #[x1,y1,x2,y2]
+                   'circles': [], #[cx,cy,cr]
+                   'arcs': [] } #[cx,cy,cr,t1,t2]
+
+    tree = ET.parse( svg_file_name )
+    elements_dict = xml_tree_parser_to_svg_elements(tree)
+
+    ###### parsing xml element to yaml's trait dictionary
+    ### path_element    
+    for path_elmt in elements_dict['path']:
+
+        for segment in svgpathtools.parse_path(path_elmt.attrib['d']):
+            if isinstance (segment, svgpathtools.Line):
+                segments = [ [ segment[0].real, segment[0].imag,
+                               segment[1].real, segment[1].imag ] ]
+                data['segments'] += segments
+                
+            elif isinstance (segment, svgpathtools.Arc):
+                print ('todo: parse Arc path')
+
+            elif isinstance (segment, svgpathtools.CubicBezier):
+                print ('todo: parse CubicBezier path')
+                
+            elif isinstance (segment, svgpathtools.QuadraticBezier):
+                print ('todo: parse QuadraticBezier path')
+
+            else:
+                print ('unknown path segment')
+
+    ### line_element
+    for line_elmt in elements_dict['line']:
+        for seg in svg_parser_line_element(line_elmt):
+            data['segments'].append([float(seg[0][0]), float(seg[0][1]),
+                                     float(seg[1][0]), float(seg[1][1]) ])
+
+
+    ### polyline_element (+polygon_element)
+    for polyline_elmt in elements_dict['polyline'] + elements_dict['polygon']:
+        for seg in svg_parser_polyline_polygon_element(polyline_elmt):
+            data['segments'].append([float(seg[0][0]), float(seg[0][1]),
+                                     float(seg[1][0]), float(seg[1][1]) ])
+           
+    ### rect_element
+    for rect_elmt in elements_dict['rect']:
+        for seg in svg_parser_rect_element(rect_elmt):
+            data['segments'].append([float(seg[0][0]), float(seg[0][1]),
+                                     float(seg[1][0]), float(seg[1][1]) ])
+
+    ### circle_element
+    for circle_elmt in elements_dict['circle']:
+        circle = svg_parser_circle_element(circle_elmt)
+        data['circles'].append( [float(circle[0]), float(circle[1]), float(circle[2]) ] )
+
+   
+    ### adding the boundary to the data
+    ### [xMin, yMin, xMax, yMax] 
+    data['boundary'] = [0,0, elements_dict['width'], elements_dict['height']]
+
+    ###### saving data
+    yaml_file_name = svg_file_name.split('.')[0]+'.yaml'
+    with open(yaml_file_name, 'w') as yaml_file:
+            yaml.dump(data, yaml_file) #, default_flow_style=True)
+    
+    return yaml_file_name

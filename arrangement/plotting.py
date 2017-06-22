@@ -15,6 +15,7 @@ PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
+from __future__ import print_function, division
 
 import numpy as np
 import sympy as sym
@@ -26,7 +27,8 @@ import matplotlib.patches as mpatches
 import matplotlib.transforms
 import matplotlib.image as mpimg
 
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
 
 
 ################################################################################
@@ -97,16 +99,16 @@ def plot_graph_pygraphviz(graph):
 def onClick(event):
     xe, ye = event.xdata, event.ydata
     if xe and ye:
-        # print 'clicked: ', xe, ye
+        # print('clicked: ', xe, ye)
 
         global arrang
         point = sym.Point(xe, ye)
         faceIdx = arrang.decomposition.find_face(point)
-        print faceIdx
+        print( faceIdx )
 
     else:
         pass
-        # print 'clicked out of border'
+        # print( 'clicked out of border' )
 
 ##################################### interactive functions on move
 def onMove(event):
@@ -116,7 +118,7 @@ def onMove(event):
     global ax
 
     if xe and ye:
-        # print 'moving: ',  xe, ye
+        # print( 'moving: ',  xe, ye )
         point = sym.Point(xe, ye)
         fIdx = arrang.decomposition.find_face(point)
 
@@ -125,7 +127,7 @@ def onMove(event):
 
     else:
         pass
-        # print 'moving out of border'
+        # print( 'moving out of border' )
 
 
 ################################################################################
@@ -483,7 +485,7 @@ def plot_new_halfEdge(axis):
                    alp=0.9, col='r',
                    withArrow=True)
     else:
-        print 'something is wrong!'
+        print( 'something is wrong!' )
 
     # ##########################################################################
     # ################################# drawing derivatives of the new haldfedge

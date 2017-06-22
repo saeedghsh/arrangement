@@ -2,48 +2,54 @@ Arrangement
 ===========
 <!--- <logo src="https://github.com/saeedghsh/arrangement/blob/master/pyarrange.png" alt="none" width="50" height="50"> --->
 
-A python package for decomposition of a 2D plane over a set of curves.
-Currently straight lines and circles are the supported classes of curves.
+A python package for 2D arrangement.
+Currently, only straight lines and circles are supported.
 
-HEAVILY UNDER MAINTENANCE
-
+This is an experimental implementation, and it is HEAVILY UNDER MAINTENANCE.
+For a stable, fast and reliable implementation of arrangement, I recommend the [CGAL](http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html) library.
+However, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-swig-bindings/wiki) does not include arrangement package.
 
 Dependencies and Download
 -------------------------
-- Dependencies
- * Python >=2.6
- * numpy >= 1.10.2
- * sympy >= 1.0
- * networkx >= 1.10
- * matplotlib >= 1.4.3
- * yaml >= 3.10 [optional]
-
 - Installing Dependencies
 ```shell
-% python2:
-apt-get install python-pip
-pip install numpy sympy matplotlib networkx pyyaml
-
-% python3:
-apt-get install python3-pip
-pip3 install install numpy sympy matplotlib networkx pyyaml 
+pip install -r requirements.txt
 ```
+<!-- ```shell -->
+<!-- % python2: -->
+<!-- apt-get install python-pip -->
+<!-- pip install numpy sympy matplotlib networkx scikit-image pyyaml -->
+
+<!-- % python3: -->
+<!-- apt-get install python3-pip -->
+<!-- pip3 install numpy sympy matplotlib networkx scikit-image pyyaml -->
+<!-- ``` -->
+<!-- or -->
+
 
 - Download
 ```shell
 git clone https://github.com/saeedghsh/arrangement/
 ```
+- Installing the package
+```shell
+python setup.py install
+```
 
-- Usage
-```python
-import sys
-sys.path.append('path_to_arrangement_repo')
+
+- Demo
+```shell
+python demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
+python3 demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
 ```
 
 Basic Use and API
 -----------------
 - Basic Use
 ```python
+import sys
+sys.path.append('path_to_arrangement_repo')
+
 # define curves:
 import arrangement.geometricTraits as trts
 curves = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
@@ -74,10 +80,11 @@ circles:
     - [center_x, center_y, radius]
 arcs:
     - [center_x, center_y, radius, interval_lower , interval_upper]
-
-boundary:
-	- [xMin, yMin, xMax, yMax]
 ```
+
+<!-- boundary: -->
+<!-- 	- [xMin, yMin, xMax, yMax] -->
+<!-- ``` -->
 
 See examples of yaml files in [testCases](https://github.com/saeedghsh/arrangement/tree/master/tests/testCases).
 Use the script [utils.py](https://github.com/saeedghsh/arrangement/blob/master/arrangement/utils.py) to retrieve data from a yaml file as following:
@@ -166,8 +173,6 @@ aplt.animate_face_patches(arrang)
 outer_halfedge_idx = arrange.get_boundary_halfedges()
 ```
 
-
-
 For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/demo.py).
 
 Limitations, Bugs and TODO
@@ -175,16 +180,16 @@ Limitations, Bugs and TODO
 - [ ] documentation
 - [ ] full test suite
 - [ ] fix known bug
+- [ ] profile for speed-up
+- [ ] svg parsing is incomplete and disabled
+- [x] python3 compatible
 - [ ] setup.py
-- [ ] make the code python3 compatible
-- [ ] performance issues
 
 <!--- 
 Limitations, Bugs and TODO
 --------------------------
 This project is currently under development, please note that efficiency and optimallity have not been the objective of the implementation. As a consequence, the code at your disposal is not in its best shape. The objective of this implementation has been to show the concept and prototyping it.
 
-- [ ] make the code python3 compatible
 - [x] add to readme: yaml_parser() usage instructions
 - [ ] Using [CGAL](cgal.org/):
  - [2D arrangement] (http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html)
@@ -198,7 +203,7 @@ This project is currently under development, please note that efficiency and opt
 - [ ] The problem with [`sympy.Circle.rotate()`] (https://github.com/sympy/sympy/issues/11743).
 - [x] `Arrangement.merge_faces()` recomputes the decomposition and hence resets face indices. This method is suitable to be called after the arrangement has been put in use, that is to say attributes have been assigned to faces. It does not reset the nodes and edge indices.
 - [ ] When dealing with ray or segment (and Arc), a given point might not be on the object (out of the interval). That's why I should always check if `object.contians(point)` this appears in IPE, DPE,... so, whenever using those, make sure to consider the cases where these methods might return False instead of expected type.
-- [ ] When a node after rotation is slightly off the original curve and the `curve.IPE(node.point)` returns False! For now the `object.contians(point)` check is disabled.
+- [ ] When a node after rotation is slightly off the original curve, the `curve.IPE(node.point)` returns False! For now the `object.contians(point)` check is disabled.
 - [ ] Rays (and segments), eventhough different, they are rejected as similar they belong to the same line.
 - [ ] It is important to reject invalide intersection points (e.g. duplicated points). In case of `Arrangement._multiProcessing` is True, the `distance_star()` is updated to reject invalid intersections resulting from arcs. But the counter part in not multi-processing should be updated to reject those wrong intersections.
 - [ ] How to define the center of a face?

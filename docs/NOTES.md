@@ -1,6 +1,11 @@
+https://www.j-raedler.de/projects/polygon/
+
+why this fails?
+file_name = 'tests/testCases/curved_checkerboard_square.yaml'
+
+
 face.halfEdges does not contain halfedges of the holes.
 face.get_all_halfEdges_Idx() return the list of face.halfEdges and holes.halfEdges
-
 
 New case (all segment): is the inside triangle a hole?
 [(0,0),(3,1)]

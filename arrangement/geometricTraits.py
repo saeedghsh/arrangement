@@ -15,6 +15,7 @@ PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
+from __future__ import print_function, division
 
 import numpy as np
 import sympy as sym
@@ -109,16 +110,16 @@ class LineModified:
         
         for opIdx, opType in enumerate(operTypes):
             
-            if opType == 'T' and operVals[opIdx]!=(0,0):
+            if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
                 
-            elif opType == 'R' and operVals[opIdx]!=0:
+            elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.rotate(theta,ref)
                 
-            elif opType == 'S' and operVals[opIdx]!=(1,1):
+            elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.scale(sx,sy,ref)
@@ -472,11 +473,11 @@ class CircleModified:
         
         for opIdx, opType in enumerate(operTypes):
             
-            if opType == 'T' and operVals[opIdx]!=(0,0):
+            if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
                 
-            elif opType == 'R' and operVals[opIdx]!=0:
+            elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
                 
@@ -493,7 +494,7 @@ class CircleModified:
                 r = self.obj.radius
                 self.obj = sym.Circle(c,r)
                 
-            elif opType == 'S' and operVals[opIdx]!=(1,1):
+            elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.scale(sx,sy,ref)
@@ -668,11 +669,11 @@ class ArcModified(CircleModified):
         
         for opIdx, opType in enumerate(operTypes):
             
-            if opType == 'T' and operVals[opIdx]!=(0,0):
+            if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
                 
-            elif opType == 'R' and operVals[opIdx]!=0:
+            elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
 
@@ -695,7 +696,7 @@ class ArcModified(CircleModified):
                 self.t2 += theta
 
                 
-            elif opType == 'S' and operVals[opIdx]!=(1,1):
+            elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.scale(sx,sy,ref)

@@ -15,7 +15,6 @@ PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>
 '''
-
 from __future__ import print_function, division
 
 import time
@@ -35,6 +34,84 @@ import matplotlib.transforms
 
 from . import geometricTraits as trts
 from . import utils as utls
+
+
+################################################################################
+######################################################## THIS SHOULD BE IN utils
+####################### BUT THIS METHOD NEEDS ACCESS TO Face CLASS,
+####################### AND I CAN'T IMPORT "import arrangement as arr" IN utils!
+################################################################################
+
+def merge_faces_on_fly(arrangement, f1_idx, f2_idx):
+    '''
+    Note: this is still not a complete solution.
+    If the merging of face create a holes, which [almost certainly] will happen
+    if share mutual halfedge in places topologically distinct, the list of
+    halfedges will contain more than one disjoint pathes.
+    If there is more than one path, one chain of halfedge list will complete
+    and eventhough the bank is not empty,it can not find a successor to the
+    last halfedge.
+    The raise will avoid infinite loop, but obviously it fails!
+    For now I return None in such cases, but should find a smarter solution
+    '''
+
+    f1 = arrangement.decomposition.faces[f1_idx]
+    f2 = arrangement.decomposition.faces[f2_idx]
+
+    # finding mutual_halfedge (mut_he), all_halfedge (all_he)
+    # and creating a bank of halfedges that contains all halfedges from both
+    # faces, except for the halfedge in the mutual_halfedge 
+    mut_he = arrangement.decomposition.find_mutual_halfEdges(f1_idx,f2_idx)
+    all_he = f1.halfEdges + f2.halfEdges
+    bank = [he for he in all_he if he not in mut_he]
+
+    if len(mut_he)==0:
+        # just in case if I forget to check faces' neighborhood before calling
+        # this method
+        
+        return None
+
+    # creating a new list of halfedges (new_he), in correct order
+    new_he = [bank.pop(0)]
+    while len(bank)>0:
+        
+        # find the successor halfedge
+        # to the last item in the last sequence of new_he
+        next_node_idx = new_he[-1][1]
+        next_idx = [idx for idx,he in enumerate(bank) if he[0] == next_node_idx]
+
+        if len(next_idx)==0:
+            return None
+            raise( NameError( 'there are disjoint chains of halfedges' ) )
+            # probably [almost certainly] only one chain is the face and the
+            # rest are holes
+
+        elif len(next_idx)==1:
+            # still in the same path, proceed
+            next_idx = next_idx[0]
+            new_he.append( bank.pop(next_idx) )
+
+        elif len(next_idx) >1:
+            # raise( NameError( 'more than one halfedge to follow...' ) )
+            
+            # e.g. concentric squares connected with a pair of twin halfedges
+            # e.g. a polygon inside another polygon, sharing one node  
+            # the following will take care of the first example 
+            
+            # print ('have to discard pairs of twin halfedges')
+            twins_idx_in_bank = [idx
+                                 for idx, (s,e,k) in enumerate(bank)
+                                 if arrangement.graph[s][e][k]['obj'].twinIdx in bank]
+            twins_idx_in_bank.sort(reverse=True)
+            for idx in twins_idx_in_bank:
+                bank.pop(idx)
+            
+    # creating a path from the new list of halfedges
+    new_path = utls.edgeList_2_mplPath(new_he, arrangement.graph, arrangement.traits )
+
+    # creating and returning a Face instance for the merged face
+    return Face(new_he, new_path)
+
 
 # import svgpathtools
 ################################################################################
@@ -106,16 +183,16 @@ class Node:
         # transforming the self.poin
         for opIdx, opType in enumerate(operTypes):
             
-            if opType == 'T' and operVals[opIdx]!=(0,0):
+            if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.point = self.point.translate(tx,ty)
                 
-            elif opType == 'R' and operVals[opIdx]!=0:
+            elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.point = self.point.rotate(theta,ref)
                 
-            elif opType == 'S' and operVals[opIdx]!=(1,1):
+            elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.point = self.point.scale(sx,sy,ref)
@@ -234,6 +311,8 @@ class Face:
         polygon = self.path.to_polygons()
 
         if len(polygon) != 1:
+            print (self.path, polygon)
+            return 0.0
             raise(NameError('the path.to_polygons() method should return a list with a single entry!'))
         
         x = polygon[0][:,0]
@@ -1117,13 +1196,12 @@ class Arrangement:
                                             traits = self.traits)
 
             with ctx.closing(mp.Pool(processes=self._multi_processing)) as p:
-                intersections_tmp = p.map( intersection_star_par, traitsTuplesIdx)
-            
+                intersections_tmp = p.map( intersection_star_par, traitsTuplesIdx)           
             
             for (row,col),ips in zip (traitsTuplesIdx, intersections_tmp):
                 intersections[row][col] = ips
                 intersections[col][row] = ips
-            del col,row, ips
+            # del col,row, ips
                 
         else:  # without multi_processing
             for row in range(len(self.traits)):
@@ -1295,7 +1373,8 @@ class Arrangement:
         # step 1_b: sort intersection points over traits
         # sorting iptersection points, according to corresponding tVal
         for cIdx in range(len(self.traits)):
-            tmp = sorted(zip( traitIpsTVal[cIdx], traitIpsIdx[cIdx] ))
+            # in python2 zip returns a list, in pothon3 it returns a zip() object
+            tmp = sorted( list( zip( traitIpsTVal[cIdx], traitIpsIdx[cIdx] )))
             traitIpsIdx[cIdx] = [pIdx for (tVal,pIdx) in tmp]
             traitIpsTVal[cIdx].sort()
 
@@ -1348,8 +1427,9 @@ class Arrangement:
                 # idx = [idx for idx,n in enumerate(np.diff(endTValList)) if n<0]
                 endTValList[-1] += 2*np.pi
 
-
-            l = zip (startIdxList, startTValList, endIdxList, endTValList)
+                
+            # in python2 zip returns a list, in pothon3 it returns a zip() object
+            l = list( zip (startIdxList, startTValList, endIdxList, endTValList) )
 
             # create a half-edge for each pair of start-end point
             for ( sIdx,sTVal, eIdx,eTVal ) in l:
@@ -1457,7 +1537,8 @@ class Arrangement:
                 canBeta.append( canObjTrait.curvature(sPoint, canObj.direction) )
 
             # sorting
-            fullList  = zip( canAlpha, canBeta, candidateEdges )
+            # in python2 zip returns a list, in pothon3 it returns a zip() object
+            fullList  = list ( zip( canAlpha, canBeta, candidateEdges ) )
             fullList += [(refAlpha,refBeta,'ref')]
             sortList  = sorted( fullList, key=operator.itemgetter(0, 1) )
 
@@ -1571,9 +1652,25 @@ class Arrangement:
 
     ############################################################################
     def transform_sequence(self, operTypes, operVals, operRefs, subDecompositions=False):
+        '''Arrangement class
+
+        This method performs a sequence of transformation processes expressed by
+        
+        * operTypes: defines the type of each transformation
+        * operVals: the values for each transformation
+        * operRefs: the reference point for each transformation
+        -- reference point is irrelevant for translation, still should be provided for consistency
+        
+        example:
+        obj.transform_sequence( operTypes='TTRST',
+        operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
+        operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
+        
+        order: ordering of transformation
+        e.g. 'TRS' -> 1)translate 2)rotate 3)scale
+        e.g. 'RTS' -> 1)rotate 2)translate 3)scale
+
         '''
-        Arrangement class
-        '''      
         # update arrangement.traits
         for trait in self.traits:
             trait.transform_sequence(operTypes, operVals, operRefs)
@@ -1585,13 +1682,49 @@ class Arrangement:
         # update arrangement.decomposition.faces
         self.decomposition.update_face_path()
 
-
         # update decomposition.faces
         if subDecompositions==True:
             for subDec in self.subDecompositions:
                 for nIdx in subDec.graph.nodes():
                     subDec.graph.node[nIdx]['obj'].transform_sequence(operTypes, operVals, operRefs, self.traits)
                 subDec.update_face_path()
+
+
+
+    ############################################################################
+    def _transform_affine(self, matrix, subDecompositions=False):
+        '''
+        Arrangement class
+        '''
+        # update arrangement.traits
+        # TDOD
+        
+        # update arrangement.graph (nodes)
+        points = [ self.graph.node[nIdx]['obj'].point
+                   for nIdx in self.graph.nodes()]
+        point_set = np.array([[p.x, py, 1] for p in points])
+        point_set_warp = np.dot(matrix, point_set.T).T
+        
+        for (nIdx,p) in zip(self.graph.nodes(),point_set_warp):
+            self.graph.node[nIdx]['obj'].point = sym.Point(p[0],p[1])        
+        
+        # update arrangement.decomposition.faces
+        self.decomposition.update_face_path()
+
+        # update decomposition.faces
+        if subDecompositions==True:
+            for subDec in self.subDecompositions:
+
+                points = [ subDec.graph.node[nIdx]['obj'].point
+                           for nIdx in subDec.graph.nodes()]
+                point_set = np.array([[p.x, py, 1] for p in points])
+                point_set_warp = np.dot(matrix, point_set.T).T
+        
+                for (nIdx,p) in zip(subDec.graph.nodes(),point_set_warp):
+                    subDec.graph.node[nIdx]['obj'].point = sym.Point(p[0],p[1])
+
+                subDec.update_face_path()
+
 
     ############################################################################
     def save_faces_to_svg_path(self,  fileName, resolution=10.):
