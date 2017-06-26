@@ -165,8 +165,9 @@ Laundry List
 - [ ] profile for speed-up.
 - [ ] svg parsing is incomplete and disabled.
 - [ ] clean up the ```plotting.py```
-- [ ] ```utilts.save_to_xml(file, myArrange)``` and ```myArrange = utilts.load_from_xml(file)```.
-  Check compatibility with [IEEE Standard for Robot Map Data Representation](http://ieeexplore.ieee.org/document/7300355/)
+- [ ] storage to XML, compatible with [IEEE Standard for Robot Map Data Representation](http://ieeexplore.ieee.org/document/7300355/).
+	- ```utilts.save_to_xml(file, myArrange)```
+	- ```myArrange = utilts.load_from_xml(file)```
 - [x] python3 compatible.
 - [x] ```setup.py```
 
