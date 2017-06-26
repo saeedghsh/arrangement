@@ -119,6 +119,9 @@ def edgeList_2_mplPath (edgeList, graph, traits):
         
     return mpath.Path(verts, codes)
 
+
+################################################################################
+################################################## traits - loading - conversion
 ################################################################################
 def load_data_from_yaml(fileName=None):
 
@@ -329,6 +332,9 @@ def bound_traits(trait_list, boundary):
 
     return trait_list
 
+
+################################################################################
+######################################################## face - shape - matching
 ################################################################################
 def get_shape_descriptor(face, arrangement, 
                          remove_redundant_lines=True):

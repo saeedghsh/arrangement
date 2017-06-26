@@ -17,20 +17,8 @@ with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 from __future__ import print_function
 
-import os
 import sys
-if sys.version_info[0] == 3:
-    from importlib import reload
-elif sys.version_info[0] == 2:
-    pass
-
 import time
-import numpy as np
-import sympy as sym
-import networkx as nx
-import matplotlib.pyplot as plt
-
-
 import arrangement.arrangement as arr
 import arrangement.plotting as aplt
 
