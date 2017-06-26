@@ -157,6 +157,21 @@ traits = data['traits]
 
 <!-- For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/demo.py). -->
 
+
+License
+-------
+Distributed with a GNU GENERAL PUBLIC LICENSE; see LICENSE.
+```
+Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
+```
+
+This package has been developed to be employed as the underlying spatial representation for robot maps in the following publications:
+- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Sensor based adaptive metric-topological cell decomposition method for semantic annotation of structured environments", ICARCV, Singapore, 2014, pp. 1771-1777. doi: 10.1109/ICARCV.2014.7064584 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7064584&isnumber=7064265).
+- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Semi-supervised semantic labeling of adaptive cell decomposition maps in well-structured environments", ECMR, Lincoln, 2015, pp. 1-8. doi: 10.1109/ECMR.2015.7324207 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7324207&isnumber=7324045).
+- S. G. Shahbandi, ‘Semantic Mapping in Warehouses’, Licentiate dissertation, Halmstad University, 2016. [URL](http://urn.kb.se/resolve?urn=urn:nbn:se:hh:diva-32170)
+- S. G. Shahbandi, M. Magnusson, "2D Map Alignment With Region Decomposition", submitted to Autonomous Robots, 2017.
+
+
 Laundry List
 ------------
 - [ ] documentation, and add more api examples.
@@ -170,11 +185,3 @@ Laundry List
 	- ```myArrange = utilts.load_from_xml(file)```
 - [x] python3 compatible.
 - [x] ```setup.py```
-
-License
--------
-Distributed with a GNU GENERAL PUBLIC LICENSE; see LICENSE.
-```
-Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
-```
-
