@@ -20,5 +20,5 @@ setup(name='arrangement',
       url='https://github.com/saeedghsh/arrangement',
       packages=['arrangement',],
       keywords='2D arrangement computational geometry',
-      license='BSD'
+      license='GPL'
      )

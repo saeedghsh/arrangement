@@ -5,52 +5,57 @@ Arrangement
 
 A python package for 2D arrangement.
 Currently, only straight lines and circles are supported.
+This package has been developed to be employed as the underlying spatial representation for robot maps in the following publications:
+- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Sensor based adaptive metric-topological cell decomposition method for semantic annotation of structured environments", ICARCV, Singapore, 2014, pp. 1771-1777. doi: 10.1109/ICARCV.2014.7064584 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7064584&isnumber=7064265).
+- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Semi-supervised semantic labeling of adaptive cell decomposition maps in well-structured environments", ECMR, Lincoln, 2015, pp. 1-8. doi: 10.1109/ECMR.2015.7324207 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7324207&isnumber=7324045).
+- S. G. Shahbandi, ‘Semantic Mapping in Warehouses’, Licentiate dissertation, Halmstad University, 2016. [URL](http://urn.kb.se/resolve?urn=urn:nbn:se:hh:diva-32170)
+- S. G. Shahbandi, M. Magnusson, "2D Map Alignment With Region Decomposition", submitted to Autonomous Robots, 2017.
 
 This is an experimental implementation, and it is HEAVILY UNDER MAINTENANCE.
 For a stable, fast and reliable implementation of arrangement, I recommend the [CGAL](http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html) library.
-However, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-swig-bindings/wiki) does not include arrangement package.
+However, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-swig-bindings/wiki) does not include the arrangement package.
 
 Dependencies and Download
 -------------------------
 - Download, installing dependencies, and install package
 ```shell
 # Download
-git clone https://github.com/saeedghsh/arrangement/
-cd arrangement
+$ git clone https://github.com/saeedghsh/arrangement.git
+$ cd arrangement
 
 # Install dependencies
-pip install -r requirements.txt
-pip3 install -r requirements.txt
+$ pip install -r requirements.txt # python 2
+$ pip3 install -r requirements.txt # python 3
 
-# Install the package
-python setup.py install
-python3 setup.py install
+# Install the package [optional]
+python setup.py install # python 2
+python3 setup.py install # python 3
 ```
 
 - Demo
 ```shell
-python demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
-python3 demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
+$ python demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
+$ python3 demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
 ```
 
 Basic Use and API
 -----------------
 - Basic Use
 ```python
-import sys
-sys.path.append('path_to_arrangement_repo')
+>>> import sys
+>>> sys.path.append('path_to_arrangement_repo') # if the package is not installed
 
 # define curves:
-import arrangement.geometricTraits as trts
-curves = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
+>>> import arrangement.geometricTraits as trts
+>>> curves = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
 
 # deploy arrangement
-import arrangement.arrangement as arr
-arrang = arr.Arrangement(curves, multiProcessing=4)
+>>> import arrangement.arrangement as arr
+>>> arrang = arr.Arrangement(curves, multiProcessing=4)
 
 # visualize the result
-import arrangement.plotting as aplt
-aplt.animate_face_patches(arrang)
+>>> import arrangement.plotting as aplt
+>>> aplt.animate_face_patches(arrang)
 ```
 
 ![animation](https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif)
@@ -150,10 +155,19 @@ traits = data['traits]
 <!-- ![merge_faces](https://github.com/saeedghsh/arrangement/blob/master/docs/merge_faces.png) -->
 <!-- <\!--- <merge_faces src="https://github.com/saeedghsh/arrangement/blob/master/docs/merge_faces.png" alt="none" width="50" height="50"> --\-> -->
 
+<!-- Face merging is based on the indices of face and after merging faces, the decomposition changes and indices are altered. -->
+<!-- Therefore, if it is desired multiple set of faces, identified by their indices, to be merged, it should be done as following: -->
+
+<!-- ```python -->
+<!-- # arrange.merge_faces([ [face_indices,], [face_indices,], ]) -->
+<!-- arrange.merge_faces([[2,3,4,5,6,7],[8,9]]) -->
+<!-- ``` -->
+
 <!-- - Acessing half-edge of the outer boundary -->
 <!-- ```python -->
 <!-- outer_halfedge_idx = arrange.get_boundary_halfedges() -->
 <!-- ``` -->
+
 
 <!-- For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/demo.py). -->
 
@@ -165,15 +179,11 @@ Distributed with a GNU GENERAL PUBLIC LICENSE; see LICENSE.
 Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
 ```
 
-This package has been developed to be employed as the underlying spatial representation for robot maps in the following publications:
-- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Sensor based adaptive metric-topological cell decomposition method for semantic annotation of structured environments", ICARCV, Singapore, 2014, pp. 1771-1777. doi: 10.1109/ICARCV.2014.7064584 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7064584&isnumber=7064265).
-- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Semi-supervised semantic labeling of adaptive cell decomposition maps in well-structured environments", ECMR, Lincoln, 2015, pp. 1-8. doi: 10.1109/ECMR.2015.7324207 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7324207&isnumber=7324045).
-- S. G. Shahbandi, ‘Semantic Mapping in Warehouses’, Licentiate dissertation, Halmstad University, 2016. [URL](http://urn.kb.se/resolve?urn=urn:nbn:se:hh:diva-32170)
-- S. G. Shahbandi, M. Magnusson, "2D Map Alignment With Region Decomposition", submitted to Autonomous Robots, 2017.
-
-
 Laundry List
 ------------
+- [ ] trts.ArcModified (obj.center.x:sympy, obj.center.y:sympy, obj.radius:sympy, t1:numpy, t2:numpy)
+  sympy objects have evalf() method that returns "normal" numbers, and numpy instances don't have it.
+  this inconsistency might cause trouble later.
 - [ ] documentation, and add more api examples.
 - [ ] full test suite.
 - [ ] fix known bugs.

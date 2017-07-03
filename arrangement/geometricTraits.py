@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.

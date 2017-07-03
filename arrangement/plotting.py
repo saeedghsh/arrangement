@@ -29,68 +29,150 @@ import matplotlib.image as mpimg
 
 # from cStringIO import StringIO
 from io import StringIO
-
+import geometricTraits as trts
 
 ################################################################################
 ################################################################ plotting graphs
 ################################################################################
 
 
-######################################## graph plot with matplotlib
-def plot_graph_networkx(graph):
-    f, axes = plt.subplots(1)
-    nx.draw(graph)
-    plt.show()
+# ######################################## graph plot with matplotlib
+# def plot_graph_networkx(graph):
+#     f, axes = plt.subplots(1)
+#     nx.draw(graph)
+#     plt.show()
 
-######################################## graph plot with pydot
-def plot_graph_pydot(graph):
-    # http://stackoverflow.com/questions/10379448/plotting-directed-graphs-in-python-in-a-way-that-show-all-edges-separately
-    # http://stackoverflow.com/questions/1664861/how-to-create-an-image-from-a-string-in-python
+# ######################################## graph plot with pydot
+# def plot_graph_pydot(graph):
+#     # http://stackoverflow.com/questions/10379448/plotting-directed-graphs-in-python-in-a-way-that-show-all-edges-separately
+#     # http://stackoverflow.com/questions/1664861/how-to-create-an-image-from-a-string-in-python
     
-    d = nx.to_pydot(graph) # d is a pydot graph object, dot options can be easily set
-    png_str = d.create_png()
-    sio = StringIO() # file-like string, appropriate for imread below
-    sio.write(png_str)
-    sio.seek(0)
+#     d = nx.to_pydot(graph) # d is a pydot graph object, dot options can be easily set
+#     png_str = d.create_png()
+#     sio = StringIO() # file-like string, appropriate for imread below
+#     sio.write(png_str)
+#     sio.seek(0)
 
-    f, axes = plt.subplots(1)
-    img = mpimg.imread(sio)
-    imgplot = plt.imshow(img)
-    plt.show()
+#     f, axes = plt.subplots(1)
+#     img = mpimg.imread(sio)
+#     imgplot = plt.imshow(img)
+#     plt.show()
 
 
-######################################## multi graph plot with pydot
-def plot_multiple_graphs_pydot(graphs):
+# ######################################## multi graph plot with pydot
+# def plot_multiple_graphs_pydot(graphs):
 
-    f, axes = plt.subplots(len(graphs))
+#     f, axes = plt.subplots(len(graphs))
 
-    for i,g in enumerate(graphs):
-        d = nx.to_pydot(g) # d is a pydot graph object, dot options can be easily set
-        png_str = d.create_png()
-        sio = StringIO() # file-like string, appropriate for imread below
-        sio.write(png_str)
-        sio.seek(0)
+#     for i,g in enumerate(graphs):
+#         d = nx.to_pydot(g) # d is a pydot graph object, dot options can be easily set
+#         png_str = d.create_png()
+#         sio = StringIO() # file-like string, appropriate for imread below
+#         sio.write(png_str)
+#         sio.seek(0)
 
-        img = mpimg.imread(sio)
-        imgplot = axes[i].imshow(img)
+#         img = mpimg.imread(sio)
+#         imgplot = axes[i].imshow(img)
 
-        axes[i].set_xticks([])
-        axes[i].set_yticks([])
+#         axes[i].set_xticks([])
+#         axes[i].set_yticks([])
 
-    plt.axis('equal')
-    plt.tight_layout()
-    plt.show()
+#     plt.axis('equal')
+#     plt.tight_layout()
+#     plt.show()
 
-######################################## graph plot with pygraphviz
-def plot_graph_pygraphviz(graph):
-    # http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
+# ######################################## graph plot with pygraphviz
+# def plot_graph_pygraphviz(graph):
+#     # http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
 
-    # # write graph to a dot file
-    # nx.drawing.nx_pydot.write_dot(arrang.graph,'multi.dot')
-    # !neato -T png multi.dot > multi.png
-    pass
+#     # # write graph to a dot file
+#     # nx.drawing.nx_pydot.write_dot(arrang.graph,'multi.dot')
+#     # !neato -T png multi.dot > multi.png
+#     pass
 
 # agraph = nx.to_agraph(arrang.graph)
+
+################################################################################
+########################################################## visualizing traits
+################################################################################
+
+def plot_traits(axis, traits, clrs=None, alph=None):
+    
+    
+    if clrs is None: clrs = {'cir':'b', 'arc':'b', 'lin':'r', 'seg':'g', 'ray':'g'}
+    if alph is None: alph = {'cir': 1., 'arc': 1., 'lin': 1., 'seg': 1., 'ray': 1.}
+
+    for idx, trait in enumerate(traits):
+
+        # note: order of the conditions matter since arcModified is subclass of CircleModified
+        if isinstance( trait, trts.ArcModified ):
+            t1,t2 = trait.t1 , trait.t2
+            tStep = max( [np.float(np.abs(t2-t1)*(180/np.pi)) ,2])
+            theta = np.linspace(np.float(t1), np.float(t2), tStep, endpoint=True)
+            xc, yc, rc = trait.obj.center.x , trait.obj.center.y , trait.obj.radius
+            x = xc + rc * np.cos(theta)
+            y = yc + rc * np.sin(theta)
+            axis.plot (x, y, clrs['arc'], alpha=alph['arc'])
+
+        elif isinstance( trait, trts.CircleModified ):
+            tStep = 360
+            theta = np.linspace(0, 2*np.pi, tStep, endpoint=True)
+            
+            xc,yc,rc = trait.obj.center.x, trait.obj.center.y, trait.obj.radius
+            x = xc + rc * np.cos(theta)
+            y = yc + rc * np.sin(theta)
+            axis.plot (x, y, clrs['cir'], alpha=alph['cir'])
+
+        elif isinstance( trait, trts.SegmentModified ):
+            x = [trait.obj.p1.x, trait.obj.p2.x]
+            y = [trait.obj.p1.y, trait.obj.p2.y]
+            axis.plot (x, y, clrs['seg'], alpha=alph['seg'])
+            
+        elif isinstance( trait, trts.RayModified ):
+            # find the ending point on one of the bLines
+            ips = []
+            for bl in bLines:
+                ips.extend( sym.intersection(trait.obj, bl) )
+            for i in range(len(ips)-1,-1,-1):
+                if not isinstance(ips[i], sym.Point):
+                    ips.pop(i)
+                elif not ( (xMin <= ips[i].x <= xMax) and (yMin <= ips[i].y <= yMax) ):
+                    ips.pop(i)
+
+            # plot the ray
+            x = np.float(trait.obj.p1.x.evalf())
+            y = np.float(trait.obj.p1.y.evalf())
+            dx = np.float(ips[0].x.evalf()) - np.float(trait.obj.p1.x.evalf())
+            dy = np.float(ips[0].y.evalf()) - np.float(trait.obj.p1.y.evalf())
+            axis.arrow( np.float(x),np.float(y),
+                        np.float(dx),np.float(dy), # shape='right',
+                        # linewidth = 1, head_width = 0.1, head_length = 0.2,
+                        fc = clrs['ray'], ec = clrs['ray'], alpha=alph['ray'])
+
+        elif isinstance( trait, trts.LineModified ):
+            # find the ending points on the bLines
+            ips = []
+            for bl in bLines:
+                ips.extend( sym.intersection(trait.obj, bl) )
+
+            for i in range(len(ips)-1,-1,-1):
+                if not isinstance(ips[i], sym.Point):
+                    ips.pop(i)
+                elif not ( (xMin <= ips[i].x <= xMax) and (yMin <= ips[i].y <= yMax) ):
+                    ips.pop(i)
+                
+            # plot the Line
+            x = sorted( [np.float(ip.x.evalf()) for ip in ips] )
+            y = sorted( [np.float(ip.y.evalf()) for ip in ips] )
+            axis.plot (x, y, clrs['lin'], alpha=alph['lin'])
+
+        else:
+            raise( StandardError( 'trait n#', str(idx), 'unknown') )
+
+    return axis
+################################################################################
+
+
 ################################################################################
 ########################################################## interactive functions
 ################################################################################

@@ -125,14 +125,15 @@ if len(x)!=0:
                 sym.Line( (xMin,yMax),(xMin,yMin) ) ]
 
 
-### plot
-fig = plt.figure( figsize=(12, 12) )
-axis = fig.add_subplot(111)
 
-clrs = {'cir':'b', 'arc':'b', 'lin':'r', 'seg':'g', 'ray':'g'}
-alph = {'cir': 1., 'arc': 1., 'lin': 1., 'seg': 1., 'ray': 1.}
+################################################################################
+def plot_traits(axis, traits, clrs=None, alph=None):
+    
+    
+    if clrs is None: clrs = {'cir':'b', 'arc':'b', 'lin':'r', 'seg':'g', 'ray':'g'}
+    if alph is None: alph = {'cir': 1., 'arc': 1., 'lin': 1., 'seg': 1., 'ray': 1.}
 
-for idx, trait in enumerate(traits):
+    for idx, trait in enumerate(traits):
 
     # note: order of the conditions matter since arcModified is subclass of CircleModified
     if isinstance( trait, trts.ArcModified ):
@@ -198,6 +199,14 @@ for idx, trait in enumerate(traits):
 
     else:
         print 'trait n#', str(idx), 'unknown'
+
+    return axis
+################################################################################
+
+### plot
+fig = plt.figure( figsize=(12, 12) )
+axis = fig.add_subplot(111)
+
 
 plt.axis('equal')
 plt.tight_layout()

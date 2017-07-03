@@ -2,8 +2,8 @@
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
 Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
 
-This file is part of Subdivision Library.
-The of Subdivision Library is free software: you can redistribute it and/or
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License as published
 by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -25,8 +25,9 @@ import skimage.transform
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-from . import geometricTraits as trts
-# from . import arrangement as arr
+# from . import geometricTraits as trts
+import geometricTraits as trts
+
 
 # svg parsing
 import xml.etree.ElementTree as ET
@@ -121,9 +122,50 @@ def edgeList_2_mplPath (edgeList, graph, traits):
 
 
 ################################################################################
-################################################## traits - loading - conversion
+######################################### traits - loading - conversion - saving
 ################################################################################
-def load_data_from_yaml(fileName=None):
+
+def save_traits_to_yaml(trait_list, file_name):
+
+    # converting traits to a dictionary
+    data = {'segments':[], 'rays':[], 'lines':[], 'arcs':[], 'circles':[] }
+    for trait in trait_list:        
+        if isinstance(trait, trts.SegmentModified):
+            s = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
+            s = [np.float(i.evalf()) for i in s]
+            data['segments'].append(s)
+                
+        elif isinstance(trait, trts.RayModified):
+            r = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
+            r = [np.float(i.evalf()) for i in r]
+            data['rays'].append(r)
+                
+        elif isinstance(trait, trts.LineModified):
+            l = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
+            l = [np.float(i.evalf()) for i in l]
+            data['lines'].append(l)
+                
+        elif isinstance(trait, trts.ArcModified):
+            a = [trait.obj.center.x, trait.obj.center.y, trait.obj.radius, sym.Float(trait.t1), sym.Float(trait.t2)]
+            a = [np.float(i.evalf()) for i in a]
+            data['arcs'].append(a)
+                
+        elif isinstance(trait, trts.CircleModified):
+            c = [trait.obj.center.x, trait.obj.center.y, trait.obj.radius]
+            c = [np.float(i.evalf()) for i in c]
+            data['circles'].append(c)
+            
+    ### removing keys with empty fields from the dictionary
+    for key in data.keys():
+        if len(data[key])==0:
+            data.pop(key)
+
+    with open(file_name, 'w') as yaml_file:
+        yaml.dump(data, yaml_file)
+
+
+################################################################################
+def load_data_from_yaml(fileName):
 
     Point = sym.Point
     Line = trts.LineModified
@@ -153,8 +195,6 @@ def load_data_from_yaml(fileName=None):
         Rc = np.random.random(nc) + .75
         traits += [ Circle( args=(Point(xc,yc), rc) )
                    for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
-
-
 
     elif 'star' in fileName:
 
@@ -394,7 +434,7 @@ def get_shape_descriptor(face, arrangement,
         s = all_halfedges_idx[idx][0]
         e = all_halfedges_idx[idx-1][1]
         if s!=e:
-            raise (NameError('half-edges are not in order... '))
+            raise (StandardError('half-edges are not in order... '))
                 
 
     # enumerate over the list of half-edges and store their description
@@ -751,10 +791,10 @@ def svg_parser_ellipse_element(element):
 def svg_to_ymal(svg_file_name):
     ''' '''
     data = { 'lines': [], #[x1,y1,x2,y2]
-                   'segments': [], #[x1,y1,x2,y2]
-                   'rays': [], #[x1,y1,x2,y2]
-                   'circles': [], #[cx,cy,cr]
-                   'arcs': [] } #[cx,cy,cr,t1,t2]
+             'segments': [], #[x1,y1,x2,y2]
+             'rays': [], #[x1,y1,x2,y2]
+             'circles': [], #[cx,cy,cr]
+             'arcs': [] } #[cx,cy,cr,t1,t2]
 
     tree = ET.parse( svg_file_name )
     elements_dict = xml_tree_parser_to_svg_elements(tree)
