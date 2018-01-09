@@ -171,14 +171,6 @@ traits = data['traits]
 
 <!-- For more examples and details see the [demo.py](https://github.com/saeedghsh/arrangement/blob/master/demo.py). -->
 
-
-License
--------
-Distributed with a GNU GENERAL PUBLIC LICENSE; see LICENSE.
-```
-Copyright (C) Saeed Gholami Shahbandi <saeed.gh.sh@gmail.com>
-```
-
 Laundry List
 ------------
 - [ ] trts.ArcModified (obj.center.x:sympy, obj.center.y:sympy, obj.radius:sympy, t1:numpy, t2:numpy)
@@ -195,3 +187,11 @@ Laundry List
 	- ```myArrange = utilts.load_from_xml(file)```
 - [x] python3 compatible.
 - [x] ```setup.py```
+
+
+License
+-------
+Distributed with a GNU GENERAL PUBLIC LICENSE; see [LICENSE](https://github.com/saeedghsh/arrangement/blob/master/LICENSE).
+```
+Copyright (C) Saeed Gholami Shahbandi
+```
