@@ -1,6 +1,6 @@
 '''
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
-Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
+Author: Saeed Gholami Shahbandi
 
 This file is part of Arrangement Library.
 The of Arrangement Library is free software: you can redistribute it and/or
@@ -28,8 +28,8 @@ import sympy as sym
 
 note_on_DPE='''
 It doesn't work for segment, and I guess Ray too.
-I think It's because of the "contain" test, but not sure/.
-''' 
+I think It's because of the 'contain' test, but not sure.
+'''
 
 note_on_isinstance = '''
 Important note:
@@ -92,33 +92,33 @@ class LineModified:
         LineModified class
 
         this method performs a sequence of transformation processes expressed by
-        
+
         * operTypes: defines the type of each transformation
         * operVals: the values for each transformation
         * operRefs: the reference point for each transformation
         -- reference point is irrelevant for translation, still should be provided for consistency
-        
+
         example:
         obj.transform_sequence( operTypes='TTRST',
         operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
         operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
-        
+
         order: ordering of transformation
         e.g. 'TRS' -> 1)translate 2)rotate 3)scale
         e.g. 'RTS' -> 1)rotate 2)translate 3)scale
         '''
-        
+
         for opIdx, opType in enumerate(operTypes):
-            
+
             if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
-                
+
             elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
                 self.obj = self.obj.rotate(theta,ref)
-                
+
             elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
@@ -133,7 +133,7 @@ class LineModified:
 
         Direct Parametric Equation
         (x,y) = df(t) = ( xl + a*t , yl + b*t )
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
@@ -156,7 +156,7 @@ class LineModified:
 
         Inverse Parametric Equation
         t = df(x,y) = (x-xl)/a if a!=0 else (y-yl)/b
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
@@ -176,10 +176,10 @@ class LineModified:
 
         generally:
         dy/dx = lim_{ Delta_x -> 0 } Delta_y / Delta_x
-        
+
         for a straight line:
         dy/dx = Delta_y / Delta_x
-        
+
         1stDer = [dx,dy],
         slope = tan(theta) -> theta = arctan(slope)
         ( note that theta \in [-pi/2, pi/2] )
@@ -262,11 +262,11 @@ class RayModified(LineModified):
     ####################################
     def __init__ (self, args):
         '''
-        RayModified class 
+        RayModified class
 
         note that "RayModified" is a subClass of "LineModified"
         but the self.obj is aggregated from sym.Ray
-        
+
         '''
         self.obj = sym.Ray( *args )
 
@@ -274,19 +274,19 @@ class RayModified(LineModified):
     ####################################
     def DPE(self, t):
         '''
-        RayModified class 
+        RayModified class
 
         TD: not sure when and how I did this, double-check
 
         Direct Parametric Equation
         (x,y) = df(t) = ( xl + a*t , yl + b*t )
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
         if self.obj.slope == 0:
             point = sym.Point(self.obj.p1.x + t, self.obj.p1.y)
-            
+
         elif self.obj.slope == sym.oo or self.obj.slope == -sym.oo:
             point =  sym.Point(self.obj.p1.x, self.obj.p1.y + t)
         else:
@@ -294,24 +294,24 @@ class RayModified(LineModified):
             b =  a * self.slope #TODO:saesha, shouldn't this be a * self.obj.slope
             point =  sym.Point(self.obj.p1.x + a.evalf()*t,
                                self.obj.p1.y + b.evalf()*t)
-        
+
         return point if self.obj.contains(point) else False
-        
+
     ####################################
     def IPE(self, point):
         '''
-        RayModified class 
+        RayModified class
 
         TD: not sure when and how I did this, double-check
 
         Inverse Parametric Equation
         t = df(x,y) = (x-xl)/a if a!=0 else (y-yl)/b
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
 
-        # TODO: 
+        # TODO:
         # this condition checking is a problem when the trait and a node on it are rotated,
         # but after rotation, the node is slightly off the trait and this function would return False!
         # temporarily I disable this condition checking until later
@@ -359,10 +359,7 @@ class SegmentModified(LineModified):
     ####################################
     def __init__ (self, args):
         '''
-        SegmentModified class 
-
-
-
+        SegmentModified class
         '''
         self.obj = sym.Segment( *args )
 
@@ -370,13 +367,13 @@ class SegmentModified(LineModified):
     ####################################
     def DPE(self, t):
         '''
-        SegmentModified class 
+        SegmentModified class
 
         TD: not sure when and how I did this, double-check
 
         Direct Parametric Equation
         (x,y) = df(t) = ( xl + a*t , yl + b*t )
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
@@ -389,9 +386,9 @@ class SegmentModified(LineModified):
             b =  a * self.obj.slope #TODO:saesha, shouldn't this be a * self.obj.slope
             point =  sym.Point(self.obj.p1.x + a.evalf()*t,
                                self.obj.p1.y + b.evalf()*t)
-        
+
         return point if self.obj.contains(point) else False
-        
+
     ####################################
     def IPE(self, point):
         '''
@@ -401,12 +398,12 @@ class SegmentModified(LineModified):
 
         Inverse Parametric Equation
         t = df(x,y) = (x-xl)/a if a!=0 else (y-yl)/b
-        
+
         a**2 + b**2 = 1 --> b = sqrt(1-a**2)
         sl = b/a --> b = a *sl
         '''
 
-        # TODO: 
+        # TODO:
         # this condition checking is a problem when the trait and a node on it are rotated,
         # but after rotation, the node is slightly off the trait and this function would return False!
         # temporarily I disable this condition checking until later
@@ -422,7 +419,7 @@ class SegmentModified(LineModified):
                 return (point.x-self.obj.p1.x)/a.evalf() if a != 0 else (point.y-self.obj.p1.y)/b.evalf()
         else:
             return False
-    
+
 
 ################################################################################
 class CircleModified:
@@ -437,7 +434,7 @@ class CircleModified:
     lm = CircleModified( args= (X) )
     X is anything that could be passed to sympy.Circle:
     X = ((xc,yc),r)
-    
+
     {:s}
     '''.format(note_on_isinstance)
 
@@ -455,32 +452,32 @@ class CircleModified:
         CircleModified class
 
         this method performs a sequence of transformation processes expressed by
-        
+
         * operTypes: defines the type of each transformation
         * operVals: the values for each transformation
         * operRefs: the reference point for each transformation
         -- reference point is irrelevant for translation, still should be provided for consistency
-        
+
         example:
         obj.transform_sequence( operTypes='TTRST',
         operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
         operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
-        
+
         order: ordering of transformation
         e.g. 'TRS' -> 1)translate 2)rotate 3)scale
         e.g. 'RTS' -> 1)rotate 2)translate 3)scale
         '''
-        
+
         for opIdx, opType in enumerate(operTypes):
-            
+
             if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
-                
+
             elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
-                
+
                 # Important note
                 # ideally I would like to do this:
                 # self.obj = self.obj.rotate(theta,ref)
@@ -493,7 +490,7 @@ class CircleModified:
                 c = self.obj.center.rotate(theta,ref)
                 r = self.obj.radius
                 self.obj = sym.Circle(c,r)
-                
+
             elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]
@@ -525,7 +522,7 @@ class CircleModified:
         dy = point.y - self.obj.center.y
         dx = point.x - self.obj.center.x
         return sym.atan2(dy, dx).evalf()
-        
+
     ####################################
     def firstDerivative (self, point, direction='positive'):
         '''
@@ -542,7 +539,7 @@ class CircleModified:
         x_ = -self.obj.radius * np.sin(theta) # sym.sin(theta)
         y_ = +self.obj.radius * np.cos(theta) # sym.cos(theta)
         res = np.array([x_.evalf(), y_.evalf()], float)
-        return res if direction == 'positive' else -1*res            
+        return res if direction == 'positive' else -1*res
 
     ####################################
     def secondDerivative(self, point, direction='positive'):
@@ -612,7 +609,7 @@ class ArcModified(CircleModified):
     well, best is to allow any interval ([-pi, pi] or [0, 2pi])
     and always check the tvalues +2pi and -2pi to see if whether they are
     in the range
-    
+
     note:
     -----
     note that "ArcModified" is a subClass of "CircleModified"
@@ -622,7 +619,7 @@ class ArcModified(CircleModified):
     ------
     pc, rc, interval =  (0,0), 1, (0,numpy.pi)
     am =  mSym.ArcModified( args=( pc, rc, interval )  )
-    
+
     {:s}
     '''.format(note_on_isinstance)
 
@@ -631,7 +628,7 @@ class ArcModified(CircleModified):
         '''
         ArcModified class
         '''
-        
+
         self.obj = sym.Circle( *args[:2] )
 
         # the radial distance of t1 to t2 can not be more than 2pi
@@ -648,28 +645,28 @@ class ArcModified(CircleModified):
         ArcModified class
 
         this method performs a sequence of transformation processes expressed by
-        
+
         * operTypes: defines the type of each transformation
         * operVals: the values for each transformation
         * operRefs: the reference point for each transformation
         -- reference point is irrelevant for translation, still should be provided for consistency
-        
+
         example:
         obj.transform_sequence( operTypes='TTRST',
         operVals=( (.5,-.5), (2,0), np.pi/2, (.5,.5), (3,-1) ),
         operRefs=( (0,0),    (0,0), (2,2),   (0,0),   (0,0)  ) )
-        
+
         order: ordering of transformation
         e.g. 'TRS' -> 1)translate 2)rotate 3)scale
         e.g. 'RTS' -> 1)rotate 2)translate 3)scale
         '''
-        
+
         for opIdx, opType in enumerate(operTypes):
-            
+
             if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
                 tx,ty = operVals[opIdx]
                 self.obj = self.obj.translate(tx,ty)
-                
+
             elif opType == 'R':# and operVals[opIdx]!=0:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
@@ -692,7 +689,7 @@ class ArcModified(CircleModified):
                 self.t1 += theta
                 self.t2 += theta
 
-                
+
             elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]
                 ref = operRefs[opIdx]

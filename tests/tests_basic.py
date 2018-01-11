@@ -1,6 +1,6 @@
 '''
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
-Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
+Author: Saeed Gholami Shahbandi
 
 This file is part of Arrangision Library.
 The of Arrangement Library is free software: you can redistribute it and/or
@@ -22,7 +22,7 @@ import os
 import sys
 import unittest
 
-import numpy as np
+# import numpy as np
 
 if not( os.path.abspath('./../') in sys.path):
     sys.path.append( os.path.abspath('./../') )
@@ -34,19 +34,19 @@ from arrangement.utils import load_data_from_yaml
 ################################################################## testing class
 ################################################################################
 
-class ArrangementTests(unittest.TestCase):    
+class ArrangementTests(unittest.TestCase):
     # '''  '''
     # def test_twinAssignment(self, arrang):
     #     # checking the correctness of twin assignment in half-edge construction
-        
+
     #     res = []
     #     for selfIdx in arrang.get_all_HalfEdge_indices():
     #         (s,e,k) = selfIdx
-            
+
     #         twinIdx = arrang.graph[s][e][k]['obj'].twinIdx
     #         (ts,te,tk) = twinIdx
 
-    #         twinOfTwinIdx = arrang.graph[ts][te][tk]['obj'].twinIdx            
+    #         twinOfTwinIdx = arrang.graph[ts][te][tk]['obj'].twinIdx
 
     #         res += [ selfIdx == twinOfTwinIdx ]
 
@@ -57,8 +57,8 @@ class ArrangementTests(unittest.TestCase):
         fileList = [ fileName
                      for fileName in os.listdir(address)
                      if (len(fileName)>5 and fileName[-5:]=='.yaml') ]
-        
-        
+
+
         for fileIdx, fileName in enumerate(sorted(fileList)):
             print (fileName)
             data = load_data_from_yaml( address+fileName )
@@ -117,10 +117,11 @@ class ArrangementTests(unittest.TestCase):
             # arrang.transform_sequence('SRT',
             #                           ((5,5), -np.pi/2, (-10,0), ),
             #                           ((0,0), (0,0),    (0,0), ) )
-   
+
 
 
 if __name__ == '__main__':
+    ''''''
     global address
     address = os.getcwd()+'/testCases/'
 
@@ -155,7 +156,7 @@ if __name__ == '__main__':
 # assert (twinIdx[1] == selfIdx[0])
 # assert (twinIdx[1] == selfIdx[0])
 # assert (succIdx[0] == selfIdx[1])
-# ########################################        
+# ########################################
 
 
 ############################# test halfEdge tvals
@@ -165,7 +166,7 @@ if __name__ == '__main__':
 
 #     sTVal = nodes[s].traitTval[nodes[s].traitIdx.index(he.cIdx)]
 #     eTVal = nodes[e].traitTval[nodes[e].traitIdx.index(he.cIdx)]
-    
+
 #     if (he.direction=='positive') and not(sTVal < eTVal):
 #         eTVal += 2*np.pi
 #     if (he.direction=='negative') and not(sTVal > eTVal):
@@ -194,7 +195,7 @@ if __name__ == '__main__':
 #         (cs,ce,ck) = face.halfEdges[idx] # current halfEdgeIdx
 #         (ss,se,sk) = face.halfEdges[idx+1] # successor halfEdgeIdx
 #         assert (myArrangement.graph[cs][ce][ck]['obj'].succIdx == (ss,se,sk))
-        
+
 #         (ts,te,tk) = myArrangement.MDG[cs][ce][ck]['obj'].twinIdx
 #         assert (ts == ss)
 
@@ -205,4 +206,3 @@ if __name__ == '__main__':
 #     (ts,te,tk) = myArrangement.graph[cs][ce][ck]['obj'].twinIdx
 #     assert (ts == ss)
 # ########################################
-

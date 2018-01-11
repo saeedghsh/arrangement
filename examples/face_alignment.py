@@ -1,18 +1,36 @@
+'''
+Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
+Author: Saeed Gholami Shahbandi
+
+This file is part of Arrangement Library.
+The of Arrangement Library is free software: you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License,
+or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this program. If not, see <http://www.gnu.org/licenses/>
+'''
+
 from __future__ import print_function
 
 import sys
-if sys.version_info[0] == 3:
-    from importlib import reload
-elif sys.version_info[0] == 2:
-    pass
+# if sys.version_info[0] == 3:
+#     from importlib import reload
+# elif sys.version_info[0] == 2:
+#     pass
 
 # import time
 import numpy as np
 import sympy as sym
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import itertools
-import skimage.transform
+# import skimage.transform
 
 # sys.path.append('../arrangement/')
 sys.path.append('../')
@@ -43,11 +61,11 @@ aplt.animate_face_patches(arrange, timeInterval = .5* 1000)
 
 print ('\t static plotting... ')
 aplt.plot_decomposition(arrange,
-                         # invert_axis = ('y'),
-                         interactive_onClick=False,
-                         interactive_onMove=False,
-                         plotNodes=True, printNodeLabels=True,
-                         plotEdges=True, printEdgeLabels=True)
+                        # invert_axis = ('y'),
+                        interactive_onClick=False,
+                        interactive_onMove=False,
+                        plotNodes=True, printNodeLabels=True,
+                        plotEdges=True, printEdgeLabels=True)
 
 
 ######################################## testing area
@@ -87,5 +105,5 @@ for key in alignments.keys():
 # alignment_tforms[key].residuals()
 
 
-np.linalg.inv(tf.params) == tf._inv_matrix
-tf._apply_mat(tf._apply_mat(np.array([1,1]), tf.params), tf._inv_matrix) == np.array([[ 1.,  1.]])
+# assert np.linalg.inv(tf.params) == tf._inv_matrix
+# assert tf._apply_mat(tf._apply_mat(np.array([1,1]), tf.params), tf._inv_matrix) == np.array([[ 1.,  1.]])

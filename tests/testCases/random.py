@@ -1,28 +1,28 @@
-    elif name == 'Random':
-        ''' Random case'''
-        curves = []
-        nl = 4
-        X1 = np.random.random(nl)
-        Y1 = np.random.random(nl)
-        X2 = np.random.random(nl)
-        Y2 = np.random.random(nl)
-        curves += [ Line( args=(Point(x1,y1), Point(x2,y2)) )
-                   for (x1,y1,x2,y2) in zip(X1,Y1,X2,Y2) ]
+# elif name == 'Random':
+#     ''' Random case'''
+#     curves = []
+#     nl = 4
+#     X1 = np.random.random(nl)
+#     Y1 = np.random.random(nl)
+#     X2 = np.random.random(nl)
+#     Y2 = np.random.random(nl)
+#     curves += [ Line( args=(Point(x1,y1), Point(x2,y2)) )
+#                for (x1,y1,x2,y2) in zip(X1,Y1,X2,Y2) ]
 
-        nc = 2
-        Xc = np.random.random(nc)
-        Yc = np.random.random(nc)
-        Rc = np.random.random(nc) + .75
-        curves += [ Circle( args=(Point(xc,yc), rc) )
-                   for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
+#     nc = 2
+#     Xc = np.random.random(nc)
+#     Yc = np.random.random(nc)
+#     Rc = np.random.random(nc) + .75
+#     curves += [ Circle( args=(Point(xc,yc), rc) )
+#                for (xc,yc,rc) in zip(Xc,Yc,Rc) ]
 
-        number_of_nodes = 0
-        number_of_edges = 0
-        number_of_faces = 0
-        number_of_subGraphs = 0
+#     number_of_nodes = 0
+#     number_of_edges = 0
+#     number_of_faces = 0
+#     number_of_subGraphs = 0
 
 
-# # for storing random cases  
+# # for storing random cases
 # for f in curves:
 #     if isinstance (f.obj, sym.Line):
 #         x1,y1 , x2,y2 = np.float(f.obj.p1.x), np.float(f.obj.p1.y) , np.float(f.obj.p2.x), np.float(f.obj.p2.y)

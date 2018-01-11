@@ -1,6 +1,6 @@
 '''
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
-Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
+Author: Saeed Gholami Shahbandi
 
 This file is part of Arrangement Library.
 The of Arrangement Library is free software: you can redistribute it and/or
@@ -32,7 +32,7 @@ import geometricTraits as trts
 # svg parsing
 import xml.etree.ElementTree as ET
 import svgpathtools
-import yaml
+# import yaml
 
 ################################################################################
 ################################################################################
@@ -46,12 +46,12 @@ def edgeList_2_mplPath (edgeList, graph, traits):
     this works only if the edgeList is sorted
     and the sequence of edges shall represent a simple closed trait (path)
     '''
-    
+
     # step1: initialization - openning the path
     (start, end, k) = edgeList[0]
     p = graph.node[start]['obj'].point
     x, y = p.x.evalf(), p.y.evalf()
-    
+
     verts = [ (x,y) ]
     codes = [ mpath.Path.MOVETO ]
 
@@ -72,8 +72,8 @@ def edgeList_2_mplPath (edgeList, graph, traits):
         elif isinstance(traits[cIdx].obj, sym.Circle):
             circ = traits[cIdx].obj
             xc, yc, rc = circ.center.x , circ.center.y , circ.radius
-            
-            # create an arc 
+
+            # create an arc
             t1 = np.float(sTVal) *(180 /np.pi)
             t2 = np.float(eTVal) *(180 /np.pi)
 
@@ -89,16 +89,16 @@ def edgeList_2_mplPath (edgeList, graph, traits):
             ## Note that the order of adding rot_scale_translate matters
             transMat.rotate(0) # rotate_around(x, y, theta)
             transMat.scale( rc ) # scale(sx, sy=None)
-            transMat.translate(xc, yc) 
+            transMat.translate(xc, yc)
             arc = arc.transformed(transMat)
-            
+
             vs = list( arc.vertices.copy() )
             cs = list( arc.codes.copy() )
             # which one? cs[0] = mpath.Path.MOVETO or mpath.Path.LINETO
             # Lineto, because, otherwise, decompsong the face into polygones
             # for area approximation, it will result in disjoint segments
             cs[0] = mpath.Path.LINETO
-            
+
             # reversing the order of vertices, if the halfEdge has negative direction
             if halfEdge_obj.direction == 'negative': vs.reverse()
 
@@ -117,8 +117,8 @@ def edgeList_2_mplPath (edgeList, graph, traits):
         verts.append( (x,y) )
         codes.append( mpath.Path.CLOSEPOLY )
     else:
-        codes[-1] = mpath.Path.CLOSEPOLY 
-        
+        codes[-1] = mpath.Path.CLOSEPOLY
+
     return mpath.Path(verts, codes)
 
 
@@ -130,32 +130,32 @@ def save_traits_to_yaml(trait_list, file_name):
 
     # converting traits to a dictionary
     data = {'segments':[], 'rays':[], 'lines':[], 'arcs':[], 'circles':[] }
-    for trait in trait_list:        
+    for trait in trait_list:
         if isinstance(trait, trts.SegmentModified):
             s = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
             s = [np.float(i.evalf()) for i in s]
             data['segments'].append(s)
-                
+
         elif isinstance(trait, trts.RayModified):
             r = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
             r = [np.float(i.evalf()) for i in r]
             data['rays'].append(r)
-                
+
         elif isinstance(trait, trts.LineModified):
             l = [trait.obj.p1.x, trait.obj.p1.y, trait.obj.p2.x, trait.obj.p2.y]
             l = [np.float(i.evalf()) for i in l]
             data['lines'].append(l)
-                
+
         elif isinstance(trait, trts.ArcModified):
             a = [trait.obj.center.x, trait.obj.center.y, trait.obj.radius, sym.Float(trait.t1), sym.Float(trait.t2)]
             a = [np.float(i.evalf()) for i in a]
             data['arcs'].append(a)
-                
+
         elif isinstance(trait, trts.CircleModified):
             c = [trait.obj.center.x, trait.obj.center.y, trait.obj.radius]
             c = [np.float(i.evalf()) for i in c]
             data['circles'].append(c)
-            
+
     ### removing keys with empty fields from the dictionary
     for key in data.keys():
         if len(data[key])==0:
@@ -178,7 +178,7 @@ def load_data_from_yaml(fileName):
     result = {}
     traits = []
 
-    if 'random' in fileName: # generate an almost random case 
+    if 'random' in fileName: # generate an almost random case
 
         result.update( {'dataset': 'random'} )
 
@@ -215,14 +215,14 @@ def load_data_from_yaml(fileName):
                    Line( args=(p2, -np.tan(a2)) ),
                    Circle( args=(Point(0,0), np.cos(a1)) ),
                    Circle( args=(Point(0,0), 1) ),
-                   Circle( args=(Point(0,0), 2) ) ]        
+                   Circle( args=(Point(0,0), 2) ) ]
 
         result.update( {'number_of_nodes': 25} )
         result.update( {'number_of_edges': 100} )
         result.update( {'number_of_faces': 26} )
-        result.update( {'number_of_subGraphs': 1} )       
+        result.update( {'number_of_subGraphs': 1} )
 
-    else: 
+    else:
 
         stream = open(fileName, 'r')
         data = yaml.load(stream)
@@ -258,7 +258,7 @@ def load_data_from_yaml(fileName):
         if 'arcs' in data.keys():
             for a in data['arcs']:
                 traits += [ Arc( args=( Point(a[0],a[1]), a[2], (a[3],a[4])) ) ]
-                
+
         if 'boundary' in data.keys():
             result.update( {'boundary':  data['boundary']} )
         else:
@@ -279,21 +279,18 @@ def unbound_traits(trait_list):
     circle -> circle
     '''
 
-    for idx in range(len(trait_list)):
+    for idx, trait in trait_list:
 
-        # the trait before adjustment
-        trait = trait_list[idx]
-        
         if isinstance(trait, (trts.SegmentModified, trts.RayModified) ):
-            # if the trait is (ray v segment) convert to line 
+            # if the trait is (ray v segment) convert to line
             trait = trts.LineModified( args=(trait.obj.p1,
                                              trait.obj.p2) )
-            
+
         elif isinstance(trait, trts.ArcModified):
             # if the trait is (arc) convert to circle
             trait = trts.Circle( args=(trait.obj.center,
                                        trait.obj.radius) )
-        
+
         else:
             # the trait is either line or circle
             # no need to adjust the trait
@@ -331,8 +328,8 @@ def bound_traits(trait_list, boundary):
 
         # the trait before adjustment
         trait = trait_list[t_idx]
-        
-        if isinstance(trait, (trts.LineModified) ):            
+
+        if isinstance(trait, (trts.LineModified) ):
 
             # finding all intersections between trait and boundary lines
             # the "if" condition is to reject lines:
@@ -349,11 +346,11 @@ def bound_traits(trait_list, boundary):
                 inbound_y = (yMin <= points[p_idx].y <= yMax)
                 if not(inbound_x) or not(inbound_y):
                     points.pop(p_idx)
-            
+
             if len(points)>2:
                 # this means some points are coinciding on one corner
                 for p_idx_1 in range(len(points)-1,-1,-1):
-                    for p_idx_2 in range(p_idx_1): 
+                    for p_idx_2 in range(p_idx_1):
                         if points[p_idx_1].distance(points[p_idx_2])<np.spacing(10**10):
                             points.pop(p_idx_1)
                             break
@@ -377,25 +374,25 @@ def bound_traits(trait_list, boundary):
 ################################################################################
 ######################################################## face - shape - matching
 ################################################################################
-def get_shape_descriptor(face, arrangement, 
+def get_shape_descriptor(face, arrangement,
                          remove_redundant_lines=True):
     '''
     This method returns a descriptor for the shape of the input face:
-    
+
     usage
     -----
     (edge_type, edge_turn, edge_start_node_idx) = get_shape_descriptor(face, arrangement)
-    
+
     input
     -----
     face: an instance of arrangement.Face
     arrangement: an instance of arrangement.Arrangement
-    
+
     Parameter
     ---------
     The parameter "remove_redundant_lines" removes straight lines that:
     > follow another line, and do turn wrt previous line
-    
+
     output
     ------
     it returns the following varibles
@@ -403,7 +400,7 @@ def get_shape_descriptor(face, arrangement,
     > edge_type (string) - the edge type
     > edge_turn (np.array) - the turning angle of the edge at the begining,
     > edge_node_idx (list) - the starting point of the edge
-    
+
     Note
     ----
     A face is identified by indices to half-edges that bounds it.
@@ -411,15 +408,15 @@ def get_shape_descriptor(face, arrangement,
     > accessing the objects of half-edges, nodes and traits that define a face.
     '''
     # area = face.get_area()
-    
+
     # get the idx:(start,end,key) of all halfedges surrounding the face
     # note that this list includes the outer half_edges of the holes
     all_halfedges_idx = face.get_all_halfEdges_Idx()
-    
+
     # remove half_edges belonging to the holes
     holes_halfedges_idx = []
-    for hole in face.holes:        
-        holes_halfedges_idx.append( hole.get_all_halfEdges_Idx() ) 
+    for hole in face.holes:
+        holes_halfedges_idx.append( hole.get_all_halfEdges_Idx() )
         for (s,e,k) in holes_halfedges_idx[-1]:
             all_halfedges_idx.pop( all_halfedges_idx.index((s,e,k)) )
 
@@ -427,7 +424,7 @@ def get_shape_descriptor(face, arrangement,
     # all_halfedges_idx -> a list of face's half-edges, except for the holes
     # holes_halfedges_idx -> contians a list half-edge per each hole
     # --> for hole[0] -> halfedges_idx = holes_halfedges_idx[0] = [(s,e,k), ...]
-    
+
     # check if the order of edges is correct
     # I'm pretty sure the half-edges must be in order, since decomposition point
     # unless the are altered somewhere, which is unlikely!
@@ -436,7 +433,7 @@ def get_shape_descriptor(face, arrangement,
         e = all_halfedges_idx[idx-1][1]
         if s!=e:
             raise (StandardError('half-edges are not in order... '))
-                
+
 
     # enumerate over the list of half-edges and store their description
     edge_type = '' # types could be L:Line, or C:Circle
@@ -444,10 +441,10 @@ def get_shape_descriptor(face, arrangement,
     edge_node_idx = [] # index to STARTING node of the edge
 
     for (s,e,k) in all_halfedges_idx:
-            
+
         half_edge = arrangement.graph[s][e][k]['obj']
         edge_node_idx += [s]
-        
+
         # storing the type
         trait = arrangement.traits[ half_edge.traitIdx ]
         L = isinstance( trait.obj, (sym.Line, sym.Segment, sym.Ray) )
@@ -465,20 +462,20 @@ def get_shape_descriptor(face, arrangement,
         start_angle = trait.tangentAngle(start_point, half_edge.direction)
         end_point = arrangement.graph.node[e]['obj'].point
         end_angle = trait.tangentAngle(end_point, half_edge.direction)
-        
+
         edge_angle += [(start_angle, end_angle)]
-            
+
     # computing the turning angles of the edge at their starting node
     # turn[i] =  angle_end[i-1] - angle_start[i]
     starting_angles = np.array([s for (s,e) in edge_angle])
     ending_angles = np.array([e for (s,e) in edge_angle])
     ending_angles = np.roll(ending_angles, 1)
-    
+
     # turn -> exterior angle
-    # the following stuff fixes this: 
+    # the following stuff fixes this:
     # t2 = pi-epsilon,  t1 = -pi+epsilon
     # turn = -2x espilon, but t2-t1= 2x(pi-epsilon)
-    
+
     # mvoing all the angle to [0,2pi]
     starting_angles = np.mod(starting_angles, 2*np.pi)
     ending_angles = np.mod(ending_angles, 2*np.pi)
@@ -487,35 +484,35 @@ def get_shape_descriptor(face, arrangement,
     ea = np.array([ending_angles ,
                    ending_angles +2*np.pi,
                    ending_angles -2*np.pi])
-    
+
     edge_turn = list( np.min(np.abs(ea-sa),axis=0) )
-    
+
     # dumping all Ls, that are followed by other Ls without a turn
     if remove_redundant_lines:
-            
-            # finding all matches,
+
+        # finding all matches,
         # by extending the edge_type with edge_type[0], we check tial-haed too
         regex, sub = edge_type+edge_type[0], 'LL'
         match_idx = np.array([ match.start()
                                for match in re.finditer('(?={:s})'.format(sub), regex) ])
-        
+
         # match_idx shows indices to starting point of the pattern (i.e. first line)
         # we want to remove the line that follows another (i.e. second line)
         match_idx += 1 # getting the index of the second line
         match_idx = np.mod(match_idx, len(edge_type)) # bringing all indices in range
-        
+
         # sortin indices in reverse order, for poping
         match_idx = list(match_idx)
         match_idx.sort(reverse=True)
-        
+
         edge_turn = list(edge_turn)
         edge_type = list(edge_type)
         edge_node_idx = list(edge_node_idx)
-        
+
         for idx in match_idx:
             # indexing with np.mod, in case a match happens at tail-head
             # for which we have to remove the first element!
-            # but that will change 
+            # but that will change
             if edge_turn[idx] == 0:
                 edge_turn.pop(idx)
                 edge_type.pop(idx)
@@ -523,7 +520,7 @@ def get_shape_descriptor(face, arrangement,
 
     # assert len(edge_turn) == len(edge_type) == len(edge_node_idx)
     if not (len(edge_turn) == len(edge_type) == len(edge_node_idx)): raise AssertionError()
-    
+
     return edge_turn, edge_type, edge_node_idx
 
 ################################################################################
@@ -532,7 +529,7 @@ def match_face_shape(face1, face2,
     '''
     This method takes two faces and compares their shape.
     The comparison is a regex match by rolling (to left) the edge_type of the
-    face1, and results a list of integers, each indicating steps of roll (to 
+    face1, and results a list of integers, each indicating steps of roll (to
     left) that would match two faces.
 
     Input
@@ -548,7 +545,7 @@ def match_face_shape(face1, face2,
     ------
     matches: list of integer
     the number of steps of roll to left that would match two faces
-    
+
     Note
     ----
     If the sizes of edge_type2 and edge_type1 do not match this method would
@@ -563,10 +560,10 @@ def match_face_shape(face1, face2,
     this method
 
     TODO:
-    adopt the code to consider "include_angle"   
+    adopt the code to consider "include_angle"
     '''
 
-    # print (' TODO: adopt the code to consider "include_angle"')   
+    # print (' TODO: adopt the code to consider "include_angle"')
     match = []
 
     attr1 = face1.attributes
@@ -574,7 +571,7 @@ def match_face_shape(face1, face2,
 
     edge_type1 = attr1['edge_type']
     edge_type2 = attr2['edge_type']
-    
+
     for roll in range(len(edge_type1)):
         # rolling to left
         # if the sizes of edge_type2 and edge_type1 do not match
@@ -614,7 +611,7 @@ def align_faces(arrangement1, arrangement2,
     Note
     ----
     src = face1 , dst = face2
-    so the result is a transformation from face1 to face2    
+    so the result is a transformation from face1 to face2
 
     Note
     ----
@@ -623,7 +620,7 @@ def align_faces(arrangement1, arrangement2,
 
     todo
     ----
-    Could this happen? 
+    Could this happen?
     make sure sx == sy and sx>0
     note that sx <0 could happen, indicating a mirror
     for instance two quadrant of a circle could be aligned with rotation or flip
@@ -637,12 +634,12 @@ def align_faces(arrangement1, arrangement2,
 
     nodes1 = arrangement1.graph.node
     nodes2 = arrangement2.graph.node
-    
+
     src = np.array( [(nodes1[n_idx]['obj'].point.x,
                       nodes1[n_idx]['obj'].point.y)
                      for n_idx in f1.attributes['edge_node_idx'] ],
                     dtype=np.float)
-    
+
     dst = np.array( [(nodes2[n_idx]['obj'].point.x,
                       nodes2[n_idx]['obj'].point.y)
                      for n_idx in f2.attributes['edge_node_idx'] ],
@@ -655,15 +652,15 @@ def align_faces(arrangement1, arrangement2,
         return alignment # returning an empty list
 
     if not(enforce_match):
-        matches = match_face_shape(f1,f2)    
+        matches = match_face_shape(f1,f2)
 
         for roll in matches:
             tform = skimage.transform.estimate_transform( tform_type,
                                                           np.roll(src,-roll,axis=0),
                                                           dst )
-            # Note that the second value in key tuple is the roll of 
+            # Note that the second value in key tuple is the roll of
             # dst point. even though with "match" the roll for dst is always
-            # zero, it is still set, for the sake of consistency with 
+            # zero, it is still set, for the sake of consistency with
             # the "enforce_match" case
             alignments[(roll,0)] = tform
 
@@ -671,7 +668,7 @@ def align_faces(arrangement1, arrangement2,
         # it's a very rough brute force manner that would skip match and
         # take all "3-consequtive nodes" from face1 and align them with all
         # "3-consequtive nodes" from face2... talking about rough, ha?
-        
+
         src_len = src.shape[0]-1
         dst_len = dst.shape[0]-1
 
@@ -685,7 +682,7 @@ def align_faces(arrangement1, arrangement2,
                                                               dst[dst_idx:dst_idx+3, :] )
 
                 alignments[(src_idx,dst_idx)] = tform
-    
+
     return alignments
 
 
@@ -731,7 +728,7 @@ def xml_tree_parser_to_svg_elements(tree):
 ########################################
 def svg_parser_line_element(element):
     '''
-    https://www.w3.org/TR/SVG/shapes.html#LineElement    
+    https://www.w3.org/TR/SVG/shapes.html#LineElement
     '''
     x1 = float(element.attrib['x1'])
     y1 = float(element.attrib['y1'])
@@ -744,7 +741,7 @@ def svg_parser_line_element(element):
 ########################################
 def svg_parser_rect_element(element):
     '''
-    https://www.w3.org/TR/SVG/shapes.html#RectElement    
+    https://www.w3.org/TR/SVG/shapes.html#RectElement
     '''
     x = float(element.attrib['x'])
     y = float(element.attrib['y'])
@@ -768,7 +765,7 @@ def svg_parser_polyline_polygon_element(element):
     # pairing points in the list and constructing the list of coordinates
     pts = [  [float(pts_str[idx]), float(pts_str[idx+1])]
              for idx in range(0, len(pts_str), 2) ]
-    
+
     # constructing line segments from points
     segments = [ [pts[idx], pts[idx+1]]
                  for idx in range(len(pts)-1) ]
@@ -779,7 +776,7 @@ def svg_parser_polyline_polygon_element(element):
 ########################################
 def svg_parser_circle_element(element):
     '''
-    https://www.w3.org/TR/SVG/shapes.html#CircleElement    
+    https://www.w3.org/TR/SVG/shapes.html#CircleElement
     '''
     cx = element.attrib['cx']
     cy = element.attrib['cy']
@@ -789,7 +786,7 @@ def svg_parser_circle_element(element):
 ########################################
 def svg_parser_ellipse_element(element):
     '''
-    https://www.w3.org/TR/SVG/shapes.html#EllipseElement    
+    https://www.w3.org/TR/SVG/shapes.html#EllipseElement
     '''
     cx = element.attrib['cx']
     cy = element.attrib['cy']
@@ -810,7 +807,7 @@ def svg_to_ymal(svg_file_name):
     elements_dict = xml_tree_parser_to_svg_elements(tree)
 
     ###### parsing xml element to yaml's trait dictionary
-    ### path_element    
+    ### path_element
     for path_elmt in elements_dict['path']:
 
         for segment in svgpathtools.parse_path(path_elmt.attrib['d']):
@@ -818,13 +815,13 @@ def svg_to_ymal(svg_file_name):
                 segments = [ [ segment[0].real, segment[0].imag,
                                segment[1].real, segment[1].imag ] ]
                 data['segments'] += segments
-                
+
             elif isinstance (segment, svgpathtools.Arc):
                 print ('todo: parse Arc path')
 
             elif isinstance (segment, svgpathtools.CubicBezier):
                 print ('todo: parse CubicBezier path')
-                
+
             elif isinstance (segment, svgpathtools.QuadraticBezier):
                 print ('todo: parse QuadraticBezier path')
 
@@ -843,7 +840,7 @@ def svg_to_ymal(svg_file_name):
         for seg in svg_parser_polyline_polygon_element(polyline_elmt):
             data['segments'].append([float(seg[0][0]), float(seg[0][1]),
                                      float(seg[1][0]), float(seg[1][1]) ])
-           
+
     ### rect_element
     for rect_elmt in elements_dict['rect']:
         for seg in svg_parser_rect_element(rect_elmt):
@@ -855,14 +852,14 @@ def svg_to_ymal(svg_file_name):
         circle = svg_parser_circle_element(circle_elmt)
         data['circles'].append( [float(circle[0]), float(circle[1]), float(circle[2]) ] )
 
-   
+
     ### adding the boundary to the data
-    ### [xMin, yMin, xMax, yMax] 
+    ### [xMin, yMin, xMax, yMax]
     data['boundary'] = [0,0, elements_dict['width'], elements_dict['height']]
 
     ###### saving data
     yaml_file_name = svg_file_name.split('.')[0]+'.yaml'
     with open(yaml_file_name, 'w') as yaml_file:
             yaml.dump(data, yaml_file) #, default_flow_style=True)
-    
+
     return yaml_file_name

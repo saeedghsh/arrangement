@@ -1,6 +1,6 @@
 '''
 Copyright (C) Saeed Gholami Shahbandi. All rights reserved.
-Author: Saeed Gholami Shahbandi (saeed.gh.sh@gmail.com)
+Author: Saeed Gholami Shahbandi
 
 This file is part of Arrangement Library.
 The of Arrangement Library is free software: you can redistribute it and/or
@@ -23,7 +23,7 @@ import arrangement.arrangement as arr
 import arrangement.plotting as aplt
 
 if __name__ == '__main__':
-    ''' 
+    '''
     list of supported parameters
     ----------------------------
     --multiprocessing
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     # fetching parameters from input arguments
     # parameters are marked with double dash,
-    # the value of a parameter is the next argument   
+    # the value of a parameter is the next argument
     listiterator = args[1:].__iter__()
     while 1:
         try:
@@ -52,7 +52,7 @@ if __name__ == '__main__':
             if item[:2] == '--':
                 exec(item[2:] + ' = next( listiterator )')
         except:
-            break   
+            break
 
     # multiprocessing parameters (number of processes or False)
     multiprocessing = int(multiprocessing) if 'multiprocessing' in locals() else False
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # if input file is svg, convert to yaml and load yaml file
     if file_name.split('.')[-1] == 'svg':
         raise( NameError('SVG support is not available yet... Sorry') )
-        file_name = arr.utls.svg_to_ymal(file_name, convert_segment_2_infinite_line=True)
+        # file_name = arr.utls.svg_to_ymal(file_name, convert_segment_2_infinite_line=True)
 
     # load traits from yaml file
     data = arr.utls.load_data_from_yaml( file_name )
@@ -81,4 +81,3 @@ if __name__ == '__main__':
     print( 'subGraphs:\t {:d}'.format( len(arrange._subDecompositions) ) )
 
     aplt.animate_face_patches(arrange, timeInterval = .5* 1000)
-
