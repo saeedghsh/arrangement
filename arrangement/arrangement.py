@@ -84,8 +84,7 @@ def merge_faces_on_fly(arrangement, f1_idx, f2_idx):
         next_idx = [idx for idx,he in enumerate(bank) if he[0] == next_node_idx]
 
         if len(next_idx)==0:
-            return None
-            raise( StandardError( 'there are disjoint chains of halfedges' ) )
+            return None # raise( StandardError( 'there are disjoint chains of halfedges' ) )
             # probably [almost certainly] only one chain is the face and the
             # rest are holes
 
@@ -345,8 +344,12 @@ class Face:
         holesArea = 0
         if considerHoles:
             for hole in self.holes:
+
                 polygon = hole.path.to_polygons()
-                assert len(polygon) == 1
+
+                # assert len(polygon) == 1
+                if not(len(polygon) == 1): raise AssertionError()
+
                 x = polygon[0][:,0]
                 y = polygon[0][:,1]
                 holesArea += 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
@@ -572,17 +575,20 @@ class Decomposition:
         "other" could be: Face, Decomposition, Arrangement
         '''
 
-        assert self.superFace
+        # assert self.superFace
+        if not(self.superFace): raise AssertionError()
 
         if isinstance(other, Face):
             otherPath = other.path
 
         elif isinstance(other, Decomposition):
-            assert other.superFace
+            # assert other.superFace
+            if not(other.superFace): raise AssertionError()
             otherPath = other.superFace.path
 
         elif isinstance(other, Arrangement):
-            assert other.decomposition.superFace
+            # assert other.decomposition.superFace
+            if not(other.decomposition.superFace): raise AssertionError()
             otherPath = other.decomposition.superFace.path
 
         return self.superFace.path.intersects_path(otherPath,filled=False)
@@ -595,17 +601,20 @@ class Decomposition:
         "other" could be: Face, Decomposition, Arrangement
         '''
 
-        assert self.superFace
+        # assert self.superFace
+        if not(self.superFace): raise AssertionError()
 
         if isinstance(other, Face):
             otherPath = other.path
 
         elif isinstance(other, Decomposition):
-            assert other.superFace
+            # assert other.superFace
+            if not(other.superFace): raise AssertionError()
             otherPath = other.superFace.path
 
         elif isinstance(other, Arrangement):
-            assert other.decomposition.superFace
+            # assert other.decomposition.superFace
+            if not(other.decomposition.superFace): raise AssertionError()
             otherPath = other.decomposition.superFace.path
         
         else:
@@ -817,7 +826,7 @@ class Arrangement:
         # yes, redundant. But if there is a non-connected node in the original graph
         # it will be missed through adding edge process.
         all_nodes_idx = [ [ idx, {} ] for idx in self.graph.nodes() ] 
-        prime.add_nodes_from( all_nodes_idx ) 
+        prime.add_nodes_from( all_nodes_idx )
         
 
         all_halfedges_idx = [halfEdgeIdx for halfEdgeIdx in self.graph.edges(keys=True)]
@@ -1373,7 +1382,8 @@ class Arrangement:
                     # print ('I\'m poping:' , idx1, '\T distance was: ', distances[idx1][idx2])
                     break
 
-        assert len(intersectionsFlat) == len(ipsTraitIdx)
+        # assert len(intersectionsFlat) == len(ipsTraitIdx)
+        if not (len(intersectionsFlat) == len(ipsTraitIdx)): raise AssertionError()
 
         ########################################
         # step 9: creating nodes from >intersection points<
@@ -1388,8 +1398,8 @@ class Arrangement:
         ########################################
         # adding nodes to the graph
         self.graph.add_nodes_from( nodes )
-        assert len(self.graph.nodes()) == len(intersectionsFlat)
-
+        # assert len(self.graph.nodes()) == len(intersectionsFlat)
+        if not (len(self.graph.nodes()) == len(intersectionsFlat)): raise AssertionError()
 
     ############################################################################
     def _construct_edges(self):
@@ -1513,7 +1523,7 @@ class Arrangement:
         return self.graph.edges(keys=True)
 
     ############################################################################
-    def _find_successor_HalfEdge(self, halfEdgeIdx, 
+    def _find_successor_HalfEdge(self, halfEdgeIdx,
                                  allHalfEdgeIdx=None,
                                  direction='ccw_before'):
         '''Arrangement class
@@ -1587,7 +1597,7 @@ class Arrangement:
             sortList  = sorted( fullList, key=operator.itemgetter(0, 1) )
 
             # picking the successor
-            for i, (alpha,beta, idx) in enumerate(sortList):
+            for i, (_, beta, idx) in enumerate(sortList):
                 if idx == 'ref':
                     if direction=='ccw_before':
                         (a,c,successorIdx) = sortList[i-1]

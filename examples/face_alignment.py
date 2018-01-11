@@ -6,7 +6,7 @@ if sys.version_info[0] == 3:
 elif sys.version_info[0] == 2:
     pass
 
-import time
+# import time
 import numpy as np
 import sympy as sym
 import matplotlib.pyplot as plt

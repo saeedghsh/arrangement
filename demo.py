@@ -24,17 +24,15 @@ import arrangement.plotting as aplt
 
 if __name__ == '__main__':
     ''' 
-
     list of supported parameters
     ----------------------------
     --multiprocessing
 
-
     example
     -------
     python demo.py --file_name 'tests/testCases/example_01.yaml' --multiprocessing 4
-   
-    '''    
+    '''
+
     args = sys.argv
 
     # fetching options from input arguments

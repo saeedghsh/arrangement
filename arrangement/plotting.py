@@ -24,11 +24,11 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-import matplotlib.transforms
+# import matplotlib.transforms
 import matplotlib.image as mpimg
 
 # from cStringIO import StringIO
-from io import StringIO
+# from io import StringIO
 import geometricTraits as trts
 
 ################################################################################

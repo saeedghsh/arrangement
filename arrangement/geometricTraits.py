@@ -630,16 +630,13 @@ class ArcModified(CircleModified):
     def __init__ (self, args):
         '''
         ArcModified class
-
-
-
-
         '''
         
         self.obj = sym.Circle( *args[:2] )
 
         # the radial distance of t1 to t2 can not be more than 2pi
-        assert max(args[2])-min(args[2]) < 2*np.pi
+        # assert max(args[2])-min(args[2]) < 2*np.pi
+        if not (max(args[2])-min(args[2]) < 2*np.pi): raise AssertionError()
 
         # make sure t1 and t2 are sorted CCW (t1<t2)
         self.t1 = min(args[2])

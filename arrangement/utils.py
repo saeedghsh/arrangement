@@ -105,7 +105,8 @@ def edgeList_2_mplPath (edgeList, graph, traits):
             verts.extend( vs )
             codes.extend( cs )
 
-    assert len(verts) == len(codes)
+    # assert len(verts) == len(codes)
+    if not len(verts) == len(codes): raise AssertionError()
 
     # step3: finialize - closing the path
     # making sure that the last point of the path is not a control point of an arc
@@ -450,9 +451,15 @@ def get_shape_descriptor(face, arrangement,
         # storing the type
         trait = arrangement.traits[ half_edge.traitIdx ]
         L = isinstance( trait.obj, (sym.Line, sym.Segment, sym.Ray) )
-        C = isinstance( trait.obj, sym.Circle )
+        # C = isinstance( trait.obj, sym.Circle )
         edge_type += 'L' if L else 'C'
-        
+        if L:
+            edge_type += 'L'
+        elif C:
+            edge_type += 'C'
+        else:
+            raise TypeError()
+
         # storing the direction ( angle )
         start_point = arrangement.graph.node[s]['obj'].point
         start_angle = trait.tangentAngle(start_point, half_edge.direction)
@@ -514,7 +521,8 @@ def get_shape_descriptor(face, arrangement,
                 edge_type.pop(idx)
                 edge_node_idx.pop(idx)
 
-    assert len(edge_turn) == len(edge_type) == len(edge_node_idx)
+    # assert len(edge_turn) == len(edge_type) == len(edge_node_idx)
+    if not (len(edge_turn) == len(edge_type) == len(edge_node_idx)): raise AssertionError()
     
     return edge_turn, edge_type, edge_node_idx
 
@@ -711,8 +719,10 @@ def xml_tree_parser_to_svg_elements(tree):
             height = element.attrib['height']
             width = element.attrib['width']
 
-    assert 'height' in locals()
-    assert 'width' in locals()
+    # assert 'height' in locals()
+    # assert 'width' in locals()
+    if not 'height' in locals(): raise AssertionError()
+    if not 'height' in locals(): raise AssertionError()
     elements_dict['height'] = np.float(height)
     elements_dict['width'] = np.float(width)
 
