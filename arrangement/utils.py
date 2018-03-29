@@ -279,7 +279,7 @@ def unbound_traits(trait_list):
     circle -> circle
     '''
 
-    for idx, trait in trait_list:
+    for idx, trait in enumerate(trait_list):
 
         if isinstance(trait, (trts.SegmentModified, trts.RayModified) ):
             # if the trait is (ray v segment) convert to line
