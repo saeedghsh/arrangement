@@ -4,16 +4,20 @@ Arrangement
 <!-- <img align="right" src="https://github.com/saeedghsh/arrangement/blob/master/docs/pysubdiv.png"> -->
 
 A python package for 2D arrangement.
-Currently, only straight lines and circles are supported.
-This package has been developed to be employed as the underlying spatial representation for robot maps in the following publications:
-- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Sensor based adaptive metric-topological cell decomposition method for semantic annotation of structured environments", ICARCV, Singapore, 2014, pp. 1771-1777. doi: 10.1109/ICARCV.2014.7064584 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7064584&isnumber=7064265).
-- S. G. Shahbandi, B. Åstrand and R. Philippsen, "Semi-supervised semantic labeling of adaptive cell decomposition maps in well-structured environments", ECMR, Lincoln, 2015, pp. 1-8. doi: 10.1109/ECMR.2015.7324207 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7324207&isnumber=7324045).
-- S. G. Shahbandi, ‘Semantic Mapping in Warehouses’, Licentiate dissertation, Halmstad University, 2016. [URL](http://urn.kb.se/resolve?urn=urn:nbn:se:hh:diva-32170)
-- S. G. Shahbandi, M. Magnusson, "2D Map Alignment With Region Decomposition", submitted to Autonomous Robots, 2017.
+<p align="center">
+	<img src="https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif" width="250">
+</p>
 
-This is an experimental implementation, and it is HEAVILY UNDER MAINTENANCE.
-For a stable, fast and reliable implementation of arrangement, I recommend the [CGAL](http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html) library.
-However, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-swig-bindings/wiki) does not include the arrangement package.
+This package has been developed to be employed as the underlying spatial representation for robot maps in the following publications:
+- Saeed Gholami Shahbandi, Björn Åstrand and Roland Philippsen, *Sensor based adaptive metric-topological cell decomposition method for semantic annotation of structured environments*, ICARCV, Singapore, 2014, pp. 1771-1777. doi: 10.1109/ICARCV.2014.7064584 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7064584&isnumber=7064265).
+- Saeed Gholami Shahbandi, Björn Åstrand and Roland Philippsen, *Semi-supervised semantic labeling of adaptive cell decomposition maps in well-structured environments*, ECMR, Lincoln, 2015, pp. 1-8. doi: 10.1109/ECMR.2015.7324207 [URL](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7324207&isnumber=7324045).
+- Saeed Gholami Shahbandi, *Semantic Mapping in Warehouses*, Licentiate dissertation, Halmstad University, 2016. [URL](http://urn.kb.se/resolve?urn=urn:nbn:se:hh:diva-32170)
+- Saeed Gholami Shahbandi, Martin Magnusson, *2D Map Alignment With Region Decomposition*, CoRR, abs/1709.00309, 2017. [URL](https://arxiv.org/abs/1709.00309)
+
+
+IMPORTANT NOTE: This is an experimental implementation and it is HEAVILY UNDER MAINTENANCE.
+Currently, only straight lines and circles are supported.
+For a stable, fast and reliable implementation of the arrangement, I recommend the [CGAL](http://doc.cgal.org/latest/Arrangement_on_surface_2/index.html) library, although, CGAL is written in C++ and its [binding](https://github.com/CGAL/cgal-swig-bindings/wiki) does not include the arrangement package.
 
 Dependencies and Download
 -------------------------
@@ -47,18 +51,21 @@ Basic Use and API
 
 # define curves:
 >>> import arrangement.geometricTraits as trts
->>> curves = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
+>>> traits = [trts.CircleModified( args=((i,i), 3) ) for i in range(4)]
 
 # deploy arrangement
 >>> import arrangement.arrangement as arr
->>> arrang = arr.Arrangement(curves, multiProcessing=4)
+>>> arrang = arr.Arrangement(traits, multiProcessing=4)
 
 # visualize the result
 >>> import arrangement.plotting as aplt
 >>> aplt.animate_face_patches(arrang)
 ```
 
-![animation](https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif)
+<!-- ![animation](https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif) -->
+<p align="center">
+	<img src="https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif">
+</p>
 
 - Arrangement class Hierarchy (the figure is created by [Pyreverse](https://www.logilab.org/blogentry/6883))
 ![classes_arrangement](https://github.com/saeedghsh/arrangement/blob/master/docs/classes_arrangement.png)
@@ -129,7 +136,7 @@ Use the script [utils.py](https://github.com/saeedghsh/arrangement/blob/master/a
 ```python
 from arrangement.utils import load_data_from_yaml
 data = load_data_from_yaml( address+fileName )
-traits = data['traits]
+traits = data['traits']
 ```
 
 <!-- - Checking sundivisions' intersection -->
