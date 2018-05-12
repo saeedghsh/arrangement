@@ -440,8 +440,11 @@ def animate_face_patches(arrangement, timeInterval=1000):
 
     # set axes limit
     bb = arrangement.decomposition.get_extents()
-    ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
-    ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
+    ax.set_xlim(bb.x0-1, bb.x1+1)
+    ax.set_ylim(bb.y0-1, bb.y1+1)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     # plot
     plt.axis('equal')
@@ -491,7 +494,7 @@ def plot_new_face_with_patch(axis, faceIdx=None):
     # draw changes on the canvas
     axis.figure.canvas.draw()
 
-    if False: plt.savefig('face #'+str(faceIdx)+'.png')
+    # if [False,True][0]: plt.savefig('{:d}'.format(faceIdx)+'.png')
 
 
 ################################################################################
