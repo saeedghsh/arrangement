@@ -21,7 +21,7 @@ import re
 import yaml
 import sympy as sym
 import numpy as np
-import skimage.transform
+# import skimage.transform
 import matplotlib.path as mpath
 import matplotlib.transforms
 
