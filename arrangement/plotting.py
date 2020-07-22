@@ -420,10 +420,11 @@ def plot_decomposition_colored (arrang,
 
 
 ########################################
-def animate_face_patches(arrangement, timeInterval=1000):
+def animate_face_patches(arrangement, timeInterval=1000, back_img=None):
 
-    fig = plt.figure( figsize=(12, 12) )
-    ax = fig.add_subplot(111)
+    # fig = plt.figure( figsize=(12, 12) )
+    fig = plt.figure( figsize=(8, 8) )
+    ax = fig.add_subplot(111)      
 
     global arrang
     global face_counter
@@ -438,10 +439,14 @@ def animate_face_patches(arrangement, timeInterval=1000):
     timer.start()
     # timer.stop()
 
+    if back_img is not None:
+        ax.imshow(back_img, cmap='gray', alpha=.7, interpolation='nearest', origin='lower')
+
     # set axes limit
     bb = arrangement.decomposition.get_extents()
-    ax.set_xlim(bb.x0-1, bb.x1+1)
-    ax.set_ylim(bb.y0-1, bb.y1+1)
+    margin = 1 if back_img is None else 10
+    ax.set_xlim(bb.x0-margin, bb.x1+margin)
+    ax.set_ylim(bb.y0-margin, bb.y1+margin)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -494,7 +499,7 @@ def plot_new_face_with_patch(axis, faceIdx=None):
     # draw changes on the canvas
     axis.figure.canvas.draw()
 
-    # if [False,True][0]: plt.savefig('{:d}'.format(faceIdx)+'.png')
+    if [False,True][0]: plt.savefig('{:05d}'.format(faceIdx)+'.png')
 
 
 ################################################################################
