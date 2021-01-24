@@ -1,8 +1,6 @@
 Arrangement
 ===========
 
-<!-- <img align="right" src="https://github.com/saeedghsh/arrangement/blob/master/docs/pysubdiv.png"> -->
-
 A python package for 2D arrangement.
 <p align="center">
 	<img src="https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif" width="250">
@@ -28,8 +26,9 @@ $ git clone https://github.com/saeedghsh/arrangement.git
 $ cd arrangement
 
 # Install dependencies
-$ pip install -r requirements.txt # python 2
-$ pip3 install -r requirements.txt # python 3
+~$ pip install -r requirements.txt # python 2~
+~$ pip3 install -r requirements.txt # python 3~
+cat requirements.txt | xargs -n 1 pip install -Iv
 
 # Install the package [optional]
 python setup.py install # python 2
@@ -62,7 +61,6 @@ Basic Use and API
 >>> aplt.animate_face_patches(arrang)
 ```
 
-<!-- ![animation](https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif) -->
 <p align="center">
 	<img src="https://github.com/saeedghsh/arrangement/blob/master/docs/animation.gif">
 </p>

@@ -29,14 +29,17 @@ import numpy as np
 import sympy as sym
 import networkx as nx
 
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-# from . import geometricTraits as trts
-# from . import utils as utls
-
-import geometricTraits as trts
-import utils as utls
+try:
+    from . import geometricTraits as trts
+    from . import utils as utls
+except:
+    from arrangement import geometricTraits as trts
+    from arrangement import utils as utls
 
 
 ################################################################################
@@ -44,7 +47,6 @@ import utils as utls
 ####################### BUT THIS METHOD NEEDS ACCESS TO Face CLASS,
 ####################### AND I CAN'T IMPORT "import arrangement as arr" IN utils!
 ################################################################################
-
 def merge_faces_on_fly(arrangement, f1_idx, f2_idx):
     '''
     Note: this is still not a complete solution.
@@ -94,11 +96,9 @@ def merge_faces_on_fly(arrangement, f1_idx, f2_idx):
 
         elif len(next_idx) >1:
             # raise( StandardError( 'more than one halfedge to follow...' ) )
-
             # e.g. concentric squares connected with a pair of twin halfedges
             # e.g. a polygon inside another polygon, sharing one node
             # the following will take care of the first example
-
             # print ('have to discard pairs of twin halfedges')
             twins_idx_in_bank = [idx
                                  for idx, (s,e,k) in enumerate(bank)
@@ -132,7 +132,6 @@ def intersection_star(idx, traits):
                 conditions = [ trait.t1 < tval < trait.t2,
                                trait.t1 < tval+2*np.pi < trait.t2,
                                trait.t1 < tval-2*np.pi < trait.t2 ]
-                # if (trait.t1 < tval < trait.t2):
                 if any(conditions):
                     pass
                 else:
@@ -147,9 +146,6 @@ def intersection_star(idx, traits):
 ################################################################################
 class Node:
     def __init__ (self, selfIdx, point, traitIdx, traits):
-        '''
-        '''
-
         self.attributes = {}
         self.selfIdx = selfIdx   # self-index
         self.point = point
@@ -157,16 +153,6 @@ class Node:
         self._traitTval = []
         self.update_tval(traits)
 
-    # ####################################
-    # def __repr__(self):
-    #     ''''''
-    #     repr_ = 'Node instance (assigned to nodes of the graph of Decomposition Class) \n '
-    #     repr_ += '\t idx: {:d} \n'.format(self.selfIdx)
-    #     repr_ += '\t trait idx: (' + (', '.join(['{:d}']*len(self._traitIdx))).format(*self._traitIdx) + ') \n'
-    #     repr_ += '\t coordinate: ({:f},{:f}) \n'.format(self.point.x.evalf(), self.point.y.evalf())
-    #     return repr_
-
-    ####################################
     def transform_sequence(self, operTypes, operVals, operRefs, traits):
         '''
         Node class
@@ -208,7 +194,6 @@ class Node:
         # updating self._traitTval after transforming the self.point
         self.update_tval(traits)
 
-    ####################################
     def update_tval (self, traits):
         '''
         Node class
@@ -216,7 +201,6 @@ class Node:
         self._traitTval = [traits[cIdx].IPE(self.point) for cIdx in self._traitIdx]
 
 
-################################################################################
 class HalfEdge:
     def __init__ (self,
                   selfIdx, twinIdx,
@@ -232,15 +216,7 @@ class HalfEdge:
         self.traitIdx = traitIdx    # Index of the trait creating the edge
         self.direction = direction  # defines the direction of t-value (positive: t2>t1, negative: t1>t2)
 
-    # ####################################
-    # def __repr__(self):
-    #     ''''''
-    #     repr_ = 'Half-Edge instance (assigned to edges of the graph of Decomposition Class) \n '
-    #     repr_ += '\t self idx: (' + (', '.join(['{:d}']*len(self.selfIdx))).format(*self.selfIdx) + ') \n'
-    #     repr_ += '\t self idx: (' + (', '.join(['{:d}']*len(self.twinIdx))).format(*self.twinIdx) + ') \n'
-    #     return repr_
 
-    ####################################
     def get_tvals(self, traits, nodes):
         '''
         HalfEdge class
@@ -269,7 +245,6 @@ class HalfEdge:
         return (sTVal, eTVal)
 
 
-################################################################################
 class Face:
     def __init__(self, halfEdgeList, path):
         '''
@@ -279,13 +254,7 @@ class Face:
         self.holes = ()               # tuple of faces
         self.attributes = {}
 
-    # ####################################
-    # def __repr__(self):
-    #     ''''''
-    #     repr_ = 'Face instance (entries of the faces list of the Decomposition Class) \n '
-    #     return repr_
 
-    ####################################
     def get_all_halfEdges_Idx(self):
         '''Face class
 
@@ -296,7 +265,7 @@ class Face:
                                  for hole in self.holes
                                  for heIdx in hole.halfEdges ]
 
-    ####################################
+
     def get_all_nodes_Idx(self):
         '''Face class
 
@@ -310,7 +279,7 @@ class Face:
 
         return hole_nodes_idx + self_node_idx
 
-    ####################################
+
     def update_path(self, graph, traits):
         '''Face class
 
@@ -320,7 +289,7 @@ class Face:
         for hole in self.holes:
             hole.path = utls.edgeList_2_mplPath (hole.halfEdges, graph, traits)
 
-    ####################################
+
     def get_area(self, considerHoles=True):
         '''Face class
 
@@ -334,7 +303,6 @@ class Face:
         if len(polygon) != 1:
             print (self.path, polygon)
             return 0.0
-            # raise(StandardError('the path.to_polygons() method should return a list with a single entry!'))
 
         x = polygon[0][:,0]
         y = polygon[0][:,1]
@@ -343,23 +311,18 @@ class Face:
         holesArea = 0
         if considerHoles:
             for hole in self.holes:
-
                 polygon = hole.path.to_polygons()
-
-                # assert len(polygon) == 1
-                if not(len(polygon) == 1): raise AssertionError()
-
+                if not(len(polygon) == 1):
+                    raise AssertionError()
                 x = polygon[0][:,0]
                 y = polygon[0][:,1]
                 holesArea += 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
 
         return PolyArea - holesArea
 
-    ####################################
-    def is_point_inside(self, point):
-        '''Face class
 
-        '''
+    def is_point_inside(self, point):
+        '''Face class'''
         if self.path.contains_point( (point.x,point.y) ):
             for hole in self.holes:
                 if hole.path.contains_point( (point.x,point.y) ):
@@ -367,7 +330,7 @@ class Face:
             return True
         return False
 
-    ####################################
+
     def punch_hole(self, holeFace):
         '''Face class
 
@@ -398,7 +361,7 @@ class Face:
         # storing final list of holes after conversion to tuple
         self.holes = tuple(holes)
 
-    ####################################
+
     def get_punched_path(self):
         '''Face class
 
@@ -418,7 +381,6 @@ class Face:
         return mpath.Path(verts, codes)
 
 
-    ####################################
     def set_shape_descriptor(self, arrangement, remove_redundant_lines=True):
         '''Face class
 
@@ -454,7 +416,6 @@ class Face:
         self.attributes['edge_node_idx'] = ndx
 
 
-################################################################################
 class Decomposition:
     def __init__ (self, graph, traits, faces, superFaceIdx=None):
         '''
@@ -470,13 +431,6 @@ class Decomposition:
             self.superFace = None
             self.faces = faces
 
-    # ####################################
-    # def __repr__(self):
-    #     ''''''
-    #     repr_ = 'Decomposition instance'
-    #     return repr_
-
-    ####################################
     def find_face(self, point):
         '''Decomposition class
 
@@ -490,7 +444,7 @@ class Decomposition:
                 return idx
         return None
 
-    ####################################
+
     def find_mutual_halfEdges(self, f1Idx, f2Idx):
         '''Decomposition class
 
@@ -507,7 +461,6 @@ class Decomposition:
         '''
 
         mutualsIdx = []
-
         for (s,e,k) in self.faces[f1Idx].get_all_halfEdges_Idx():
             (ts,te,tk) = self.graph[s][e][k]['obj'].twinIdx
             if (ts,te,tk) in self.faces[f2Idx].get_all_halfEdges_Idx():
@@ -517,7 +470,6 @@ class Decomposition:
         return mutualsIdx
 
 
-    ####################################
     def find_neighbours(self, faceIdx):
         '''Decomposition class
 
@@ -546,19 +498,13 @@ class Decomposition:
             if any([ twin in boundary  for twin in twinsIdx]):
                 neighbours.append(fIdx)
 
-        # identical:
-        # neighbours = [ fIdx
-        #                for fIdx,face in enumerate(self.faces)
-        #                if any([ twin in face.get_all_halfEdges_Idx()
-        #                         for twin in twinsIdx]) ]
-
         # rejecting the face itself if it is included in the neighbours
         if faceIdx in neighbours:
             neighbours.pop( neighbours.index(faceIdx) )
 
         return neighbours
 
-    ####################################
+
     def get_extents(self):
         '''Decomposition class
 
@@ -566,54 +512,51 @@ class Decomposition:
         bboxes = [face.path.get_extents() for face in self.faces]
         return matplotlib.transforms.BboxBase.union(bboxes)
 
-    ####################################
+
     def does_intersect(self, other):
         '''Decomposition class
 
         checks only the intersection of the boundaries
         "other" could be: Face, Decomposition, Arrangement
         '''
-
-        # assert self.superFace
-        if not(self.superFace): raise AssertionError()
+        if not(self.superFace):
+            raise AssertionError()
 
         if isinstance(other, Face):
             otherPath = other.path
 
         elif isinstance(other, Decomposition):
-            # assert other.superFace
-            if not(other.superFace): raise AssertionError()
+            if not(other.superFace):
+                raise AssertionError()
             otherPath = other.superFace.path
 
         elif isinstance(other, Arrangement):
-            # assert other.decomposition.superFace
-            if not(other.decomposition.superFace): raise AssertionError()
+            if not(other.decomposition.superFace):
+                raise AssertionError()
             otherPath = other.decomposition.superFace.path
 
         return self.superFace.path.intersects_path(otherPath,filled=False)
 
-    ####################################
+
     def does_overlap(self, other):
         '''Decomposition class
 
         checks overlapping (and enclosure) of two regions
         "other" could be: Face, Decomposition, Arrangement
         '''
-
-        # assert self.superFace
         if not(self.superFace): raise AssertionError()
 
         if isinstance(other, Face):
             otherPath = other.path
 
         elif isinstance(other, Decomposition):
-            # assert other.superFace
-            if not(other.superFace): raise AssertionError()
+            if not(other.superFace):
+                raise AssertionError()
             otherPath = other.superFace.path
 
         elif isinstance(other, Arrangement):
-            # assert other.decomposition.superFace
-            if not(other.decomposition.superFace): raise AssertionError()
+            if not(other.decomposition.superFace):
+                raise AssertionError()
             otherPath = other.decomposition.superFace.path
 
         else:
@@ -621,7 +564,7 @@ class Decomposition:
 
         return self.superFace.path.intersects_path(otherPath,filled=True)
 
-    ####################################
+
     def does_enclose(self, other):
         '''Decomposition class
 
@@ -639,7 +582,6 @@ class Decomposition:
         return False
 
 
-    ####################################
     def update_face_path(self):
         '''Decomposition class
 
@@ -656,8 +598,6 @@ class Decomposition:
 ####################################################### aggregates from networkx
 ################################################################################
 class Arrangement:
-
-    ############################################################################
     def __init__ (self, traits , config):
         '''
         traits are aggregated instances of sympy's geometric module
@@ -680,30 +620,28 @@ class Arrangement:
         # TODO: I know I need a directional-multi-graph, explain why
         tic = time.time()
         self.graph = nx.MultiDiGraph()
-        if self._timing: print( '\t arrangement - graph construction time:\t', time.time() - tic )
+        if self._timing:
+            print( '\t arrangement - graph construction time:\t', time.time() - tic )
 
         #### STAGE A: construct nodes
         tic = time.time()
         self._construct_nodes()
-        if self._timing: print( '\t arrangement - nodes construction time:\t', time.time() - tic )
+        if self._timing:
+            print( '\t arrangement - nodes construction time:\t', time.time() - tic )
 
         #### STAGE B: construct edges
         tic = time.time()
         self._construct_edges()
-        if self._timing: print( '\t arrangement - edges construction time:\t', time.time() - tic )
+        if self._timing:
+            print( '\t arrangement - edges construction time:\t', time.time() - tic )
 
         ########## decomposition
         tic = time.time()
         self._decompose()
-        if self._timing: print( '\t arrangement - decomposition construction time:\t', time.time() - tic )
+        if self._timing:
+            print( '\t arrangement - decomposition construction time:\t', time.time() - tic )
 
-    # ####################################
-    # def __repr__(self):
-    #     ''''''
-    #     repr_ = 'Arrangement instance'
-    #     return repr_
 
-    ############################################################################
     def find_mutual_halfEdges(self, f1Idx, f2Idx):
         '''Arrangement class
 
@@ -720,10 +658,9 @@ class Arrangement:
         For full documentations see:
         Decomposition.find_mutual_halfEdges.__doc__
         '''
-
         return self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
 
-    ############################################################################
+
     def find_neighbours(self, face_idx):
         '''Arrangement class
 
@@ -740,7 +677,7 @@ class Arrangement:
         '''
         return self.decomposition.find_neighbours(face_idx)
 
-    ############################################################################
+
     def get_boundary_halfedges(self):
         '''Arrangement class
 
@@ -753,13 +690,9 @@ class Arrangement:
         idx = []
         for sf in self._get_independent_superfaces():
             idx.extend( sf.get_all_halfEdges_Idx() )
-
-        # a half_edge can not be in two faces, therefor the idx list is unique
-        # idx = np.vstack({row for row in idx})
-
         return idx
 
-    ############################################################################
+
     def _get_independent_superfaces(self):
         '''Arrangement class
 
@@ -775,10 +708,9 @@ class Arrangement:
         '''
         superFaces = [ self._subDecompositions[idx].superFace
                        for idx in self._get_independent_subdecompositions_idx() ]
-
         return superFaces
 
-    ############################################################################
+
     def _get_independent_subdecompositions_idx(self):
         '''Arrangement class
 
@@ -793,20 +725,9 @@ class Arrangement:
                 for sd1_idx in range(len(self._subDecompositions))
                 if not(any([ self._subDecompositions[sd2_idx].does_enclose(self._subDecompositions[sd1_idx])
                              for sd2_idx in range(len(self._subDecompositions)) ])) ]
-
-        # idx = []
-        # for sd1_idx in range(len(arrang._subDecompositions)):
-        #     # a decomposition does not enclose itself
-        #     # decomposition.does_enclose(decomposition) = False
-        #     is_separate = not(any([ arrang._subDecompositions[sd2_idx].does_enclose(arrang._subDecompositions[sd1_idx])
-        #                             for sd2_idx in range(len(arrang._subDecompositions)) ]))
-        #     if is_separate:
-        #         idx += [sd1_idx]
-
         return idx
 
 
-    ############################################################################
     def get_prime_graph(self):
         '''Arrangement class
 
@@ -819,15 +740,12 @@ class Arrangement:
         and the prime graph is missing, hence we don't know which edge in prime
         corresponds to which face in the arrang.decomposition.faces
         '''
-
         prime = nx.MultiGraph()
         # adding edges will creat the nodes, so why do we add nodes first? redundant?
         # yes, redundant. But if there is a non-connected node in the original graph
         # it will be missed through adding edge process.
         all_nodes_idx = [ [ idx, {} ] for idx in self.graph.nodes() ]
         prime.add_nodes_from( all_nodes_idx )
-
-
         all_halfedges_idx = [halfEdgeIdx for halfEdgeIdx in self.graph.edges(keys=True)]
         while len(all_halfedges_idx) != 0:
             (s,e,k) = all_halfedges_idx[-1]
@@ -842,18 +760,15 @@ class Arrangement:
         return prime
 
 
-    ############################################################################
     def get_dual_graph(self):
         '''Arrangement class
 
         arrang.decomposition is the main decomposition. I contains all the faces.
         arrang.decomposition -> dual
         '''
-
         dual = nx.MultiGraph()
 
         # per each face, a node is created in the dual graph
-        # nodes = [ [fIdx, {'face':face}] for fIdx,face in enumerate(self.decomposition.faces)]
         nodes = [ [fIdx, {}] for fIdx,face in enumerate(self.decomposition.faces)]
         dual.add_nodes_from( nodes )
 
@@ -864,12 +779,9 @@ class Arrangement:
                 # note that even if two faces share more than one pair of twin half-edges,
                 # still there will be one connecting edge between the two.
                 dual.add_edges_from( [ (f1Idx,f2Idx, {}) ] )
-                # dual.add_edges_from( [ (f1Idx,f2Idx, {'mutualHalfEdges': mutualHalfEdges}) ] )
-
         return dual
 
 
-    ############################################################################
     def merge_faces(self, faces_idx=[], loose_degree=2):
         '''Arrangement class
 
@@ -900,23 +812,18 @@ class Arrangement:
         '''
 
         # to reject duplication
-        #if type(faces_idx[0]) == int:
         if isinstance(faces_idx[0], int):
-            ######## this is normal, where faces_idx is a list of face indices
+            # this is normal, where faces_idx is a list of face indices
             faceIdx = list(set(faces_idx))
             halfEdge2Remove = []
             for (f1Idx,f2Idx) in itertools.combinations(faces_idx, 2):
-                # f1 = self.decomposition.faces[f1Idx]
-                # f2 = self.decomposition.faces[f2Idx]
                 halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
 
         elif type(faces_idx[0]) == list:
-            ######## this is new, where faces_idx is a list of lists of face indices
+            # this is new, where faces_idx is a list of lists of face indices
             halfEdge2Remove = []
             for faceIdx in faces_idx:
                 for (f1Idx,f2Idx) in itertools.combinations(list(set(faceIdx)), 2):
-                    # f1 = self.decomposition.faces[f1Idx]
-                    # f2 = self.decomposition.faces[f2Idx]
                     halfEdge2Remove += self.decomposition.find_mutual_halfEdges(f1Idx, f2Idx)
         else:
             raise( StandardError('faces_idx entries are unidentifiable') )
@@ -928,7 +835,6 @@ class Arrangement:
         self.remove_edges( list(set(halfEdge2Remove)), loose_degree=loose_degree)
 
 
-    ############################################################################
     def remove_edges(self, edges_idx, loose_degree=2):
         '''Arrangement class
 
@@ -951,14 +857,11 @@ class Arrangement:
         see arrangement.remove_nodes.__doc__ for more details
         '''
         self.graph.remove_edges_from( edges_idx )
-
         # the following method will remove loose nodes
         # and more importantly will call the self._decompose()
-
         self.remove_nodes(nodes_idx=[], loose_degree=loose_degree)
 
 
-    ############################################################################
     def remove_nodes(self, nodes_idx, loose_degree=2):
         '''Arrangement class
 
@@ -993,7 +896,7 @@ class Arrangement:
         # If a node in the container is not in the graph it is silently ignored.
         self.graph.remove_nodes_from( nodes_idx )
 
-        ################ clean_loose_nodes
+        # clean_loose_nodes
         nodes_degree = self.graph.degree()
         loose_nodes = [k
                        for k in nodes_degree.keys()
@@ -1016,12 +919,10 @@ class Arrangement:
         self._decompose()
 
 
-    ############################################################################
     def _decompose(self):
         '''Arrangement class
 
         '''
-
         #### STAGE 0: split the base graph into connected subgraphs
         subGraphs = list(nx.connected_component_subgraphs(self.graph.to_undirected()))
         subGraphs = [sg.to_directed() for sg in subGraphs]
@@ -1118,7 +1019,6 @@ class Arrangement:
                                            allFaces, superFaceIdx=None)
 
 
-    ############################################################################
     def _find_punch_holes(self, subDecompositions):
         '''Arrangement class
 
@@ -1134,18 +1034,7 @@ class Arrangement:
                 fIdx = sd1.find_face ( samplePoint )
                 subDecompositions[idx1].faces[fIdx].punch_hole ( sd2.superFace )
 
-        # for idx1,sd1 in enumerate(subDecompositions):
-        #     for idx2,sd2 in enumerate(subDecompositions):
-        #         if idx1 != idx2:
 
-        #             # sd1 or sd2 could be empty; faces =[] and superFace=None
-        #             if len(sd1.faces)>0 and len(sd2.faces)>0 and sd1.does_enclose(sd2):
-        #                     sampleNodeIdx = sd2.graph.nodes()[0]
-        #                     samplePoint = sd2.graph.node[sampleNodeIdx]['obj'].point
-        #                     fIdx = sd1.find_face ( samplePoint )
-        #                     subDecompositions[idx1].faces[fIdx].punch_hole ( sd2.superFace )
-
-    ############################################################################
     def _store_traits(self, traits):
         '''Arrangement class
 
@@ -1156,9 +1045,6 @@ class Arrangement:
 
         invalid traits are:    circles/arcs, where radius <= 0
         '''
-
-        # epsilon = np.spacing(10**10)
-
         for cIdx1 in range(len(traits)-1,-1,-1):
             obj1 = traits[cIdx1].obj
             obj1IsCirc = isinstance(traits[cIdx1], trts.CircleModified)
@@ -1198,7 +1084,7 @@ class Arrangement:
 
         self.traits = traits
 
-    ############################################################################
+
     def _construct_nodes(self):
         '''Arrangement class
 
@@ -1356,11 +1242,6 @@ class Arrangement:
         # step 7: merge collocated intersection points
         # duplicate: resulted of same traits intersection
         # collocated: resulted of different traits intersection
-
-        # ips = np.array([[1,4],
-        #                 [2,5],
-        #                 [3,6]])
-
         ips_ = np.array(intersectionsFlat, dtype=np.float)
 
         xh = np.repeat( [ips_[:,0]], ips_.shape[0], axis=0)
@@ -1392,7 +1273,6 @@ class Arrangement:
         # pIdx: intersection point's index
         # cIdx: intersecting traits' indices
         # tVal: intersecting traits' t-value at the intersection point
-
         nodes = [ [ pIdx, {'obj': Node(pIdx, intersectionsFlat[pIdx], ipsTraitIdx[pIdx], self.traits)} ]
                   for pIdx in range(len(intersectionsFlat)) ]
 
@@ -1452,7 +1332,6 @@ class Arrangement:
                 endTValList = tvals[1:]
 
             elif isinstance(trait, trts.ArcModified): # and isinstance(trait.obj, sym.Circ)
-
                 # Important note: The order of elif matters...
                 # isinstance(circle, trts.ArcModified) - > False
                 # isinstance(circle, trts.CircleModified) - > True
@@ -1481,7 +1360,6 @@ class Arrangement:
                 # it is copied from the begining
                 # idx = [idx for idx,n in enumerate(np.diff(endTValList)) if n<0]
                 endTValList[-1] += 2*np.pi
-
 
             # in python2 zip returns a list, in pothon3 it returns a zip() object
             l = list( zip (startIdxList, startTValList, endIdxList, endTValList) )
@@ -1515,7 +1393,7 @@ class Arrangement:
 
                 self.graph.add_edges_from([e1, e2])
 
-    ############################################################################
+
     def get_all_halfEdges (self):
         '''Arrangement class
 
@@ -1523,18 +1401,16 @@ class Arrangement:
         '''
         return self.graph.edges(keys=True)
 
-    ############################################################################
+
     def _find_successor_HalfEdge(self, halfEdgeIdx,
                                  allHalfEdgeIdx=None,
                                  direction='ccw_before'):
         '''Arrangement class
-
         '''
         # Note that in cases where there is a circle with one node on it,
         # the half-edge itself would be among candidates,
         # and it is important not to reject it from the candidates
         # otherwise the loop for find the face will never terminate!
-
         if allHalfEdgeIdx == None:
             allHalfEdgeIdx = self.graph.edges(keys=True) # self.get_all_HalfEdge_indices(self.graph) here here
 
@@ -1609,7 +1485,6 @@ class Arrangement:
             return successorIdx
 
 
-    ############################################################################
     def _decompose_graph(self, graph):
         '''Arrangement class
 
@@ -1705,7 +1580,7 @@ class Arrangement:
                             utls.edgeList_2_mplPath(edgeList, self.graph, self.traits ) )
                       for edgeList in faces )
 
-    ############################################################################
+
     def transform_sequence(self, operTypes, operVals, operRefs, subDecompositions=False):
         '''Arrangement class
 
@@ -1745,15 +1620,10 @@ class Arrangement:
                 subDec.update_face_path()
 
 
-
-    ############################################################################
     def _transform_affine(self, matrix, subDecompositions=False):
         '''
         Arrangement class
         '''
-        # update arrangement.traits
-        # TDOD
-
         # update arrangement.graph (nodes)
         points = [ self.graph.node[nIdx]['obj'].point
                    for nIdx in self.graph.nodes()]
@@ -1781,14 +1651,13 @@ class Arrangement:
                 subDec.update_face_path()
 
 
-    ############################################################################
     def save_faces_to_svg_path(self,  fileName, resolution=10.):
         '''
         Arrangement class
         '''
         pass #TODO(saesha)
 
-    ############################################################################
+
     def add_new_traits(self, traits=[]):
         '''
         Arrangement class
