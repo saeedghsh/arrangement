@@ -54,7 +54,6 @@ isinstance(line, RayModified) - > False
 isinstance(line, LineModified) - > True
 '''
 
-################################################################################
 class LineModified:
 
     __doc__ = '''
@@ -76,7 +75,7 @@ class LineModified:
     {:s}
     '''.format(note_on_isinstance, note_on_DPE)
 
-    ####################################
+
     def __init__ (self, args):
         '''
         LineModified class
@@ -86,7 +85,7 @@ class LineModified:
         else:
             self.obj = sym.Line( args[0], slope=args[1] )
 
-    ####################################
+
     def transform_sequence(self, operTypes, operVals, operRefs):
         '''
         LineModified class
@@ -107,7 +106,6 @@ class LineModified:
         e.g. 'TRS' -> 1)translate 2)rotate 3)scale
         e.g. 'RTS' -> 1)rotate 2)translate 3)scale
         '''
-
         for opIdx, opType in enumerate(operTypes):
 
             if opType == 'T':# and all(operVals[opIdx]!=(0,0)):
@@ -124,7 +122,7 @@ class LineModified:
                 ref = operRefs[opIdx]
                 self.obj = self.obj.scale(sx,sy,ref)
 
-    ####################################
+
     def DPE(self, t):
         '''
         LineModified class
@@ -147,7 +145,7 @@ class LineModified:
             return sym.Point(self.obj.p1.x + a.evalf()*t,
                              self.obj.p1.y + b.evalf()*t)
 
-    ####################################
+
     def IPE(self, point):
         '''
         LineModified class
@@ -169,7 +167,7 @@ class LineModified:
             b = sym.sqrt(1 - a**2)
             return (point.x-self.obj.p1.x)/a.evalf() if a != 0 else (point.y-self.obj.p1.y)/b.evalf()
 
-    ####################################
+
     def firstDerivative (self, point=None, direction='positive'):
         '''
         LineModified class
@@ -194,7 +192,7 @@ class LineModified:
         return res if direction == 'positive' else -1*res
 
 
-    ####################################
+
     def secondDerivative(self, point=None, direction='positive'):
         '''
         LineModified class
@@ -205,7 +203,7 @@ class LineModified:
         '''
         return np.array([0. ,0.], float)
 
-    ####################################
+
     def tangentAngle(self, point=None, direction='positive'):
         '''
         LineModified class
@@ -219,7 +217,7 @@ class LineModified:
         alpha = np.arctan2(dy,dx)
         return np.mod(alpha + 2*np.pi , 2*np.pi)
 
-    ####################################
+
     def curvature(self, point=None, direction='positive'):
         '''
         LineModified class
@@ -231,11 +229,8 @@ class LineModified:
         return 0.
 
 
-
-################################################################################
 #TODO:saesha
 class RayModified(LineModified):
-
     __doc__ = '''
     This class is to represent a Ray objects (half-line)
     It is aggregated from sympy.Ray class, hence the name.
@@ -259,7 +254,7 @@ class RayModified(LineModified):
     {:s}
     '''.format(note_on_isinstance)
 
-    ####################################
+
     def __init__ (self, args):
         '''
         RayModified class
@@ -271,7 +266,6 @@ class RayModified(LineModified):
         self.obj = sym.Ray( *args )
 
 
-    ####################################
     def DPE(self, t):
         '''
         RayModified class
@@ -297,7 +291,7 @@ class RayModified(LineModified):
 
         return point if self.obj.contains(point) else False
 
-    ####################################
+
     def IPE(self, point):
         '''
         RayModified class
@@ -311,11 +305,11 @@ class RayModified(LineModified):
         sl = b/a --> b = a *sl
         '''
 
-        # TODO:
-        # this condition checking is a problem when the trait and a node on it are rotated,
-        # but after rotation, the node is slightly off the trait and this function would return False!
-        # temporarily I disable this condition checking until later
-
+        # TODO: this condition checking is a problem when the trait
+        # and a node on it are rotated, but after rotation, the node
+        # is slightly off the trait and this function would return
+        # False!  temporarily I disable this condition checking until
+        # later
         if True: #self.obj.contains(point):
             if self.obj.slope == 0:
                 return point.x
@@ -329,9 +323,6 @@ class RayModified(LineModified):
             return False
 
 
-
-################################################################################
-#TODO:saesha
 class SegmentModified(LineModified):
 
     __doc__ = '''
@@ -356,7 +347,7 @@ class SegmentModified(LineModified):
     {:s}
     '''.format(note_on_isinstance)
 
-    ####################################
+
     def __init__ (self, args):
         '''
         SegmentModified class
@@ -364,7 +355,6 @@ class SegmentModified(LineModified):
         self.obj = sym.Segment( *args )
 
 
-    ####################################
     def DPE(self, t):
         '''
         SegmentModified class
@@ -389,7 +379,7 @@ class SegmentModified(LineModified):
 
         return point if self.obj.contains(point) else False
 
-    ####################################
+
     def IPE(self, point):
         '''
         SegmentModified class
@@ -403,11 +393,11 @@ class SegmentModified(LineModified):
         sl = b/a --> b = a *sl
         '''
 
-        # TODO:
-        # this condition checking is a problem when the trait and a node on it are rotated,
-        # but after rotation, the node is slightly off the trait and this function would return False!
-        # temporarily I disable this condition checking until later
-
+        # TODO: this condition checking is a problem when the trait
+        # and a node on it are rotated, but after rotation, the node
+        # is slightly off the trait and this function would return
+        # False!  temporarily I disable this condition checking until
+        # later
         if True: # self.obj.contains(point):
             if self.obj.slope == 0:
                 return point.x
@@ -421,7 +411,6 @@ class SegmentModified(LineModified):
             return False
 
 
-################################################################################
 class CircleModified:
 
     __doc__ = '''
@@ -438,15 +427,13 @@ class CircleModified:
     {:s}
     '''.format(note_on_isinstance)
 
-
-    ####################################
     def __init__ (self, args):
         '''
         CircleModified class
         '''
         self.obj = sym.Circle( *args )
 
-    ####################################
+
     def transform_sequence(self, operTypes, operVals, operRefs ):
         '''
         CircleModified class
@@ -478,15 +465,16 @@ class CircleModified:
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
 
-                # Important note
-                # ideally I would like to do this:
-                # self.obj = self.obj.rotate(theta,ref)
-                # but as rotate is not effective for circles (don't know why!)
-                # and since I can not set the attributes of the circel as:
+                # Important note ideally I would like to do this:
+                # self.obj = self.obj.rotate(theta,ref) but as rotate
+                # is not effective for circles (don't know why!)  and
+                # since I can not set the attributes of the circel as:
                 # self.obj.center = self.obj.center.rotate(theta,ref)
-                # I am left with no choice but to define a new circle and assign it to the obj
-                # fortunately this won't be a problem, as this obj instance is an attribute
-                # to the modifiedCircle instance, and that's what I want to maintain a reference to
+                # I am left with no choice but to define a new circle
+                # and assign it to the obj fortunately this won't be a
+                # problem, as this obj instance is an attribute to the
+                # modifiedCircle instance, and that's what I want to
+                # maintain a reference to
                 c = self.obj.center.rotate(theta,ref)
                 r = self.obj.radius
                 self.obj = sym.Circle(c,r)
@@ -497,8 +485,6 @@ class CircleModified:
                 self.obj = self.obj.scale(sx,sy,ref)
 
 
-
-    ####################################
     def DPE(self, t):
         '''
         CircleModified class
@@ -510,7 +496,7 @@ class CircleModified:
         fy = self.obj.center.y + self.obj.radius * np.sin(t) # sym.sin(t)
         return sym.Point( fx.evalf(), fy.evalf() )
 
-    ####################################
+
     def IPE(self, point):
         '''
         CircleModified class
@@ -518,12 +504,11 @@ class CircleModified:
         Inverse Parametric Equation
         t = fi(x,y)|(xc,yc,rc)
         '''
-        # if (point.y-self.center.y)**2 + (point.x-self.center.x)**2 == self.radius**2:
         dy = point.y - self.obj.center.y
         dx = point.x - self.obj.center.x
         return sym.atan2(dy, dx).evalf()
 
-    ####################################
+
     def firstDerivative (self, point, direction='positive'):
         '''
         CircleModified class
@@ -541,7 +526,7 @@ class CircleModified:
         res = np.array([x_.evalf(), y_.evalf()], float)
         return res if direction == 'positive' else -1*res
 
-    ####################################
+
     def secondDerivative(self, point, direction='positive'):
         '''
         CircleModified class
@@ -557,11 +542,11 @@ class CircleModified:
 
         '''
         theta = np.float(self.IPE(point))
-        x_ = -self.obj.radius * np.cos(theta) # sym.cos(theta).evalf()
-        y_ = -self.obj.radius * np.sin(theta) # sym.sin(theta).evalf()
+        x_ = -self.obj.radius * np.cos(theta)
+        y_ = -self.obj.radius * np.sin(theta)
         return np.array([x_.evalf(), y_.evalf()], float)
 
-    ####################################
+
     def tangentAngle(self, point, direction='positive'):
         '''
         CircleModified class
@@ -576,7 +561,6 @@ class CircleModified:
         return np.mod(alpha + 2*np.pi , 2*np.pi)
 
 
-    ####################################
     def curvature(self, point=None, direction='positive'):
         '''
         CircleModified class
@@ -588,12 +572,7 @@ class CircleModified:
         return k if direction == 'positive' else -1*k
 
 
-
-
-################################################################################
 class ArcModified(CircleModified):
-
-
     __doc__ = '''
     This class is to represent circle objects
     It is aggregated from sympy.Circle class, hence the name.
@@ -623,7 +602,7 @@ class ArcModified(CircleModified):
     {:s}
     '''.format(note_on_isinstance)
 
-    ####################################
+
     def __init__ (self, args):
         '''
         ArcModified class
@@ -639,7 +618,7 @@ class ArcModified(CircleModified):
         self.t1 = min(args[2])
         self.t2 = max(args[2])
 
-    ####################################
+
     def transform_sequence(self, operTypes, operVals, operRefs ):
         '''
         ArcModified class
@@ -671,24 +650,26 @@ class ArcModified(CircleModified):
                 theta = operVals[opIdx]
                 ref = operRefs[opIdx]
 
-                # Important note
-                # ideally I would like to do this:
-                # self.obj = self.obj.rotate(theta,ref)
-                # but as rotate is not effective for circles (don't know why!)
-                # and since I can not set the attributes of the circel as:
+                # Important note ideally I would like to do this:
+                # self.obj = self.obj.rotate(theta,ref) but as rotate
+                # is not effective for circles (don't know why!)  and
+                # since I can not set the attributes of the circel as:
                 # self.obj.center = self.obj.center.rotate(theta,ref)
-                # I am left with no choice but to define a new circle and assign it to the obj
-                # fortunately this won't be a problem, as this obj instance is an attribute
-                # to the modifiedCircle instance, and that's what I want to maintain a reference to
+                # I am left with no choice but to define a new circle
+                # and assign it to the obj fortunately this won't be a
+                # problem, as this obj instance is an attribute to the
+                # modifiedCircle instance, and that's what I want to
+                # maintain a reference to
                 c = self.obj.center.rotate(theta,ref)
                 r = self.obj.radius
                 self.obj = sym.Circle(c,r)
 
-                # TODO: too many consequtive rotation might carry t1 and t2 out of the predefined interval
-                # correct them if there is going to be any valid interval for t1 and t2
+                # TODO: too many consequtive rotation might carry t1
+                # and t2 out of the predefined interval correct them
+                # if there is going to be any valid interval for t1
+                # and t2
                 self.t1 += theta
                 self.t2 += theta
-
 
             elif opType == 'S':# and all(operVals[opIdx]!=(1,1)):
                 sx,sy = operVals[opIdx]

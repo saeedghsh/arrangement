@@ -19,86 +19,22 @@ from __future__ import print_function, division
 
 import numpy as np
 import sympy as sym
-# import networkx as nx
 
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-# import matplotlib.path as mpath
 import matplotlib.patches as mpatches
-# import matplotlib.transforms
-# import matplotlib.image as mpimg
 
-# from cStringIO import StringIO
-# from io import StringIO
-import geometricTraits as trts
-
-################################################################################
-################################################################ plotting graphs
-################################################################################
-
-
-# ######################################## graph plot with matplotlib
-# def plot_graph_networkx(graph):
-#     f, axes = plt.subplots(1)
-#     nx.draw(graph)
-#     plt.show()
-
-# ######################################## graph plot with pydot
-# def plot_graph_pydot(graph):
-#     # http://stackoverflow.com/questions/10379448/plotting-directed-graphs-in-python-in-a-way-that-show-all-edges-separately
-#     # http://stackoverflow.com/questions/1664861/how-to-create-an-image-from-a-string-in-python
-
-#     d = nx.to_pydot(graph) # d is a pydot graph object, dot options can be easily set
-#     png_str = d.create_png()
-#     sio = StringIO() # file-like string, appropriate for imread below
-#     sio.write(png_str)
-#     sio.seek(0)
-
-#     f, axes = plt.subplots(1)
-#     img = mpimg.imread(sio)
-#     imgplot = plt.imshow(img)
-#     plt.show()
-
-
-# ######################################## multi graph plot with pydot
-# def plot_multiple_graphs_pydot(graphs):
-
-#     f, axes = plt.subplots(len(graphs))
-
-#     for i,g in enumerate(graphs):
-#         d = nx.to_pydot(g) # d is a pydot graph object, dot options can be easily set
-#         png_str = d.create_png()
-#         sio = StringIO() # file-like string, appropriate for imread below
-#         sio.write(png_str)
-#         sio.seek(0)
-
-#         img = mpimg.imread(sio)
-#         imgplot = axes[i].imshow(img)
-
-#         axes[i].set_xticks([])
-#         axes[i].set_yticks([])
-
-#     plt.axis('equal')
-#     plt.tight_layout()
-#     plt.show()
-
-# ######################################## graph plot with pygraphviz
-# def plot_graph_pygraphviz(graph):
-#     # http://stackoverflow.com/questions/14943439/how-to-draw-multigraph-in-networkx-using-matplotlib-or-graphviz
-
-#     # # write graph to a dot file
-#     # nx.drawing.nx_pydot.write_dot(arrang.graph,'multi.dot')
-#     # !neato -T png multi.dot > multi.png
-#     pass
-
-# agraph = nx.to_agraph(arrang.graph)
+try:
+    from . import geometricTraits as trts
+except:
+    from arrangement import geometricTraits as trts
 
 ################################################################################
 ########################################################## visualizing traits
 ################################################################################
 
 def plot_traits(axis, traits, clrs=None, alph=None):
-
-
     if clrs is None: clrs = {'cir':'b', 'arc':'b', 'lin':'r', 'seg':'g', 'ray':'g'}
     if alph is None: alph = {'cir': 1., 'arc': 1., 'lin': 1., 'seg': 1., 'ray': 1.}
 
@@ -107,7 +43,7 @@ def plot_traits(axis, traits, clrs=None, alph=None):
         # note: order of the conditions matter since arcModified is subclass of CircleModified
         if isinstance( trait, trts.ArcModified ):
             t1,t2 = trait.t1 , trait.t2
-            tStep = max( [np.float(np.abs(t2-t1)*(180/np.pi)) ,2])
+            tStep = max( [np.int(np.abs(t2-t1)*(180/np.pi))+1 ,2])
             theta = np.linspace(np.float(t1), np.float(t2), tStep, endpoint=True)
             xc, yc, rc = trait.obj.center.x , trait.obj.center.y , trait.obj.radius
             x = xc + rc * np.cos(theta)
@@ -170,53 +106,33 @@ def plot_traits(axis, traits, clrs=None, alph=None):
             raise( StandardError( 'trait n#', str(idx), 'unknown') )
 
     return axis
-################################################################################
 
 
 ################################################################################
 ########################################################## interactive functions
 ################################################################################
-
-##################################### interactive functions on click
 def onClick(event):
     xe, ye = event.xdata, event.ydata
     if xe and ye:
-        # print('clicked: ', xe, ye)
-
         global arrang
         point = sym.Point(xe, ye)
         faceIdx = arrang.decomposition.find_face(point)
         print( faceIdx )
 
-    else:
-        pass
-        # print( 'clicked out of border' )
-
-##################################### interactive functions on move
 def onMove(event):
     xe, ye = event.xdata, event.ydata
-
-    global arrang
-    global ax
-
     if xe and ye:
-        # print( 'moving: ',  xe, ye )
+        global arrang
+        global ax
         point = sym.Point(xe, ye)
         fIdx = arrang.decomposition.find_face(point)
-
         if fIdx is not None: # explicit, because fIdx could be 0
             plot_new_face_with_patch(ax, faceIdx=fIdx)
 
-    else:
-        pass
-        # print( 'moving out of border' )
-
-
+        
 ################################################################################
 ######################################################### plotting decomposition
 ################################################################################
-
-################################### plotting edges
 def plot_edges(axis, arrang,
                alp=1., col='b',
                halfEdgeIdx=None,
@@ -227,20 +143,15 @@ def plot_edges(axis, arrang,
     a list of half-edge indices to plot.
     If None, all will be plotted.
     '''
-
     edge_plot_instances = []
     if halfEdgeIdx is None:
-        halfEdgeList = arrang.graph.edges(keys=True) # arrang.get_all_HalfEdge_indices()
-
+        halfEdgeList = arrang.graph.edges(keys=True)
     else:
         halfEdgeList = halfEdgeIdx
 
     for (start, end, k) in halfEdgeList:
-
         he_obj = arrang.graph[start][end][k]['obj']
         trait_obj = arrang.traits[he_obj.traitIdx].obj
-
-        # thei =  he_obj.twinIdx
         sTVal, eTVal = he_obj.get_tvals(arrang.traits, arrang.graph.node)
 
         if isinstance(trait_obj, (sym.Line, sym.Segment, sym.Ray) ):
@@ -270,13 +181,12 @@ def plot_edges(axis, arrang,
                                    fontdict={'color':col,  'size': 10})
 
         elif isinstance(trait_obj, sym.Circle):
-            tStep = max( [np.float(np.abs(eTVal-sTVal)*(180/np.pi)) ,2])
+            tStep = max( [np.int(np.abs(eTVal-sTVal)*(180/np.pi))+1 ,2])            
             theta = np.linspace(np.float(sTVal), np.float(eTVal),
                                 tStep, endpoint=True)
             xc, yc, rc = trait_obj.center.x , trait_obj.center.y , trait_obj.radius
             x = xc + rc * np.cos(theta)
             y = yc + rc * np.sin(theta)
-
             if not withArrow:
                 edge_plot_instances += [axis.plot (x, y, col, alpha=alp)[0]]
 
@@ -307,11 +217,9 @@ def plot_edges(axis, arrang,
     return edge_plot_instances
 
 
-################################### plotting nodes
 def plot_nodes (axis, arrang, nodes=None,
                alp = 1., col = 'r',
                printLabels = False):
-
     if nodes==None:  nodes = arrang.graph.nodes()
     points = [arrang.graph.node[idx]['obj'].point for idx in nodes]
 
@@ -321,7 +229,6 @@ def plot_nodes (axis, arrang, nodes=None,
     node_plot_instances = axis.plot (nx,ny, col+'o', alpha= alp)
 
     if printLabels:
-        # font = {'color':col, 'size': 10}
         for idx in arrang.graph.nodes():
             axis.text(arrang.graph.node[idx]['obj'].point.x,
                       arrang.graph.node[idx]['obj'].point.y,
@@ -330,10 +237,8 @@ def plot_nodes (axis, arrang, nodes=None,
     return node_plot_instances
 
 
-
-######################################## plot decomposition, no faces
 def plot_decomposition(arrangement,
-                       invert_axis = [],# ['x','y']
+                       invert_axis = [],
                        interactive_onClick=False,
                        interactive_onMove=False,
                        plotNodes=False, printNodeLabels=False,
@@ -348,11 +253,9 @@ def plot_decomposition(arrangement,
     ax = fig.add_subplot(111)
 
     if interactive_onClick:
-        # cid_click = fig.canvas.mpl_connect('button_press_event', onClick)
         fig.canvas.mpl_connect('button_press_event', onClick)
 
     if interactive_onMove:
-        # cid_move = fig.canvas.mpl_connect('motion_notify_event', onMove)
         fig.canvas.mpl_connect('motion_notify_event', onMove)
 
     if plotEdges:
@@ -362,8 +265,8 @@ def plot_decomposition(arrangement,
 
     # set axes limit
     bb = arrang.decomposition.get_extents()
-    ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
-    ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
+    ax.set_xlim(bb.x0-1, bb.x1+1)
+    ax.set_ylim(bb.y0-1, bb.y1+1)
 
     if 'x' in invert_axis: ax.invert_xaxis()
     if 'y' in invert_axis: ax.invert_yaxis()
@@ -373,23 +276,18 @@ def plot_decomposition(arrangement,
     plt.show()
 
 
-######################################## plot decomposition, face-> patch
 def plot_decomposition_colored (arrang,
                                 printNodeLabels=True,
                                 printEdgeLabels=False,
                                 printFaceLabels=False,
                                 fCol='b', eCol='r'):
-
-    # with plt.xkcd():
     fig = plt.figure( figsize=(12, 12) )
     ax = fig.add_subplot(111)
 
     plot_edges (ax, arrang, printLabels=printEdgeLabels)
     plot_nodes (ax, arrang, nodes=None, printLabels=printNodeLabels)
 
-    # colors = plt.cm.Spectral(np.linspace(0, 1, len(arrang.decomposition.faces)))
     colors = plt.cm.gist_ncar(np.linspace(0, 1, len(arrang.decomposition.faces)))
-
     for f_idx,face in enumerate(arrang.decomposition.faces):
         patch = mpatches.PathPatch(face.get_punched_path(),
                                    facecolor=colors[f_idx][0:3], #fCol
@@ -397,32 +295,20 @@ def plot_decomposition_colored (arrang,
                                    alpha=0.5)
         ax.add_patch(patch)
 
-        if printFaceLabels:
-            pass
-
-
     # set axes limit
     bb = arrang.decomposition.get_extents()
-    ax.set_xlim(bb.x0-1, bb.x1+1)#, ax.set_xticks([])
-    ax.set_ylim(bb.y0-1, bb.y1+1)#, ax.set_yticks([])
+    ax.set_xlim(bb.x0-1, bb.x1+1)
+    ax.set_ylim(bb.y0-1, bb.y1+1)
 
     ax.axis('equal')
     plt.tight_layout()
     plt.show()
 
 
-
-
-
 ################################################################################
 ################################################## animatining face with patches
 ################################################################################
-
-
-########################################
 def animate_face_patches(arrangement, timeInterval=1000, back_img=None):
-
-    # fig = plt.figure( figsize=(12, 12) )
     fig = plt.figure( figsize=(8, 8) )
     ax = fig.add_subplot(111)      
 
@@ -458,7 +344,6 @@ def animate_face_patches(arrangement, timeInterval=1000, back_img=None):
     timer.stop()
 
 
-#########################################
 def plot_new_face_with_patch(axis, faceIdx=None):
     global arrang
 
@@ -505,9 +390,6 @@ def plot_new_face_with_patch(axis, faceIdx=None):
 ################################################################################
 ######################################################### animatining Half-edges
 ################################################################################
-
-
-########################################
 def animate_halfEdges(arrangement, timeInterval = .1*1000):
 
     fig = plt.figure(figsize=(12,12))
@@ -541,7 +423,6 @@ def animate_halfEdges(arrangement, timeInterval = .1*1000):
     timer.stop()
 
 
-######################################### half-edge plots
 def plot_new_halfEdge(axis):
 
     global halfEdge_counter
@@ -578,36 +459,6 @@ def plot_new_halfEdge(axis):
                    withArrow=True)
     else:
         print( 'something is wrong!' )
-
-    # ##########################################################################
-    # ################################# drawing derivatives of the new haldfedge
-    # if False:
-    #     p1 = arrang.graph.node[start]['obj'].point
-    #     px, py = p1.x.evalf() , p1.y.evalf()
-    #     he_obj = arrang.graph[start][end][k]['obj']
-
-    #     # Blue: 1st derivative - tangent to the trait
-    #     dx,dy = he_obj.s1stDer
-    #     axis.arrow(px,py, dx,dy,
-    #                length_includes_head = True,
-    #                head_width = 0.5, head_length = 1.,
-    #                fc = 'b', ec = 'b') ,
-
-    #     # Green: normal to the 1st derivative
-    #     dx,dy = he_obj.s1stDer
-    #     dxn,dyn = np.array( [dy,-dx] ) if he_obj.direction =='positive' else np.array( [-dy,dx] )
-    #     axis.arrow(px,py, dxn,dyn,
-    #                length_includes_head = True,
-    #                head_width = 0.5, head_length = 1.,
-    #                fc = 'g', ec = 'g')
-
-    #     # Red: 2ns derivative
-    #     dx,dy = he_obj.s2ndDer
-    #     axis.arrow(px,py, dx,dy,
-    #                length_includes_head = True,
-    #                head_width = 0.5, head_length = 1.,
-    #                fc = 'r', ec = 'r')
-    # ##########################################################################
 
     # print index of the half-edge
     axis.text(-8, -7,

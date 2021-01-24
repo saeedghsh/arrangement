@@ -21,25 +21,25 @@ import re
 import yaml
 import sympy as sym
 import numpy as np
-# import skimage.transform
+
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.path as mpath
 import matplotlib.transforms
 
-# from . import geometricTraits as trts
-import geometricTraits as trts
-
-
-# svg parsing
 import xml.etree.ElementTree as ET
 import svgpathtools
-# import yaml
+
+try:
+    from . import geometricTraits as trts
+except:
+    from arrangement import geometricTraits as trts
+
+
 
 ################################################################################
 ################################################################################
 ################################################################################
-
-
-################################### converting face to mpl.path
 def edgeList_2_mplPath (edgeList, graph, traits):
     '''
     important note:
@@ -165,7 +165,6 @@ def save_traits_to_yaml(trait_list, file_name):
         yaml.dump(data, yaml_file)
 
 
-################################################################################
 def load_data_from_yaml(fileName):
 
     Point = sym.Point
@@ -268,7 +267,7 @@ def load_data_from_yaml(fileName):
 
     return result
 
-################################################################################
+
 def unbound_traits(trait_list):
     '''
     this method takes a list of traits and converts them as follow:
@@ -301,7 +300,7 @@ def unbound_traits(trait_list):
 
     return trait_list
 
-################################################################################
+
 def bound_traits(trait_list, boundary):
     '''
     this method takes a list of traits and bounds them to boundary.
@@ -322,15 +321,11 @@ def bound_traits(trait_list, boundary):
                  sym.Line( (xMax,yMax), (xMin,yMax) ),
                  sym.Line( (xMin,yMax), (xMin,yMin) ) ]
 
-
-
     for t_idx in range(len(trait_list)-1,-1,-1):
 
         # the trait before adjustment
         trait = trait_list[t_idx]
-
         if isinstance(trait, (trts.LineModified) ):
-
             # finding all intersections between trait and boundary lines
             # the "if" condition is to reject lines:
             # sym.intersection would return a sym.Line if one of the traits
@@ -407,8 +402,6 @@ def get_shape_descriptor(face, arrangement,
     Therefore, the arrangement object, to which face belong is required for:
     > accessing the objects of half-edges, nodes and traits that define a face.
     '''
-    # area = face.get_area()
-
     # get the idx:(start,end,key) of all halfedges surrounding the face
     # note that this list includes the outer half_edges of the holes
     all_halfedges_idx = face.get_all_halfEdges_Idx()
@@ -523,7 +516,7 @@ def get_shape_descriptor(face, arrangement,
 
     return edge_turn, edge_type, edge_node_idx
 
-################################################################################
+
 def match_face_shape(face1, face2,
                      include_angle=False):
     '''
@@ -562,8 +555,6 @@ def match_face_shape(face1, face2,
     TODO:
     adopt the code to consider "include_angle"
     '''
-
-    # print (' TODO: adopt the code to consider "include_angle"')
     match = []
 
     attr1 = face1.attributes
@@ -582,7 +573,6 @@ def match_face_shape(face1, face2,
     return match
 
 
-################################################################################
 def align_faces(arrangement1, arrangement2,
                 f1Idx, f2Idx,
                 tform_type='similarity',
@@ -626,15 +616,11 @@ def align_faces(arrangement1, arrangement2,
     for instance two quadrant of a circle could be aligned with rotation or flip
     sx==sy holds true if 'similarity' is used
     '''
-
     alignments = {}
-
     f1 = arrangement1.decomposition.faces[f1Idx]
     f2 = arrangement2.decomposition.faces[f2Idx]
-
     nodes1 = arrangement1.graph.node
     nodes2 = arrangement2.graph.node
-
     src = np.array( [(nodes1[n_idx]['obj'].point.x,
                       nodes1[n_idx]['obj'].point.y)
                      for n_idx in f1.attributes['edge_node_idx'] ],
@@ -716,8 +702,6 @@ def xml_tree_parser_to_svg_elements(tree):
             height = element.attrib['height']
             width = element.attrib['width']
 
-    # assert 'height' in locals()
-    # assert 'width' in locals()
     if not 'height' in locals(): raise AssertionError()
     if not 'height' in locals(): raise AssertionError()
     elements_dict['height'] = np.float(height)
@@ -725,7 +709,7 @@ def xml_tree_parser_to_svg_elements(tree):
 
     return elements_dict
 
-########################################
+
 def svg_parser_line_element(element):
     '''
     https://www.w3.org/TR/SVG/shapes.html#LineElement
@@ -738,7 +722,7 @@ def svg_parser_line_element(element):
     # ndmin is set to 3 to match the rect and polyline/polgon functiosn
     return np.array(segments, dtype=float, ndmin=3)
 
-########################################
+
 def svg_parser_rect_element(element):
     '''
     https://www.w3.org/TR/SVG/shapes.html#RectElement
@@ -753,7 +737,7 @@ def svg_parser_rect_element(element):
                  [[x, y+h],   [x, y]] ]
     return np.array(segments, dtype=float, ndmin=3)
 
-########################################
+
 def svg_parser_polyline_polygon_element(element):
     '''
     https://www.w3.org/TR/SVG/shapes.html#PolylineElement
@@ -773,7 +757,6 @@ def svg_parser_polyline_polygon_element(element):
     return np.array(segments, dtype=float, ndmin=3)
 
 
-########################################
 def svg_parser_circle_element(element):
     '''
     https://www.w3.org/TR/SVG/shapes.html#CircleElement
@@ -783,7 +766,7 @@ def svg_parser_circle_element(element):
     r = element.attrib['r']
     return np.array([cx, cy, r ], dtype=float)
 
-########################################
+
 def svg_parser_ellipse_element(element):
     '''
     https://www.w3.org/TR/SVG/shapes.html#EllipseElement
@@ -794,7 +777,7 @@ def svg_parser_ellipse_element(element):
     ry = element.attrib['ry']
     return np.array([cx, cy, rx, ry], dtype=float)
 
-################################################################################
+
 def svg_to_ymal(svg_file_name):
     ''' '''
     data = { 'lines': [], #[x1,y1,x2,y2]
@@ -834,7 +817,6 @@ def svg_to_ymal(svg_file_name):
             data['segments'].append([float(seg[0][0]), float(seg[0][1]),
                                      float(seg[1][0]), float(seg[1][1]) ])
 
-
     ### polyline_element (+polygon_element)
     for polyline_elmt in elements_dict['polyline'] + elements_dict['polygon']:
         for seg in svg_parser_polyline_polygon_element(polyline_elmt):
@@ -851,7 +833,6 @@ def svg_to_ymal(svg_file_name):
     for circle_elmt in elements_dict['circle']:
         circle = svg_parser_circle_element(circle_elmt)
         data['circles'].append( [float(circle[0]), float(circle[1]), float(circle[2]) ] )
-
 
     ### adding the boundary to the data
     ### [xMin, yMin, xMax, yMax]
